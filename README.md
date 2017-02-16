@@ -1,16 +1,27 @@
 CSV Cruncher - query and process your CSV using SQL.
-####################################################
+====================================================
 
 A tool which treats CSV files AS SQL tables, and exports CSV files using a SQL SELECT statement.
 
-Many tools spit out CSV, or are able to as one of output options.
-Also, in your projects, you can simply use the logging to put some values into a CSV, for instance in Bash:
-`echo "$val2, $val2" >> data.csv`
+Many tools and systems can export their data to CSV - comma separated values.
+Typical work with these data is importing them into some spreadsheet like Excel and process them manually.
 
-Then you can do quite complex queries – even with a single flat table, you can actually do subselects and then LEFT JOINs,
-which gives you very powerful tool to process the data.
+With this tool, you can automate this processing by writing SQL queries, which produce another CSV as a result.
+The SQL operations can be quite powerful – just consider what everything you have at hand:
 
-For SQL, HyperSQL database is used. See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
+ * Simple selects - ordering, filtering, grouping, aggregating, etc.
+ * Joins - use multiple CSV files and use their relations
+ * Subselects (pre-computing certain data for another select)
+ * Self-joins (same input file used multiple times)
+ * Recursive queries
+ * Triggers
+ * User-defined functions (PL/SQL-based and Java-based)
+ * XML and JSON processing
+ * Time and date functions
+ * Statistical agregate functions
+...and more.
+
+All this is backed by [HyperSQL database](http://hsqldb.org/doc/2.0/guide/index.html). See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
 Usage
 =====
