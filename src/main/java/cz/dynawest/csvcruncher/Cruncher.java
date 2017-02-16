@@ -1,4 +1,4 @@
-package org.jboss.qa.cvscruncher;
+package cz.dynawest.csvcruncher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,7 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jboss.qa.cvscruncher.App;
+import cz.dynawest.csvcruncher.App;
 
 public class Cruncher {
    private static final Logger log = Logger.getLogger(App.class.getName());

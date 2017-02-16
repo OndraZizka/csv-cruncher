@@ -1,9 +1,9 @@
-package org.jboss.qa.cvscruncher;
+package cz.dynawest.csvcruncher;
 
 import cz.dynawest.logging.LoggingUtils;
 import java.util.logging.Logger;
-import org.jboss.qa.cvscruncher.Cruncher;
-import org.jboss.qa.cvscruncher.Cruncher.Options;
+import cz.dynawest.csvcruncher.Cruncher;
+import cz.dynawest.csvcruncher.Cruncher.Options;
 
 public class App {
    private static final Logger log = Logger.getLogger(App.class.getName());
