@@ -15,7 +15,7 @@ Then you can do quite complex queries – from a flat table, you can actually do
 
 Example:
 
-crunch input.csv output.csv "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM indata ORDER BY duration LIMIT 2 OFFSET 6)"`
+    crunch input.csv output.csv "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM indata ORDER BY duration LIMIT 2 OFFSET 6)"`
 
 
 ---------------------
