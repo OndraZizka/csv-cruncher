@@ -1,6 +1,12 @@
 CSV Cruncher - query and process your CSV using SQL.
 ====================================================
 
+![icon](/docs/images/icon.png)
+
+<!--
+http://static.openheatmap.com/images/googleicon.png
+-->
+
 A tool which treats CSV files AS SQL tables, and exports CSV files using a SQL SELECT statement.
 
 Many tools and systems can export their data to CSV - comma separated values.
