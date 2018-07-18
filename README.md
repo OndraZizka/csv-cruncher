@@ -1,4 +1,4 @@
-CSV Cruncher - query and process your CSV using SQL.
+CSV Cruncher - query and process your CSVs using SQL.
 ====================================================
 
 A tool which treats CSV files AS SQL tables, and exports CSV files using a SQL `SELECT` statement.
