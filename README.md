@@ -1,9 +1,9 @@
 CSV Cruncher - query and process your CSV using SQL.
 ====================================================
 
-A tool which treats CSV files AS SQL tables, and exports CSV files using a SQL SELECT statement.
+A tool which treats CSV files AS SQL tables, and exports CSV files using a SQL `SELECT` statement.
 
-<img src="/docs/images/icon.png" align="left" style="float: left;">
+<img src="./docs/images/icon.png" align="left" style="float: left;">
 
 <!--
 ! [icon](/docs/images/icon.png)
@@ -14,8 +14,8 @@ Many tools and systems can export their data to CSV - comma separated values.
 Typical work with these data is importing them into some spreadsheet like Excel and process them manually.
 
 <div style="clear: both"></div>
-  
-  
+
+
 With this tool, you can automate this processing by writing SQL queries, which produce another CSV as a result.
 The SQL operations can be quite powerful – just consider what everything you have at hand:
 
@@ -29,9 +29,11 @@ The SQL operations can be quite powerful – just consider what everything you h
  * XML and JSON processing
  * Time and date functions
  * Statistical agregate functions
+
 ...and more.
 
-All this is backed by [HyperSQL database](http://hsqldb.org/doc/2.0/guide/index.html). See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
+All this is backed by [HyperSQL database](http://hsqldb.org/doc/2.0/guide/index.html).
+See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
 Usage
 =====
