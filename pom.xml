@@ -15,7 +15,15 @@
         <mainClass>Crunch</mainClass>
     </properties>
 
+
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <excludes><exclude>*.java</exclude></excludes>
+            </resource>
+        </resources>
+
         <plugins>
 
             <plugin>
@@ -49,6 +57,14 @@
             -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <goals><goal>single</goal></goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
                 <configuration>
                     <finalName>${project.artifactId}-${project.version}-dist</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
@@ -65,6 +81,31 @@
                     <archiverConfig>
                     </archiverConfig>
                 </configuration>
+            </plugin>
+
+            <!-- Try run it. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>runJar</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-dist.jar
+                                -in src/test/data/eapBuilds.csv
+                                -out target/results/result.csv
+                                -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
+                                        CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
+                                        FROM indata ORDER BY deployDur'
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
