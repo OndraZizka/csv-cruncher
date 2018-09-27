@@ -1,19 +1,3 @@
-This was auto-migrated from Google Code. Unfortunately, that failed, and now I can't find the original code.
-Damn Google, that was really a backstab.
-
-The code here is decompiled from a .jar I found on my web.  
-Also, it seems that this version only supports a single input file.
-
-I've only made the code buildable, formatted some classes and renamed few variables.
-I didn't try running it yet so it may be unusable at the moment.
-Pull requests welcome.
-
-If it was useful to you, star this github repo :)
-
-
-----------------------------------------------
-
-
 CSV Cruncher - query and process your CSVs using SQL.
 ====================================================
 
@@ -82,7 +66,11 @@ SQL query:
         FROM indata ORDER BY deployDur
 
 ----------------------------------------------
-
+This was migrated from Google Code.
+The code here is decompiled and reverse-engineered from a  .jar I found on my web.
+It seems to work, but testing, feedback, and pull requests welcome.
+If it was useful to you, star this github repo :)
+----------------------------------------------
 
 Easter Egg: The original text I sent to JBoss mailing list when introducing the tool :)
 
