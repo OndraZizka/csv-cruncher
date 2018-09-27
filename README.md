@@ -1,3 +1,18 @@
+This was auto-migrated from Google Code. Unfortunately, that failed, and now I can't find the original code.
+Damn Google, that was really a backstab.
+
+The code here is decompiled from a .jar I found on my web.
+
+I've only made the code buildable, formatted some classes and renamed few variables.
+I didn't try running it yet so it may be unusable at the moment.
+Pull requests welcome.
+
+If it was useful to you, star this github repo :)
+
+
+----------------------------------------------
+
+
 CSV Cruncher - query and process your CSVs using SQL.
 ====================================================
 
@@ -64,20 +79,6 @@ SQL query:
     SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
             CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
         FROM indata ORDER BY deployDur
-
-----------------------------------------------
-
-This was auto-migrated from Google Code. Unfortunately, that failed, and now I can't find the original code.
-Damn Google, that was really a backstab.
-
-The code here is decompiled from a .jar I found on my web.
-
-I've only made the code buildable, formatted some classes and renamed few variables.
-I didn't try running it yet so it may be unusable at the moment.
-Pull requests welcome.
-
-If it was useful to you, star this github repo :)
-
 
 ----------------------------------------------
 
