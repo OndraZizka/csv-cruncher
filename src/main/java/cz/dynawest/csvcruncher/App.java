@@ -51,7 +51,7 @@ public class App
                 if (next != null) {
                     switch (next) {
                         case IN:
-                            opt.csvPathIn = str;
+                            opt.csvPathIn.add(str);
                             relPos = Math.max(relPos, 1);
                             continue;
                         case OUT:
@@ -72,7 +72,7 @@ public class App
 
                 ++relPos;
                 if (relPos == 0) {
-                    opt.csvPathIn = str;
+                    opt.csvPathIn.add(str);
                 }
                 else if (relPos == 1) {
                     opt.csvPathOut = str;

@@ -3,6 +3,8 @@ package cz.dynawest.csvcruncher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,6 +12,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,70 +43,66 @@ public class Cruncher
         this.conn = DriverManager.getConnection("jdbc:hsqldb:file:" + dbPath + ";shutdown=true", "SA", "");
     }
 
+    /**
+     * Performs the whole process.
+     */
     public void crunch() throws Exception
     {
+        validateParameters();
+
+        Map<String, File> tablesToFiles = new HashMap<>();
         try
         {
-            if (this.options.csvPathIn == null)
-                throw new IllegalArgumentException(" -in is not set.");
-
-            if (this.options.sql == null)
-                throw new IllegalArgumentException(" -sql is not set.");
-
-            if (this.options.csvPathOut == null)
-                throw new IllegalArgumentException(" -out is not set.");
-
-            File ex = new File(this.options.csvPathIn);
-            if (!ex.exists())
-                throw new FileNotFoundException(ex.getPath());
-
             byte reachedStage = 0;
-            boolean success = true;
+            boolean success = false;
+
+            File outFile = this.getFileObject(this.options.csvPathOut);
+            outFile.getAbsoluteFile().getParentFile().mkdirs();
 
             try
             {
-                File ps = this.getFileObject(this.options.csvPathIn);
-                File outFile = this.getFileObject(this.options.csvPathOut);
-                log.info(this.options.toString());
-                log.info("******* inPath: " + this.options.csvPathIn);
-                log.info("******* inFile: " + ps.getPath());
-                if (!ps.exists())
-                {
-                    throw new FileNotFoundException("CSV file not found: " + ps.getPath());
+                // For each input CSV file...
+                for (String path : this.options.csvPathIn) {
+                    File csvInFile = this.getFileObject(path);
+                    log.info(" * CSV input: " + csvInFile);
+
+                    String tableName = normalizeFileNameForTableName(csvInFile);
+                    File previousIfAny = tablesToFiles.put(tableName, csvInFile);
+                    if (previousIfAny != null)
+                        throw new IllegalArgumentException("File names normalized to table names collide: " + previousIfAny + ", " + csvInFile);
+
+                    String[] colNames = parseColsFromFirstLine(csvInFile);
+                    // Read the CSV into a table.
+                    this.createTableForCsvFile(tableName, csvInFile, colNames, true);
                 }
 
-                outFile.getAbsoluteFile().getParentFile().mkdirs();
-                String[] colNames = parseColsFromFirstLine(ex);
-                this.createTableForCsvFile("indata", ps, colNames, true);
-                PreparedStatement ps1 = this.conn.prepareStatement(this.options.sql);
-                ResultSet rs = ps1.executeQuery();
-                colNames = new String[rs.getMetaData().getColumnCount()];
-                int sql = 0;
+                // Perform the SQL
+                PreparedStatement statement = this.conn.prepareStatement(this.options.sql);
+                ResultSet rs = statement.executeQuery();
 
-                while (true)
-                {
-                    if (sql >= colNames.length)
-                    {
-                        this.createTableForCsvFile("output", outFile, colNames, true);
-                        reachedStage = 2;
-                        String userSql = "INSERT INTO output (" + this.options.sql + ")";
-                        log.info("User\'s SQL: " + userSql);
-                        ps1 = this.conn.prepareStatement(userSql);
-                        int rowsAffected = ps1.executeUpdate();
-                        success = false;
-                        break;
-                    }
-
-                    colNames[sql] = rs.getMetaData().getColumnName(sql + 1);
-                    ++sql;
+                // Column names
+                String [] colNames = new String[rs.getMetaData().getColumnCount()];
+                for (int col = 0; col < colNames.length; col++) {
+                    colNames[col] = rs.getMetaData().getColumnName(col + 1);
                 }
+
+                // Write the result into a CSV
+                this.createTableForCsvFile("output", outFile, colNames, true);
+                reachedStage = 2;
+                String userSql = "INSERT INTO output (" + this.options.sql + ")";
+                log.info("User\'s SQL: " + userSql);
+                statement = this.conn.prepareStatement(userSql);
+                int rowsAffected = statement.executeUpdate();
+                success = true;
             }
             finally
             {
                 if (success)
                 {
-                    if (reachedStage >= 1)
-                        this.detachTable("indata", false);
+                    for (Map.Entry<String, File> tableAndFile: tablesToFiles.entrySet()) {
+                        //if (reachedStage >= 1)
+                        this.detachTable(tableAndFile.getKey(), false);
+                    }
 
                     if (reachedStage >= 2)
                         this.detachTable("output", false);
@@ -110,20 +112,34 @@ public class Cruncher
                     this.conn.close();
                 }
             }
-
-            if (reachedStage >= 1)
-                this.detachTable("indata", false);
-
-            if (reachedStage >= 2)
-                this.detachTable("output", false);
-
-            PreparedStatement statement = this.conn.prepareStatement("DROP SCHEMA PUBLIC CASCADE");
-            statement.execute();
-            this.conn.close();
         }
         catch (Exception ex)
         {
             throw ex;
+        }
+    }
+
+    private String normalizeFileNameForTableName(File fileName)
+    {
+        return fileName.getName().replaceFirst(".csv$", "").replaceAll("[^a-zA-Z0-9_]", "_");
+    }
+
+    private void validateParameters() throws FileNotFoundException
+    {
+        if (this.options.csvPathIn == null || this.options.csvPathIn.isEmpty())
+            throw new IllegalArgumentException(" -in is not set.");
+
+        if (this.options.sql == null)
+            throw new IllegalArgumentException(" -sql is not set.");
+
+        if (this.options.csvPathOut == null)
+            throw new IllegalArgumentException(" -out is not set.");
+
+
+        for (String path : this.options.csvPathIn) {
+            File ex = new File(path);
+            if (!ex.exists())
+                throw new FileNotFoundException("CSV file not found: " + ex.getPath());
         }
     }
 
@@ -219,7 +235,7 @@ public class Cruncher
 
     private File getFileObject(String path)
     {
-        return !path.isEmpty() && path.charAt(0) == 47 ? new File(path) : new File(System.getProperty("user.dir"), path);
+        return Paths.get(path).isAbsolute() ? new File(path) : new File(System.getProperty("user.dir"), path);
     }
 
     private String escapeSql(String str)
@@ -229,7 +245,7 @@ public class Cruncher
 
     protected static class Options
     {
-        protected String csvPathIn;
+        protected List<String> csvPathIn = new ArrayList<>();
         protected String sql;
         protected String csvPathOut;
         protected String dbPath = null;

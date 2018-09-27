@@ -47,7 +47,7 @@ The SQL operations can be quite powerful – just consider what everything you h
 
 ...and more.
 
-All this is backed by [HyperSQL database](http://hsqldb.org/doc/2.0/guide/index.html).
+All this is backed by [HyperSQL database](http://hsqldb.org/).
 See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
 Usage
@@ -60,8 +60,8 @@ Usage
 Usage example
 =============
 
-    crunch input.csv output.csv \
-        "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM indata ORDER BY duration LIMIT 2 OFFSET 6)"
+    crunch myInput.csv output.csv \
+        "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
 
 Data and usage example
 ======================
