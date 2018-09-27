@@ -80,7 +80,7 @@ In case you really want to use this in your project, then beware:
 This was migrated from Google Code.
 The code here is decompiled and reverse-engineered from a  .jar I found on my web.
 It seems to work, but testing, feedback, and pull requests welcome.
-If it was useful to you, star this github repo :)
+
 ----------------------------------------------
 
 Easter Egg: The original text I sent to JBoss mailing list when introducing the tool :)
