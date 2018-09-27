@@ -49,20 +49,20 @@ public class App
             }
             else {
                 if (next != null) {
-                    switch (App.SyntheticClass_1.$SwitchMap$org$jboss$qa$cvscruncher$App$OptionsNext[next.ordinal()]) {
-                        case 1:
+                    switch (next) {
+                        case IN:
                             opt.csvPathIn = str;
                             relPos = Math.max(relPos, 1);
                             continue;
-                        case 2:
+                        case OUT:
                             opt.csvPathOut = str;
                             relPos = Math.max(relPos, 2);
                             continue;
-                        case 3:
+                        case SQL:
                             opt.sql = str;
                             relPos = Math.max(relPos, 3);
                             continue;
-                        case 4:
+                        case DBPATH:
                             opt.dbPath = str;
                             continue;
                         default:
@@ -98,10 +98,10 @@ public class App
     private static void printUsage()
     {
         System.out.println("  Usage:");
-        System.out.println("    Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>");
+        System.out.println("    crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>");
     }
 
-    private static enum OptionsNext
+    private enum OptionsNext
     {
         IN,
         OUT,
@@ -109,41 +109,4 @@ public class App
         DBPATH;
     }
 
-    // $FF: synthetic class
-    static class SyntheticClass_1
-    {
-        // $FF: synthetic field
-        static final int[] $SwitchMap$org$jboss$qa$cvscruncher$App$OptionsNext = new int[App.OptionsNext.values().length];
-
-        static {
-            try {
-                $SwitchMap$org$jboss$qa$cvscruncher$App$OptionsNext[App.OptionsNext.IN.ordinal()] = 1;
-            }
-            catch (NoSuchFieldError var4) {
-                ;
-            }
-
-            try {
-                $SwitchMap$org$jboss$qa$cvscruncher$App$OptionsNext[App.OptionsNext.OUT.ordinal()] = 2;
-            }
-            catch (NoSuchFieldError var3) {
-                ;
-            }
-
-            try {
-                $SwitchMap$org$jboss$qa$cvscruncher$App$OptionsNext[App.OptionsNext.SQL.ordinal()] = 3;
-            }
-            catch (NoSuchFieldError var2) {
-                ;
-            }
-
-            try {
-                $SwitchMap$org$jboss$qa$cvscruncher$App$OptionsNext[App.OptionsNext.DBPATH.ordinal()] = 4;
-            }
-            catch (NoSuchFieldError var1) {
-                ;
-            }
-
-        }
-    }
 }
