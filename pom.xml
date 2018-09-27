@@ -61,26 +61,44 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>assemble</id>
+                        <id>assembleDistJar</id>
                         <goals><goal>single</goal></goals>
                         <phase>package</phase>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}-single</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>${mainClass}</mainClass>
+                                    <addClasspath>false</addClasspath> <!-- false for jar-with-dependencies -->
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>assembleDistZip</id>
+                        <goals><goal>single</goal></goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}-dist</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>${mainClass}</mainClass>
+                                    <addClasspath>false</addClasspath>
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                </manifest>
+                            </archive>
+                            <descriptors>
+                                <descriptor>src/main/assembly-dist.xml</descriptor>
+                            </descriptors>
+                        </configuration>
                     </execution>
                 </executions>
                 <configuration>
-                    <finalName>${project.artifactId}-${project.version}-dist</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>${mainClass}</mainClass>
-                            <addClasspath>false</addClasspath> <!-- false for jar-with-dependencies -->
-                            <classpathPrefix>lib/</classpathPrefix>
-                        </manifest>
-                    </archive>
-                    <archiverConfig>
-                    </archiverConfig>
                 </configuration>
             </plugin>
 
@@ -97,7 +115,7 @@
                         <configuration>
                             <executable>java</executable>
                             <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-dist.jar
+                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
                                 -in src/test/data/eapBuilds.csv
                                 -out target/results/result.csv
                                 -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
