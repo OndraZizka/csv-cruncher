@@ -64,6 +64,17 @@ SQL query:
     SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
             CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
         FROM indata ORDER BY deployDur
+        
+        
+License
+=======
+
+In case you really want to use this in your project, then beware:
+
+1. I am not responsible for any bugs in this tool and potential damage it may cause.
+2. If you use it, star the repo. I want to be famous :)
+3. If you change the source code, make a pull request with your changes.
+
 
 ----------------------------------------------
 This was migrated from Google Code.
