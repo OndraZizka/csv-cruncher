@@ -1,7 +1,8 @@
 This was auto-migrated from Google Code. Unfortunately, that failed, and now I can't find the original code.
 Damn Google, that was really a backstab.
 
-The code here is decompiled from a .jar I found on my web.
+The code here is decompiled from a .jar I found on my web.  
+Also, it seems that this version only supports a single input file.
 
 I've only made the code buildable, formatted some classes and renamed few variables.
 I didn't try running it yet so it may be unusable at the moment.
