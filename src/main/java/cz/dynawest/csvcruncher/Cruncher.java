@@ -1,8 +1,14 @@
 package cz.dynawest.csvcruncher;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -11,6 +17,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,9 +26,14 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.json.JsonProviderImpl;
 
 public class Cruncher
 {
@@ -58,12 +71,13 @@ public class Cruncher
         {
             boolean addCounterColumn = true;    // TODO: Get this from the parameters.
             boolean convertResultToJson = true; // TODO: Get this from the parameters.
+            boolean printAsArray = false;       // TODO: Get this from the parameters.
 
             byte reachedStage = 0;
             boolean crunchSuccess = false;
 
-            File outFile = this.getFileObject(this.options.csvPathOut);
-            outFile.getAbsoluteFile().getParentFile().mkdirs();
+            File csvOutFile = this.getFileObject(this.options.csvPathOut);
+            csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
 
             try
             {
@@ -129,11 +143,12 @@ public class Cruncher
                 // Column names
                 String [] colNames = new String[rs.getMetaData().getColumnCount()];
                 for (int col = 0; col < colNames.length; col++) {
-                    colNames[col] = rs.getMetaData().getColumnName(col + 1);
+                    colNames[col] = rs.getMetaData().getColumnName(col + 1).toLowerCase();
                 }
 
                 // Write the result into a CSV
-                this.createTableForCsvFile(TABLE_NAME__OUTPUT, outFile, colNames, true, counterColumnDdl);
+                log.info(" * CSV output: " + csvOutFile);
+                this.createTableForCsvFile(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumnDdl);
                 reachedStage = 2;
 
                 // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
@@ -142,7 +157,7 @@ public class Cruncher
                 String selectSql = this.options.sql.replace("SELECT ", "SELECT " + counterColumnVal + " ");
 
                 String userSql = "INSERT INTO output (" + selectSql + ")";
-                log.info("User's SQL: " + userSql);
+                log.info(" * User's SQL: " + userSql);
                 statement = this.conn.prepareStatement(userSql);
                 int rowsAffected = statement.executeUpdate();
                 crunchSuccess = true;
@@ -150,6 +165,19 @@ public class Cruncher
 
                 // Now let's convert it to JSON if necessary.
                 reachedStage = 3;
+
+                if (convertResultToJson) {
+                    Path destJsonFile = Paths.get(csvOutFile.toPath().toString() + ".json");
+                    log.info(" * JSON output: " + destJsonFile);
+
+                    try (Statement statement2 = this.conn.createStatement()) {
+                        convertResultToJson(
+                                statement2.executeQuery("SELECT * FROM " + TABLE_NAME__OUTPUT),
+                                destJsonFile,
+                                printAsArray
+                        );
+                    }
+                }
             }
             finally
             {
@@ -175,6 +203,70 @@ public class Cruncher
         }
     }
 
+    /**
+     * Writes the given resultset to a JSON file at given path, one entry per line, optionally as an JSON array.
+     */
+    private void convertResultToJson(ResultSet resultSet, Path destFile, boolean printAsArray)
+    {
+        try (
+                OutputStream outS = new BufferedOutputStream(new FileOutputStream(destFile.toFile()));
+                Writer outW = new OutputStreamWriter(outS, StandardCharsets.UTF_8);
+        ) {
+            ResultSetMetaData metaData = resultSet.getMetaData();
+
+            // Cache which cols are numbers.
+
+            boolean[] colsAreNumbers;
+            cacheWhichColumnsNeedJsonQuotes(metaData);
+
+
+            if (printAsArray)
+                outW.append("[\n");
+
+            while (resultSet.next()) {
+                // javax.json way
+                JsonObjectBuilder builder = Json.createObjectBuilder();
+                // Columns
+                for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++) {
+                    addTheRightTypeToJavaxJsonBuilder(resultSet, colIndex, builder);
+                }
+                JsonObject jsonObject = builder.build();
+                JsonWriter writer = Json.createWriter(outW);
+                writer.writeObject(jsonObject);
+
+
+                /*// Hand-made
+                outW.append("{\"");
+                // Columns
+                for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++) {
+                    // Key
+                    outW.append(org.json.simple.JSONObject.escape(metaData.getColumnLabel(colIndex) ));
+                    outW.append("\":");
+                    // TODO
+                    String val = formatValueForJson(resultSet, colIndex, colsAreNumbers);
+                    if (null == val) {
+                        outW.append("null");
+                        continue;
+                    }
+                    if (!colsAreNumbers[colIndex])
+                        outW.append('"');
+                    outW.append(val);
+                    if (!colsAreNumbers[colIndex])
+                        outW.append('"');
+                }
+                outW.append("\"}");
+                /**/
+
+                outW.append(printAsArray ? ",\n" : "\n");
+            }
+            if (printAsArray)
+                outW.append("]\n");
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Failed browsing the final query results: " + ex.getMessage(), ex);
+        }
+    }
+
     private void executeDbCommand(String sql, String errorMsg) throws SQLException
     {
         try {
@@ -184,7 +276,7 @@ public class Cruncher
         }
     }
 
-    private String normalizeFileNameForTableName(File fileName)
+    private static String normalizeFileNameForTableName(File fileName)
     {
         return fileName.getName().replaceFirst(".csv$", "").replaceAll("[^a-zA-Z0-9_]", "_");
     }
@@ -250,6 +342,8 @@ public class Cruncher
     private void createTableForCsvFile(String tableName, File csvFileToBind, String[] colNames, boolean ignoreFirst, String counterColumnDdl) throws SQLException, FileNotFoundException
     {
         boolean readOnly = false;
+        boolean csvUsesSingleQuote = true;
+
         StringBuilder sbCsvHeader = new StringBuilder("# ");
         StringBuilder sb = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");
 
@@ -270,7 +364,7 @@ public class Cruncher
         sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
         sb.delete(sb.length() - 2, sb.length());
         sb.append(" )");
-        log.info("Output table DDL SQL: " + sb.toString());
+        log.info("Table DDL SQL: " + sb.toString());
 
         PreparedStatement statement = this.conn.prepareStatement(sb.toString());
         boolean success = statement.execute();
@@ -278,9 +372,13 @@ public class Cruncher
         // Bind the table to the CSV file.
         String csvPath = csvFileToBind.getPath();
         csvPath = escapeSql(csvPath);
+        String quoteCharacter = csvUsesSingleQuote ? "\\quote" : "\"";
         String ignoreFirstFlag = ignoreFirst ? "ignore_first=true;" : "";
-        String DESC = readOnly ? "DESC" : "";
-        statement = this.conn.prepareStatement("SET TABLE " + tableName + " SOURCE \'" + csvPath + ";" + ignoreFirstFlag + "fs=,\' " + DESC);
+        String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
+        String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
+        String sql = "SET TABLE " + tableName + " SOURCE \'" + csvPath + ";" + csvSettings + "' " + DESC;
+        log.fine("CSV import SQL: " + sql);
+        statement = this.conn.prepareStatement(sql);
         success = statement.execute();
     }
 
@@ -290,6 +388,94 @@ public class Cruncher
         PreparedStatement ps = this.conn.prepareStatement(sql);
         boolean succ = ps.execute();
     }
+
+
+
+    private boolean[] cacheWhichColumnsNeedJsonQuotes(ResultSetMetaData metaData) throws SQLException
+    {
+        boolean[] colsAreNumbers = new boolean[metaData.getColumnCount()+1];
+        int colType;
+        for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++ ) {
+            colType = metaData.getColumnType(colIndex);
+            colsAreNumbers[colIndex] =
+                    colType == Types.TINYINT || colType == Types.SMALLINT || colType == Types.INTEGER || colType == Types.BIGINT
+                            || colType == Types.DECIMAL || colType == Types.NUMERIC ||  colType == Types.BIT || colType == Types.ROWID || colType == Types.DOUBLE || colType == Types.FLOAT || colType == Types.BOOLEAN;
+        }
+        return colsAreNumbers;
+    }
+
+
+
+    /**
+     * This is for the case we use hand-made JSON marshalling.
+     * Returns null if the column value was null, or if the returned type is not supported.
+     */
+    private static String formatValueForJson(ResultSet resultSet, int colIndex, boolean[] colsAreNumbers) throws SQLException
+    {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        String val;
+        switch (metaData.getColumnType(colIndex)) {
+            case Types.VARCHAR:
+            case Types.CHAR:
+            case Types.CLOB:
+                val = resultSet.getString(colIndex); break;
+            case Types.TINYINT:
+            case Types.BIT:
+                val = (""+resultSet.getByte(colIndex)); break;
+            case Types.SMALLINT: val = (""+resultSet.getShort(colIndex)); break;
+            case Types.INTEGER:  val = (""+resultSet.getInt(colIndex)); break;
+            case Types.BIGINT:   val = (""+resultSet.getLong(colIndex)); break;
+            case Types.BOOLEAN:  val = (""+resultSet.getBoolean(colIndex)); break;
+            case Types.FLOAT:    val = (""+resultSet.getFloat(colIndex)); break;
+            case Types.DOUBLE:
+            case Types.DECIMAL:  val = (""+resultSet.getDouble(colIndex)); break;
+            case Types.NUMERIC:  val = (""+resultSet.getBigDecimal(colIndex)); break;
+            case Types.DATE:    val = (""+resultSet.getDate(colIndex)); break;
+            case Types.TIME:    val = (""+resultSet.getTime(colIndex)); break;
+            case Types.TIMESTAMP:    val = (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T');  break; // JS Date() takes "1995-12-17T03:24:00"
+            default:
+                log.severe("Unsupported type of column " + metaData.getColumnLabel(colIndex) + ": " + metaData.getColumnTypeName(colIndex));
+                return null;
+        }
+        if (resultSet.wasNull())
+            return null;
+        return val;
+    }
+
+    /**
+     * Used in case we use javax.json.JsonBuilder.
+     * This also needs JsonProviderImpl.
+     */
+    private static void addTheRightTypeToJavaxJsonBuilder(ResultSet resultSet, int colIndex, JsonObjectBuilder builder) throws SQLException
+    {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        String columnLabel = metaData.getColumnLabel(colIndex);
+        if (columnLabel.matches("[A-Z]+"))
+            columnLabel = columnLabel.toLowerCase();
+
+        switch (metaData.getColumnType(colIndex)) {
+            case Types.VARCHAR:
+            case Types.CHAR:
+            case Types.CLOB:
+                builder.add(columnLabel, resultSet.getString(colIndex)); break;
+            case Types.TINYINT:
+            case Types.BIT:
+                builder.add(columnLabel, resultSet.getByte(colIndex)); break;
+            case Types.SMALLINT: builder.add(columnLabel, resultSet.getShort(colIndex)); break;
+            case Types.INTEGER:  builder.add(columnLabel, resultSet.getInt(colIndex)); break;
+            case Types.BIGINT:   builder.add(columnLabel, resultSet.getLong(colIndex)); break;
+            case Types.BOOLEAN:  builder.add(columnLabel, resultSet.getBoolean(colIndex)); break;
+            case Types.FLOAT:    builder.add(columnLabel, resultSet.getFloat(colIndex)); break;
+            case Types.DOUBLE:
+            case Types.DECIMAL:  builder.add(columnLabel, resultSet.getDouble(colIndex)); break;
+            case Types.NUMERIC:  builder.add(columnLabel, resultSet.getBigDecimal(colIndex)); break;
+            case Types.DATE:    builder.add(columnLabel, ""+resultSet.getDate(colIndex)); break;
+            case Types.TIME:    builder.add(columnLabel, ""+resultSet.getTime(colIndex)); break;
+            case Types.TIMESTAMP:    builder.add(columnLabel, (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T')); break; // JS Date() takes "1995-12-17T03:24:00"
+        }
+    }
+
+
 
     private void testDumpSelect(String tableName) throws SQLException
     {
