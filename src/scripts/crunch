@@ -1,12 +1,12 @@
 
 
-scriptPath="$(cd "${0%/*}" 2>/dev/null; echo "$PWD"/"${0##*/}")"
-scriptDir=`dirname "$scriptPath"`
+SCRIPT_PATH="$(cd "${0%/*}" 2>/dev/null; echo "$PWD"/"${0##*/}")"
+SCRIPT_DIR=`dirname "$scriptPath"`
 
 
 #echo "In script PWD:"`pwd`;
 #echo "TOOL_HOME: $TOOL_HOME";
-java -jar "$scriptDir"/CsvCruncher-*-single.jar "$@"
+java -Djava.util.logging.config.file="$SCRIPT_DIR/jul.properties" -jar "$SCRIPT_DIR"/CsvCruncher-*-single.jar "$@"
 
 
 ## Cleanup
