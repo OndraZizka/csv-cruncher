@@ -1,13 +1,14 @@
 package cz.dynawest.csvcruncher;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Utils
 {
-    static File resolvePathToUserDirIfRelative(String path)
+    static File resolvePathToUserDirIfRelative(Path path)
     {
-        return Paths.get(path).isAbsolute() ? new File(path) : new File(System.getProperty("user.dir"), path);
+        return path.isAbsolute() ? path.toFile() : Paths.get(System.getProperty("user.dir")).resolve(path).toFile();
     }
 
     static String escapeSql(String str)

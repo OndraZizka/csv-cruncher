@@ -5,23 +5,24 @@ import java.util.List;
 
 class Options
 {
-    protected List<String> csvPathIn = new ArrayList<>();
+    protected List<String> inputPaths = new ArrayList<>();
     protected String sql;
-    protected String csvPathOut;
+    protected String outputPathCsv;
     protected String dbPath = null;
     protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
     protected Long initialRowNumber = null;
-    protected SortInputFiles combineCsvFiles = SortInputFiles.PARAMS_ORDER;
+    protected SortInputFiles sortInputFiles = SortInputFiles.PARAMS_ORDER;
     protected CombineInputFiles combineInputFiles = CombineInputFiles.NONE;
+    protected CombineDirectories combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR;
 
     public boolean isFilled()
     {
-        return this.csvPathIn != null && this.csvPathOut != null && this.sql != null;
+        return this.inputPaths != null && this.outputPathCsv != null && this.sql != null;
     }
 
     public String toString()
     {
-        return "\n    dbPath: " + this.dbPath + "\n    csvPathIn: " + this.csvPathIn + "\n    csvPathOut: " + this.csvPathOut + "\n    sql: " + this.sql;
+        return "\n    dbPath: " + this.dbPath + "\n    inputPaths: " + this.inputPaths + "\n    outputPathCsv: " + this.outputPathCsv + "\n    sql: " + this.sql;
     }
 
 
@@ -36,6 +37,20 @@ class Options
         SortInputFiles(String value, String description) {
             this.optionValue = value;
             this.description = description;
+        }
+    }
+
+    public enum CombineDirectories {
+        //USE_EACH_FILE("none"),
+        COMBINE_PER_EACH_DIR("perDir"),
+        COMBINE_PER_INPUT_DIR("perInputDir"),
+        COMBINE_PER_INPUT_SUBDIR("perRootSubdir"),
+        COMBINE_ALL_FILES("all");
+
+        private final String combineMode;
+
+        CombineDirectories(String combineMode) {
+            this.combineMode = combineMode;
         }
     }
 

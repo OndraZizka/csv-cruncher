@@ -1,14 +1,8 @@
 package cz.dynawest.csvcruncher;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -20,16 +14,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,6 +38,7 @@ public class Cruncher
 
     public static final String TABLE_NAME__OUTPUT = "output";
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.
+    public static final String FILENAME_SUFFIX_CSV = ".csv";
 
     private Connection conn;
     private Options options;
@@ -74,13 +74,23 @@ public class Cruncher
             byte reachedStage = 0;
             boolean crunchSuccess = false;
 
-            File csvOutFile = Utils.resolvePathToUserDirIfRelative(this.options.csvPathOut);
+            File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
             csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
 
             try
             {
+                // Sort
+                List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
+                inputPaths = sortInputPaths(inputPaths, this.options.sortInputFiles);
+
+                // Combine files. Should we concat the files or UNION the tables?
+                if (this.options.combineInputFiles != Options.CombineInputFiles.NONE) {
+                    List<Path> concatenatedFiles = combineInputFiles(inputPaths, this.options);
+                    inputPaths = concatenatedFiles;
+                }
+
                 // For each input CSV file...
-                for (String path : this.options.csvPathIn) {
+                for (Path path : inputPaths) {
                     File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
                     log.info(" * CSV input: " + csvInFile);
 
@@ -101,17 +111,7 @@ public class Cruncher
 
                 if (addCounterColumn) {
 
-                    long initialNumber;
-
-                    if (options.initialRowNumber != -1) {
-                        initialNumber = options.initialRowNumber;
-                    } else {
-                        // A timestamp at the beginning:
-                        //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
-                        //executeDbCommand(sql, "Failed creating the counter variable: ");
-                        // Uh oh. Variables can't be used in SELECTs.
-                        initialNumber = (System.currentTimeMillis() - TIMESTAMP_SUBSTRACT);
-                    }
+                    long initialNumber = getInitialNumber();
 
                     String sql;
 
@@ -142,7 +142,7 @@ public class Cruncher
 
 
                 // Perform the SQL
-                PreparedStatement statement = this.conn.prepareStatement(this.options.sql);
+                PreparedStatement statement = this.conn.prepareStatement(this.options.sql + " LIMIT 1");
                 ResultSet rs = statement.executeQuery();
 
                 // Column names
@@ -153,7 +153,7 @@ public class Cruncher
 
                 // Write the result into a CSV
                 log.info(" * CSV output: " + csvOutFile);
-                this.createTableForCsvFile(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumnDdl);
+                this.createTableForCsvFile(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumnDdl, false);
                 reachedStage = 2;
 
                 // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
@@ -205,6 +205,121 @@ public class Cruncher
         catch (Exception ex)
         {
             throw ex;
+        }
+    }
+
+    private long getInitialNumber()
+    {
+        long initialNumber;
+
+        if (options.initialRowNumber != -1) {
+            initialNumber = options.initialRowNumber;
+        } else {
+            // A timestamp at the beginning:
+            //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
+            //executeDbCommand(sql, "Failed creating the counter variable: ");
+            // Uh oh. Variables can't be used in SELECTs.
+            initialNumber = (System.currentTimeMillis() - TIMESTAMP_SUBSTRACT);
+        }
+        return initialNumber;
+    }
+
+    /**
+     * Combine the input files (typically, concatenate).
+     * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
+     * The resulting file will be witten under the respective "group root directory".
+     */
+    private static List<Path> combineInputFiles(List<Path> inputPaths, Options options)
+    {
+        switch (options.combineInputFiles) {
+            case NONE: default: return inputPaths;
+            case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
+            case CONCAT:
+                // First, expand the directories.
+                Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
+                // null will be used as a special key for COMBINE_ALL_FILES.
+                fileGroupsToConcat.putIfAbsent(null, new ArrayList<>());
+
+                List<Path> concatenatedFiles = new ArrayList<>();
+                for (Path inputPath: inputPaths) {
+                    try {
+                        // Put files simply to "global" group. Might be improved in the future.
+                        if (inputPath.toFile().isFile())
+                            fileGroupsToConcat.get(null).add(inputPath);
+                        // Walk directories for CSV, and group them as per options.combineDirs.
+                        if (inputPath.toFile().isDirectory()) {
+
+                            Consumer<Path> fileToGroupSorter = null;
+                            switch (options.combineDirs) {
+                                case COMBINE_ALL_FILES: {
+                                    List<Path> fileGroup = fileGroupsToConcat.get(null);
+                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
+                                    } break;
+                                case COMBINE_PER_INPUT_DIR: {
+                                    List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
+                                    } break;
+                                case COMBINE_PER_EACH_DIR: {
+                                    List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                                    fileToGroupSorter = curPath -> { fileGroupsToConcat.get(curPath.toAbsolutePath()).add(curPath); };
+                                }
+                            }
+
+                            Files.walk(inputPath)
+                                    .filter(curPath -> Files.isRegularFile(curPath) && curPath.getFileName().toString().endsWith(FILENAME_SUFFIX_CSV))
+                                    .forEach(fileToGroupSorter);
+                        }
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Failed combining the input files in ");
+                    }
+                }
+
+                // Then combine the file sets.
+                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
+                    // Sort
+                    List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles).stream().collect(Collectors.toList());
+                    fileGroupsToConcat.put(fileGroup.getKey(), sortedPaths);
+                    concatFiles(sortedPaths, fileGroup.getKey());
+                }
+
+                return concatenatedFiles;
+        }
+    }
+
+    /**
+     * Concatenates given files into a file in the destDir, named "CsvCruncherConcat.csv".
+     * If some of the input files does not end with a new line, it is appended after that file.
+     * @return The path to the created file.
+     */
+    private static Path concatFiles(List<Path> filesToConcat, Path destDir)
+    {
+        File resultFile = destDir.resolve("CsvCruncherConcat.csv").toFile();
+        try(FileOutputStream resultOS = new FileOutputStream(resultFile);) {
+            for (Path pathToConcat : filesToConcat) {
+                try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
+                    IOUtils.copy(fileToConcatIS, resultOS);
+                }
+                // Read the last byte, check if it's a \n. If not, let's append one.
+                try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
+                    fileToConcatIS.skip(pathToConcat.toFile().length()-1);
+                    if ('\n' != fileToConcatIS.read())
+                        resultOS.write('\n');
+                }
+            }
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Failed concatenating files from " + destDir + ": " + ex.getMessage(), ex);
+        }
+        return  resultFile.toPath();
+    }
+
+    private static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputFiles sortMethod)
+    {
+        switch (sortMethod) {
+            case PARAMS_ORDER: return inputPaths;
+            case ALPHA: inputPaths = new ArrayList<>(inputPaths); Collections.sort(inputPaths); return inputPaths;
+            case TIME: throw new UnsupportedOperationException("Sorting by time not implemented yet.");
+            default: throw new UnsupportedOperationException("Unkown sorting method.");
         }
     }
 
@@ -288,17 +403,17 @@ public class Cruncher
 
     private void validateParameters() throws FileNotFoundException
     {
-        if (this.options.csvPathIn == null || this.options.csvPathIn.isEmpty())
+        if (this.options.inputPaths == null || this.options.inputPaths.isEmpty())
             throw new IllegalArgumentException(" -in is not set.");
 
         if (this.options.sql == null)
             throw new IllegalArgumentException(" -sql is not set.");
 
-        if (this.options.csvPathOut == null)
+        if (this.options.outputPathCsv == null)
             throw new IllegalArgumentException(" -out is not set.");
 
 
-        for (String path : this.options.csvPathIn) {
+        for (String path : this.options.inputPaths) {
             File ex = new File(path);
             if (!ex.exists())
                 throw new FileNotFoundException("CSV file not found: " + ex.getPath());
@@ -340,11 +455,11 @@ public class Cruncher
 
     private void createTableForCsvFile(String tableName, File csvFileToBind, String[] colNames, boolean ignoreFirst) throws SQLException, FileNotFoundException
     {
-        createTableForCsvFile(tableName, csvFileToBind, colNames, ignoreFirst, "");
+        createTableForCsvFile(tableName, csvFileToBind, colNames, ignoreFirst, "", true);
     }
 
 
-    private void createTableForCsvFile(String tableName, File csvFileToBind, String[] colNames, boolean ignoreFirst, String counterColumnDdl) throws SQLException, FileNotFoundException
+    private void createTableForCsvFile(String tableName, File csvFileToBind, String[] colNames, boolean ignoreFirst, String counterColumnDdl, boolean readOnlyX) throws SQLException, FileNotFoundException
     {
         boolean readOnly = false;
         boolean csvUsesSingleQuote = true;

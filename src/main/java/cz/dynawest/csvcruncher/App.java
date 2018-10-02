@@ -79,11 +79,11 @@ public class App
                 if (next != null) {
                     switch (next) {
                         case IN:
-                            opt.csvPathIn.add(str);
+                            opt.inputPaths.add(str);
                             relPos = Math.max(relPos, 1);
                             continue;
                         case OUT:
-                            opt.csvPathOut = str;
+                            opt.outputPathCsv = str;
                             relPos = Math.max(relPos, 2);
                             continue;
                         case SQL:
@@ -100,10 +100,10 @@ public class App
 
                 ++relPos;
                 if (relPos == 0) {
-                    opt.csvPathIn.add(str);
+                    opt.inputPaths.add(str);
                 }
                 else if (relPos == 1) {
-                    opt.csvPathOut = str;
+                    opt.outputPathCsv = str;
                 }
                 else {
                     if (relPos != 2) {
