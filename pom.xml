@@ -121,6 +121,9 @@
                                 -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
                                         CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
                                         FROM eapBuilds ORDER BY deployDur'
+                                --json=entries
+                                --rowNumbers
+                                --joinInputs
                             </commandlineArgs>
                         </configuration>
                     </execution>

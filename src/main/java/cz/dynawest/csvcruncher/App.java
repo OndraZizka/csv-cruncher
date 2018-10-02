@@ -4,6 +4,13 @@ import cz.dynawest.logging.LoggingUtils;
 import java.util.logging.Logger;
 import cz.dynawest.csvcruncher.Cruncher;
 import cz.dynawest.csvcruncher.Cruncher.Options;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+
+/*
+ * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
+ * So please be lenient with the code below :)
+ */
 
 public class App
 {
@@ -33,7 +40,31 @@ public class App
 
         for (int i = 0; i < args.length; ++i) {
             String str = args[i];
-            if ("-in".equals(str)) {
+
+            if (str.startsWith("--json")) {
+                if (str.endsWith("=" + Cruncher.JsonExportFormat.ARRAY.getOptionsValue()))
+                    opt.jsonExportFormat = Cruncher.JsonExportFormat.ARRAY;
+                //if (str.endsWith("=" + Cruncher.JsonExportFormat.ENTRY_PER_LINE.getOptionsValue()))
+                else
+                    opt.jsonExportFormat = Cruncher.JsonExportFormat.ENTRY_PER_LINE;
+            }
+            else if (str.startsWith("--rowNumbers")) {
+                opt.initialRowNumber = -1L;
+                if (str.startsWith("--rowNumbers=")) {
+                    String numberStr = StringUtils.removeStart(str, "--rowNumbers=");
+                    try {
+                        long number = Long.parseLong(numberStr);
+                        opt.initialRowNumber = number;
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
+                    }
+                }
+            }
+            else if (str.startsWith("--joinInputs")) {
+                // TODO
+            }
+
+            else if ("-in".equals(str)) {
                 next = App.OptionsNext.IN;
             }
             else if ("-out".equals(str)) {
@@ -79,7 +110,8 @@ public class App
                 }
                 else {
                     if (relPos != 2) {
-                        throw new IllegalArgumentException("Wrong arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>");
+                        printUsage();
+                        throw new IllegalArgumentException("Wrong arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...");
                     }
 
                     opt.sql = str;
@@ -88,7 +120,8 @@ public class App
         }
 
         if (!opt.isFilled()) {
-            throw new IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>");
+            printUsage();
+            throw new IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...");
         }
         else {
             return opt;
@@ -98,7 +131,7 @@ public class App
     private static void printUsage()
     {
         System.out.println("  Usage:");
-        System.out.println("    crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>");
+        System.out.println("    crunch [-in] <inCSV> [<inCSV> ...] [-out] <outCSV> [--<option> --...] [-sql] <SQL>");
     }
 
     private enum OptionsNext

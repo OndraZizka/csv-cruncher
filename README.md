@@ -38,9 +38,22 @@ See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc
 Usage
 =====
 
-    crunch [-in] <in-CSV>, <in-CSV-2>, ... [-out] <out-CSV> [-sql] "<SQL>"
+    crunch [-in] <in-CSV>, <in-CSV-2>, ... [-out] <out-CSV> --<option> [-sql] "<SQL>"
 
-(The `crunch` script yet to be done. Currently you need to run `java -jar CsvCruncher.jar <args>`.)
+Options:
+
+ * --rowNumbers[=<firstNumber>|remember]
+    Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
+    By specifying `<firstNumber>`, the first number to be used can be set.
+    By default, a milliseconds-based timestamp times 1000 is used.
+    `remember` is yet to be implemented, and will continue where the last run stopped.
+
+ * --json[=entries|array]
+    Create the output in JSON format.
+    `entries` (default) will create a JSON entry per line, representing the original rows.
+    `array` will create a file with a JSON array (`[...,...]`).
+
+ * --joinInputs[=paramsOrder|alpha|time] - TODO
 
 Usage example
 =============

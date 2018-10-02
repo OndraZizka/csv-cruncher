@@ -33,7 +33,6 @@ import javax.json.JsonWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.json.JsonProviderImpl;
 
 public class Cruncher
 {
@@ -69,9 +68,9 @@ public class Cruncher
         Map<String, File> tablesToFiles = new HashMap<>();
         try
         {
-            boolean addCounterColumn = true;    // TODO: Get this from the parameters.
-            boolean convertResultToJson = true; // TODO: Get this from the parameters.
-            boolean printAsArray = false;       // TODO: Get this from the parameters.
+            boolean addCounterColumn = options.initialRowNumber != null;
+            boolean convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE;
+            boolean printAsArray = options.jsonExportFormat == JsonExportFormat.ARRAY;
 
             byte reachedStage = 0;
             boolean crunchSuccess = false;
@@ -103,10 +102,17 @@ public class Cruncher
 
                 if (addCounterColumn) {
 
-                    // A timestamp at the beginning:
-                    //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000"; // Uh oh. Variables can't be used in SELECTs.
-                    //executeDbCommand(sql, "Failed creating the counter variable: ");
-                    long timeStamp = (System.currentTimeMillis() - TIMESTAMP_SUBSTRACT);
+                    long initialNumber;
+
+                    if (options.initialRowNumber != -1) {
+                        initialNumber = options.initialRowNumber;
+                    } else {
+                        // A timestamp at the beginning:
+                        //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
+                        //executeDbCommand(sql, "Failed creating the counter variable: ");
+                        // Uh oh. Variables can't be used in SELECTs.
+                        initialNumber = (System.currentTimeMillis() - TIMESTAMP_SUBSTRACT);
+                    }
 
                     String sql;
 
@@ -119,7 +125,7 @@ public class Cruncher
                     sql = "CREATE SEQUENCE IF NOT EXISTS crunchCounter AS BIGINT NO CYCLE"; // MINVALUE 1 STARTS WITH <number>
                     executeDbCommand(sql, "Failed creating the counter sequence: ");
 
-                    sql = "ALTER SEQUENCE crunchCounter RESTART WITH " + timeStamp; //
+                    sql = "ALTER SEQUENCE crunchCounter RESTART WITH " + initialNumber;
                     executeDbCommand(sql, "Failed altering the counter sequence: ");
 
                     // ... referencing it explicitely?
@@ -512,6 +518,10 @@ public class Cruncher
         protected String csvPathOut;
         protected String dbPath = null;
 
+        protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
+
+        protected Long initialRowNumber = null;
+
         public boolean isFilled()
         {
             return this.csvPathIn != null && this.csvPathOut != null && this.sql != null;
@@ -520,6 +530,23 @@ public class Cruncher
         public String toString()
         {
             return "\n    dbPath: " + this.dbPath + "\n    csvPathIn: " + this.csvPathIn + "\n    csvPathOut: " + this.csvPathOut + "\n    sql: " + this.sql;
+        }
+    }
+
+    public enum JsonExportFormat
+    {
+        NONE(null), ENTRY_PER_LINE("entries"), ARRAY("array");
+
+        private final String optionsValue;
+
+        JsonExportFormat(String value)
+        {
+            this.optionsValue = value;
+        }
+
+        public String getOptionsValue()
+        {
+            return optionsValue;
         }
     }
 }
