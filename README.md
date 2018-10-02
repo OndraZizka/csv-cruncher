@@ -97,15 +97,7 @@ In case you really want to use this in your project, then beware:
 3. If you change the source code, make a pull request with your changes.
 
 
-----------------------------------------------
-This was migrated from Google Code.
-The code here is decompiled and reverse-engineered from a  .jar I found on my web.
-It seems to work, but testing, feedback, and pull requests welcome.
-
-----------------------------------------------
-
-Easter Egg: The original text I sent to JBoss mailing list when introducing the tool :)
-
+*Easter Egg: The original text I sent to JBoss mailing list when introducing the tool :)*
 
 > Hi,
 >
