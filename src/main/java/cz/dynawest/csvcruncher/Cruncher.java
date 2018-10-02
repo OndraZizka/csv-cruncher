@@ -278,8 +278,14 @@ public class Cruncher
                 for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
                     // Sort
                     List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles).stream().collect(Collectors.toList());
-                    fileGroupsToConcat.put(fileGroup.getKey(), sortedPaths);
-                    concatFiles(sortedPaths, fileGroup.getKey());
+
+                    Path destDir = fileGroup.getKey();
+                    fileGroupsToConcat.put(destDir, sortedPaths);
+
+                    if (destDir == null) {
+                        destDir = Paths.get(System.getProperty("user.dir"));
+                    }
+                    concatFiles(sortedPaths, destDir);
                 }
 
                 return concatenatedFiles;
