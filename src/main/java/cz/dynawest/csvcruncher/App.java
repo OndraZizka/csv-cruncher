@@ -2,10 +2,7 @@ package cz.dynawest.csvcruncher;
 
 import cz.dynawest.logging.LoggingUtils;
 import java.util.logging.Logger;
-import cz.dynawest.csvcruncher.Cruncher;
-import cz.dynawest.csvcruncher.Cruncher.Options;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 
 /*
  * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
@@ -42,11 +39,11 @@ public class App
             String str = args[i];
 
             if (str.startsWith("--json")) {
-                if (str.endsWith("=" + Cruncher.JsonExportFormat.ARRAY.getOptionsValue()))
-                    opt.jsonExportFormat = Cruncher.JsonExportFormat.ARRAY;
+                if (str.endsWith("=" + Options.JsonExportFormat.ARRAY.getOptionsValue()))
+                    opt.jsonExportFormat = Options.JsonExportFormat.ARRAY;
                 //if (str.endsWith("=" + Cruncher.JsonExportFormat.ENTRY_PER_LINE.getOptionsValue()))
                 else
-                    opt.jsonExportFormat = Cruncher.JsonExportFormat.ENTRY_PER_LINE;
+                    opt.jsonExportFormat = Options.JsonExportFormat.ENTRY_PER_LINE;
             }
             else if (str.startsWith("--rowNumbers")) {
                 opt.initialRowNumber = -1L;

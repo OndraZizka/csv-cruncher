@@ -21,7 +21,6 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -42,9 +41,9 @@ public class Cruncher
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.
 
     private Connection conn;
-    private Cruncher.Options options;
+    private Options options;
 
-    public Cruncher(Cruncher.Options options) throws ClassNotFoundException, SQLException
+    public Cruncher(Options options) throws ClassNotFoundException, SQLException
     {
         this.options = options;
         this.init();
@@ -69,20 +68,20 @@ public class Cruncher
         try
         {
             boolean addCounterColumn = options.initialRowNumber != null;
-            boolean convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE;
-            boolean printAsArray = options.jsonExportFormat == JsonExportFormat.ARRAY;
+            boolean convertResultToJson = options.jsonExportFormat != Options.JsonExportFormat.NONE;
+            boolean printAsArray = options.jsonExportFormat == Options.JsonExportFormat.ARRAY;
 
             byte reachedStage = 0;
             boolean crunchSuccess = false;
 
-            File csvOutFile = this.getFileObject(this.options.csvPathOut);
+            File csvOutFile = Utils.resolvePathToUserDirIfRelative(this.options.csvPathOut);
             csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
 
             try
             {
                 // For each input CSV file...
                 for (String path : this.options.csvPathIn) {
-                    File csvInFile = this.getFileObject(path);
+                    File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
                     log.info(" * CSV input: " + csvInFile);
 
                     String tableName = normalizeFileNameForTableName(csvInFile);
@@ -364,7 +363,7 @@ public class Cruncher
         {
             colName = colNames[colIndex];
             sbCsvHeader.append(colName).append(", ");
-            colName = escapeSql(colName);
+            colName = Utils.escapeSql(colName);
             sb.append(colName).append(" VARCHAR(255), ");
         }
         sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
@@ -377,7 +376,7 @@ public class Cruncher
 
         // Bind the table to the CSV file.
         String csvPath = csvFileToBind.getPath();
-        csvPath = escapeSql(csvPath);
+        csvPath = Utils.escapeSql(csvPath);
         String quoteCharacter = csvUsesSingleQuote ? "\\quote" : "\"";
         String ignoreFirstFlag = ignoreFirst ? "ignore_first=true;" : "";
         String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
@@ -390,7 +389,7 @@ public class Cruncher
 
     private void detachTable(String name, boolean reattach) throws SQLException
     {
-        String sql = "SET TABLE " + escapeSql(name) + " SOURCE " + (reattach ? "ON" : "OFF");
+        String sql = "SET TABLE " + Utils.escapeSql(name) + " SOURCE " + (reattach ? "ON" : "OFF");
         PreparedStatement ps = this.conn.prepareStatement(sql);
         boolean succ = ps.execute();
     }
@@ -498,55 +497,6 @@ public class Cruncher
                 System.out.println(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i));
             }
         }
-
     }
 
-    private File getFileObject(String path)
-    {
-        return Paths.get(path).isAbsolute() ? new File(path) : new File(System.getProperty("user.dir"), path);
-    }
-
-    private String escapeSql(String str)
-    {
-        return str.replace("'", "''");
-    }
-
-    protected static class Options
-    {
-        protected List<String> csvPathIn = new ArrayList<>();
-        protected String sql;
-        protected String csvPathOut;
-        protected String dbPath = null;
-
-        protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
-
-        protected Long initialRowNumber = null;
-
-        public boolean isFilled()
-        {
-            return this.csvPathIn != null && this.csvPathOut != null && this.sql != null;
-        }
-
-        public String toString()
-        {
-            return "\n    dbPath: " + this.dbPath + "\n    csvPathIn: " + this.csvPathIn + "\n    csvPathOut: " + this.csvPathOut + "\n    sql: " + this.sql;
-        }
-    }
-
-    public enum JsonExportFormat
-    {
-        NONE(null), ENTRY_PER_LINE("entries"), ARRAY("array");
-
-        private final String optionsValue;
-
-        JsonExportFormat(String value)
-        {
-            this.optionsValue = value;
-        }
-
-        public String getOptionsValue()
-        {
-            return optionsValue;
-        }
-    }
 }
