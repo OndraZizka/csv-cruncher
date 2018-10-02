@@ -6,7 +6,7 @@ scriptDir=`dirname "$scriptPath"`
 
 #echo "In script PWD:"`pwd`;
 #echo "TOOL_HOME: $TOOL_HOME";
-java -jar $scriptDir/../lib/CsvCruncher-*-single.jar "$@"
+java -jar "$scriptDir"/CsvCruncher-*-single.jar "$@"
 
 
 ## Cleanup
