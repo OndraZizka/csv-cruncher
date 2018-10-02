@@ -1,7 +1,5 @@
 package cz.dynawest.util;
 
-import cz.dynawest.util.RelationInfo;
-import cz.dynawest.util.RelationInfo.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,10 +12,10 @@ public class SQLIntegrityChecker
     public void checkIntegrity(RelationInfo ri)
     {
         List asQueries = this.getCheckSql(ri);
-        Iterator i$ = asQueries.iterator();
+        Iterator iter = asQueries.iterator();
 
-        while (i$.hasNext()) {
-            String query = (String) i$.next();
+        while (iter.hasNext()) {
+            String query = (String) iter.next();
             System.out.println(query + ";");
         }
 
@@ -29,15 +27,15 @@ public class SQLIntegrityChecker
         ArrayList asQueries = new ArrayList(2);
         boolean checkNonExistingParent = false;
         boolean checkNonExistingChild = false;
-        switch (SQLIntegrityChecker.SyntheticClass_1.$SwitchMap$cz$dynawest$util$RelationInfo$Type[ri.type.ordinal()]) {
-            case 1:
+        switch (ri.type) {
+            case REL_1_01:
                 checkNonExistingParent = true;
                 break;
-            case 2:
+            case REL_1_1:
                 checkNonExistingParent = true;
                 checkNonExistingChild = true;
                 break;
-            case 3:
+            case REL_1_0N:
                 checkNonExistingParent = true;
         }
 
@@ -52,37 +50,5 @@ public class SQLIntegrityChecker
         }
 
         return asQueries;
-    }
-
-
-    // $FF: synthetic class
-    static class SyntheticClass_1
-    {
-        // $FF: synthetic field
-        static final int[] $SwitchMap$cz$dynawest$util$RelationInfo$Type = new int[Type.values().length];
-
-        static {
-            try {
-                $SwitchMap$cz$dynawest$util$RelationInfo$Type[Type.REL_1_01.ordinal()] = 1;
-            }
-            catch (NoSuchFieldError var3) {
-                ;
-            }
-
-            try {
-                $SwitchMap$cz$dynawest$util$RelationInfo$Type[Type.REL_1_1.ordinal()] = 2;
-            }
-            catch (NoSuchFieldError var2) {
-                ;
-            }
-
-            try {
-                $SwitchMap$cz$dynawest$util$RelationInfo$Type[Type.REL_1_0N.ordinal()] = 3;
-            }
-            catch (NoSuchFieldError var1) {
-                ;
-            }
-
-        }
     }
 }
