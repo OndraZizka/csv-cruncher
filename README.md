@@ -13,7 +13,7 @@ http://static.openheatmap.com/images/googleicon.png
 Many tools and systems can export their data to CSV - comma separated values.
 Typical work with these data is importing them into some spreadsheet like Excel and process them manually.
 
-<div style="clear: both"></div>
+<div style="clear: both; height: 10px"></div>
 
 
 With this tool, you can automate this processing by writing SQL queries, which produce another CSV as a result.
@@ -29,8 +29,16 @@ The SQL operations can be quite powerful – just consider what everything you h
  * XML and JSON processing
  * Time and date functions
  * Statistical agregate functions
-
-...and more.
+ ...[and more](http://hsqldb.org/doc/2.0/guide/guide.html).
+ 
+On top of that, CSV Cruncher can:
+ * Convert CSV to JSON
+ * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
+ 
+And this is planned:
+ * Import and export Excel (XLS) files
+ * Import JSON files
+ * Export HTML tables
 
 All this is backed by [HyperSQL database](http://hsqldb.org/).
 See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
