@@ -1,6 +1,14 @@
 package cz.dynawest.csvcruncher;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -142,7 +151,23 @@ public class Cruncher
 
 
                 // Perform the SQL
-                PreparedStatement statement = this.conn.prepareStatement(this.options.sql + " LIMIT 1");
+                PreparedStatement statement;
+                try {
+                    statement = this.conn.prepareStatement(this.options.sql + " LIMIT 1");
+                }
+                catch (SQLSyntaxErrorException ex) {
+                    if (ex.getMessage().contains("object not found:")) {
+                        String tableNames = formatListOfAvailableTables(); // TODO
+                        throw new RuntimeException(
+                                "Looks like you are referring to a table that was not created.\n"
+                                + "This could mean that you have a typo in the input file name,\n"
+                                + "or maybe you use --combineInputs but try to use the original inputs.\n"
+                                + "These tables are actually available:\n"
+                                + tableNames + "\n\n Message from the database:\n  "
+                                + ex.getMessage(), ex);
+                    }
+                    throw new RuntimeException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
+                }
                 ResultSet rs = statement.executeQuery();
 
                 // Column names
@@ -208,6 +233,27 @@ public class Cruncher
         }
     }
 
+    private String formatListOfAvailableTables()
+    {
+        StringBuilder sb = new StringBuilder();
+
+        String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'PUBLIC'";
+        try (ResultSet rs = this.conn.createStatement().executeQuery(sql)) {
+            while(rs.next()) {
+                String tableName = rs.getString("TABLE_NAME");
+                sb.append(" * ").append(tableName).append('\n');
+            }
+            if (sb.length() == 0)
+                return "    (No tables)";
+            return sb.toString();
+        }
+        catch (SQLException ex) {
+            String msg = "Failed listing tables: " + ex.getMessage();
+            log.severe(msg);
+            return msg;
+        }
+    }
+
     private long getInitialNumber()
     {
         long initialNumber;
@@ -236,6 +282,8 @@ public class Cruncher
             case NONE: default: return inputPaths;
             case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
             case CONCAT:
+                log.info("Concatenating input files:");
+
                 // First, expand the directories.
                 Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
                 // null will be used as a special key for COMBINE_ALL_FILES.
@@ -243,6 +291,7 @@ public class Cruncher
 
                 List<Path> concatenatedFiles = new ArrayList<>();
                 for (Path inputPath: inputPaths) {
+                    log.info("  * " + inputPath);
                     try {
                         // Put files simply to "global" group. Might be improved in the future.
                         if (inputPath.toFile().isFile())
