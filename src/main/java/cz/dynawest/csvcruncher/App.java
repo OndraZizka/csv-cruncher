@@ -11,6 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 
 public class App
 {
+    static {
+        printBanner();
+    }
+
     public static final String STR_USAGE = "Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>";
     private static final Logger log = Logger.getLogger(App.class.getName());
 
@@ -35,9 +39,11 @@ public class App
         int relPos = -1;
         App.OptionsNext next = null;
 
+        log.fine(" Parameters: ");
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
-            System.out.println("XXX " + arg);
+            //System.out.println(" * " + arg);
+            log.fine(" * " + arg);
 
             // JSON output
             if (arg.startsWith("--json")) {
@@ -157,6 +163,20 @@ public class App
         else {
             return opt;
         }
+    }
+
+    private static void printBanner() {
+        System.out.println(
+        "\n" +
+        "\n" +
+        "   ____________    __   ______                      __             \n" +
+        "  / ____/ ___/ |  / /  / ____/______  ______  _____/ /_  ___  _____\n" +
+        " / /    \\__ \\| | / /  / /   / ___/ / / / __ \\/ ___/ __ \\/ _ \\/ ___/\n" +
+        "/ /___ ___/ /| |/ /  / /___/ /  / /_/ / / / / /__/ / / /  __/ /    \n" +
+        "\\____//____/ |___/   \\____/_/   \\__,_/_/ /_/\\___/_/ /_/\\___/_/     \n" +
+        "                                                                   \n" +
+        "\n"
+        );
     }
 
     private static void printUsage()
