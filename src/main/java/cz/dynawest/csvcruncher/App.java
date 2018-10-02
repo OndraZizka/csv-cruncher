@@ -1,6 +1,7 @@
 package cz.dynawest.csvcruncher;
 
 import cz.dynawest.logging.LoggingUtils;
+import cz.dynawest.logging.SystemOutHandler;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 
@@ -75,6 +76,13 @@ public class App
             else if ("-db".equals(str)) {
                 next = App.OptionsNext.DBPATH;
             }
+
+            else if ("-v".equals(str) || "--version".equals(str)) {
+                String version = Utils.getVersion();
+                System.out.println(" CSV Cruncher version " + version);
+                System.exit(0);
+            }
+
             else {
                 if (next != null) {
                     switch (next) {

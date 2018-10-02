@@ -43,6 +43,12 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
@@ -72,7 +78,12 @@
                                     <mainClass>${mainClass}</mainClass>
                                     <addClasspath>false</addClasspath> <!-- false for jar-with-dependencies -->
                                     <classpathPrefix>lib/</classpathPrefix>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                                 </manifest>
+                                <manifestEntries>
+                                    <Release-Version>${project.version}</Release-Version>
+                                </manifestEntries>
                             </archive>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
@@ -110,7 +121,7 @@
                 <version>1.6.0</version>
                 <executions>
                     <execution>
-                        <id>runJar</id>
+                        <id>testCrunch-simple</id>
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
@@ -120,11 +131,23 @@
                                 -in src/test/data/eapBuilds.csv
                                 -out target/results/result.csv
                                 -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
-                                        CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
-                                        FROM eapBuilds ORDER BY deployDur'
+                                CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
+                                FROM eapBuilds ORDER BY deployDur'
                                 --json=entries
                                 --rowNumbers
                                 --joinInputs
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>testVersion</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                -v
                             </commandlineArgs>
                         </configuration>
                     </execution>
