@@ -227,7 +227,8 @@ public class Cruncher
     /**
      * Combine the input files (typically, concatenate).
      * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
-     * The resulting file will be witten under the respective "group root directory".
+     * The combined input files will be witten under the respective "group root directory".
+     * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
      */
     private static List<Path> combineInputFiles(List<Path> inputPaths, Options options)
     {
