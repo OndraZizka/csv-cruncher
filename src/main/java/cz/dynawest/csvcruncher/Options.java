@@ -9,6 +9,7 @@ class Options
     protected String sql;
     protected String outputPathCsv;
     protected String dbPath = null;
+
     protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
     protected Long initialRowNumber = null;
     protected SortInputFiles sortInputFiles = SortInputFiles.PARAMS_ORDER;
@@ -47,24 +48,39 @@ class Options
         COMBINE_PER_INPUT_SUBDIR("perRootSubdir"),
         COMBINE_ALL_FILES("all");
 
+        public static final String OPTION = "combineDirs";
+
         private final String combineMode;
 
         CombineDirectories(String combineMode) {
             this.combineMode = combineMode;
         }
+
+        public String getCombineMode()
+        {
+            return combineMode;
+        }
     }
 
     public enum CombineInputFiles
     {
-        NONE("Uses each input files as a separate table."),
-        CONCAT("Joins the CSV files into one and processes it as input."),
-        INTERSECT ("Takes the intersection of the CSV files as input."),
-        EXCEPT("Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
+        NONE(      null,         "Uses each input files as a separate table."),
+        CONCAT(    "concat",     "Joins the CSV files into one and processes it as input."),
+        INTERSECT( "intersect",  "Takes the intersection of the CSV files as input."),
+        EXCEPT(    "substract",  "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
+
+        public static final String OPTION = "combineInputs";
 
         private final String description;
+        private final String optionValue;
 
-        CombineInputFiles(String description) {
+        CombineInputFiles(String value, String description) {
             this.description = description;
+            this.optionValue = value;
+        }
+
+        public String getOptionValue() {
+            return optionValue;
         }
     }
 
@@ -72,14 +88,14 @@ class Options
     {
         NONE(null), ENTRY_PER_LINE("entries"), ARRAY("array");
 
-        private final String optionsValue;
+        private final String optionValue;
 
         JsonExportFormat(String value) {
-            this.optionsValue = value;
+            this.optionValue = value;
         }
 
-        public String getOptionsValue() {
-            return optionsValue;
+        public String getOptionValue() {
+            return optionValue;
         }
     }
 }

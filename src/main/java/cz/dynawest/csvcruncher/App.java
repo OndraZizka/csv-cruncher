@@ -1,7 +1,6 @@
 package cz.dynawest.csvcruncher;
 
 import cz.dynawest.logging.LoggingUtils;
-import cz.dynawest.logging.SystemOutHandler;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,13 +38,15 @@ public class App
         for (int i = 0; i < args.length; ++i) {
             String str = args[i];
 
+            // JSON output
             if (str.startsWith("--json")) {
-                if (str.endsWith("=" + Options.JsonExportFormat.ARRAY.getOptionsValue()))
+                if (str.endsWith("=" + Options.JsonExportFormat.ARRAY.getOptionValue()))
                     opt.jsonExportFormat = Options.JsonExportFormat.ARRAY;
-                //if (str.endsWith("=" + Cruncher.JsonExportFormat.ENTRY_PER_LINE.getOptionsValue()))
                 else
                     opt.jsonExportFormat = Options.JsonExportFormat.ENTRY_PER_LINE;
             }
+
+            // Row numbers
             else if (str.startsWith("--rowNumbers")) {
                 opt.initialRowNumber = -1L;
                 if (str.startsWith("--rowNumbers=")) {
@@ -58,8 +59,27 @@ public class App
                     }
                 }
             }
-            else if (str.startsWith("--joinInputs")) {
-                // TODO
+
+            // Combine input files
+            else if (str.startsWith("--" + Options.CombineInputFiles.OPTION)) {
+                if (str.endsWith("=" + Options.CombineInputFiles.INTERSECT.getOptionValue()))
+                    opt.combineInputFiles = Options.CombineInputFiles.INTERSECT;
+                else if (str.endsWith("=" + Options.CombineInputFiles.EXCEPT.getOptionValue()))
+                    opt.combineInputFiles = Options.CombineInputFiles.EXCEPT;
+                else
+                    opt.combineInputFiles = Options.CombineInputFiles.CONCAT;
+            }
+
+            // Combine files in input directories
+            else if (str.startsWith("--" + Options.CombineDirectories.OPTION)) {
+                if (str.endsWith("=" + Options.CombineDirectories.COMBINE_PER_EACH_DIR.getCombineMode()))
+                    opt.combineDirs = Options.CombineDirectories.COMBINE_PER_EACH_DIR;
+                else if (str.endsWith("=" + Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR.getCombineMode()))
+                    opt.combineDirs = Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR;
+                else if (str.endsWith("=" + Options.CombineDirectories.COMBINE_PER_INPUT_DIR.getCombineMode()))
+                    opt.combineDirs = Options.CombineDirectories.COMBINE_PER_INPUT_DIR;
+                else
+                    opt.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES;
             }
 
             else if ("-in".equals(str)) {

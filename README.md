@@ -42,6 +42,9 @@ Usage
 
 Options:
 
+ * -db <pathToDatabaseDirectory>
+    Determines where the files of the underlying database will be stored.
+
  * --rowNumbers[=<firstNumber>|remember]
     Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
     By specifying `<firstNumber>`, the first number to be used can be set.
@@ -53,13 +56,20 @@ Options:
     `entries` (default) will create a JSON entry per line, representing the original rows.
     `array` will create a file with a JSON array (`[...,...]`).
 
- * --joinInputs[=paramsOrder|alpha|time] - TODO
+ * --combineInputs[=]
+
+ * --combineDirs[=]
+
+ * --sortInputs[=paramsOrder|alpha|time]
+
 
 Usage example
 =============
 
-    crunch myInput.csv output.csv \
-        "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
+    crunch -in myInput.csv -out output.csv \
+        -sql "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
+        --json
+        -- j
 
 Data and usage example
 ======================
@@ -77,8 +87,8 @@ SQL query:
     SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
             CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
         FROM indata ORDER BY deployDur
-        
-        
+
+
 License
 =======
 
