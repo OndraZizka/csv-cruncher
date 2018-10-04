@@ -226,38 +226,42 @@ public class Cruncher
             {
                 LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
 
-                //if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED))
-                // I'm removing these stage checks, since the table might have been left
-                // from previous run. Later let's implement a cleanup at start.
-                {
-                    for (Map.Entry<String, File> tableAndFile : tablesToFiles.entrySet()) {
-                        try {
-                            this.detachTable(tableAndFile.getKey(), false, true);
-                        } catch (Exception ex) {
-                            LOG.severe("Could not delete the input table: " + ex.getMessage());
-                        }
-                    }
-                }
+                cleanUpInputOutputTables(tablesToFiles);
 
-                //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED))
-                {
-                    try {
-                        this.detachTable(TABLE_NAME__OUTPUT, false, true);
-                    } catch (Exception ex) {
-                        LOG.severe("Could not delete the output table: " + ex.getMessage());
-                    }
-                }
-
-                //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED))
-                {
-                    executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
-                    this.conn.close();
-                }
+                executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
+                this.conn.close();
             }
         }
         catch (Exception ex) {
             throw ex;
         }
+    }
+
+    private void cleanUpInputOutputTables(Map<String, File> inputTablesToFiles)
+    {
+        //if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED))
+        // I'm removing these stage checks, since the table might have been left
+        // from previous run. Later let's implement a cleanup at start.
+        {
+            for (Map.Entry<String, File> tableAndFile : inputTablesToFiles.entrySet()) {
+                try {
+                    this.detachTable(tableAndFile.getKey(), false, true);
+                } catch (Exception ex) {
+                    LOG.severe("Could not delete the input table: " + ex.getMessage());
+                }
+            }
+        }
+
+        //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED))
+        {
+            try {
+                this.detachTable(TABLE_NAME__OUTPUT, false, true);
+            } catch (Exception ex) {
+                LOG.severe("Could not delete the output table: " + ex.getMessage());
+            }
+        }
+
+        //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED))
     }
 
     enum ReachedCrunchStage {
