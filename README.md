@@ -43,6 +43,8 @@ And this is planned:
 All this is backed by [HyperSQL database](http://hsqldb.org/).
 See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
+Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases).
+
 Usage
 =====
 
