@@ -160,7 +160,7 @@ public class Cruncher
                 catch (SQLSyntaxErrorException ex) {
                     if (ex.getMessage().contains("object not found:")) {
 
-                        boolean notFoundIsColumn = analyzeWhatWasNotFound(ex.getMessage(), this.options.sql);
+                        boolean notFoundIsColumn = DbUtils.analyzeWhatWasNotFound(ex.getMessage(), this.options.sql);
 
                         String tableNames = formatListOfAvailableTables(notFoundIsColumn); // TODO
 
@@ -224,18 +224,18 @@ public class Cruncher
             }
             finally
             {
-                for (Map.Entry<String, File> tableAndFile: tablesToFiles.entrySet()) {
-                    //if (reachedStage >= 1)
-                    this.detachTable(tableAndFile.getKey(), false, true);
+                if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED)) {
+                    for (Map.Entry<String, File> tableAndFile : tablesToFiles.entrySet()) {
+                        this.detachTable(tableAndFile.getKey(), false, true);
+                    }
                 }
 
-                if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED))
-                {
-                    if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED)) {
-                        this.detachTable(TABLE_NAME__OUTPUT, false, true);
-                    }
+                if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED)) {
+                    this.detachTable(TABLE_NAME__OUTPUT, false, true);
+                }
 
-                    executeUpdate("DROP SCHEMA PUBLIC CASCADE");
+                if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED)) {
+                    executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
                     this.conn.close();
                 }
             }
@@ -259,29 +259,6 @@ public class Cruncher
         }
     }
 
-    /**
-     * Tells apart whether the "object not found" was a column or a table.
-     * Relies on HSQLDB's exception message, which looks like this:
-     *  USER LACKS PRIVILEGE OR OBJECT NOT FOUND: JOBNAME IN STATEMENT [SELECT JOBNAME, FROM
-     *
-     *     user lacks privilege or object not found: JOBNAME in statement [SELECT jobName, ... FROM ...]
-     *
-     * @return true if column, false if table (or something else).
-     */
-    private boolean analyzeWhatWasNotFound(String message, String sql)
-    {
-        String notFoundName = StringUtils.substringAfter(message, "object not found: ");
-        notFoundName = StringUtils.substringBefore(notFoundName, " in statement [");
-
-        message = message.toUpperCase().replace('\n', ' ');
-
-        //String sqlRegex = "[^']*\\[SELECT .*" + notFoundName + ".*FROM.*";
-        String sqlRegex = ".*SELECT.*"+notFoundName+".*FROM.*";
-        //LOG.finer(String.format("\n\tNot found object: %s\n\tMsg: %s\n\tRegex: %s", notFoundName, message.toUpperCase(), sqlRegex));
-
-        return message.toUpperCase().matches(sqlRegex);
-    }
-
     private String formatListOfAvailableTables(boolean withColumns)
     {
         StringBuilder sb = new StringBuilder();
@@ -291,6 +268,7 @@ public class Cruncher
                     " FROM INFORMATION_SCHEMA.TABLES AS t " +
                     " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
                 " WHERE t.table_schema = 'PUBLIC'";
+
         try (ResultSet rs = this.conn.createStatement().executeQuery(sql)) {
             tables:
             while(rs.next()) {
@@ -332,20 +310,18 @@ public class Cruncher
     }
 
 
-    /* These two are moreless the same. TODO: Remove one. */
-    private void executeUpdate(String sql) throws SQLException
-    {
-        try (Statement stmt = this.conn.createStatement()) {
-            stmt.executeUpdate(sql);
-        }
-    }
-
     private void executeDbCommand(String sql, String errorMsg) throws SQLException
     {
         try (Statement stmt = this.conn.createStatement()){
             stmt.execute(sql);
         } catch (Exception ex) {
-            throw new RuntimeException(errorMsg + "\n  " + sql + "\n  " + ex.getMessage() + "\n  " + this.conn.getWarnings().getNextWarning(), ex);
+            if (StringUtils.isBlank(errorMsg))
+                throw ex;
+            else
+                throw new RuntimeException(errorMsg +
+                        "\n  " + sql +
+                        "\n  " + ex.getMessage() +
+                        "\n  " + this.conn.getWarnings().getNextWarning(), ex);
         }
     }
 
@@ -440,8 +416,8 @@ public class Cruncher
         sb.delete(sb.length() - 2, sb.length());
         sb.append(" )");
         LOG.info("Table DDL SQL: " + sb.toString());
+        executeDbCommand(sb.toString(), "Failed to CREATE TEXT TABLE: ");
 
-        executeUpdate(sb.toString());
 
         // Bind the table to the CSV file.
         String csvPath = csvFileToBind.getPath();
@@ -452,9 +428,7 @@ public class Cruncher
         String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
         String sql = "SET TABLE " + tableName + " SOURCE \'" + csvPath + ";" + csvSettings + "' " + DESC;
         LOG.info("CSV import SQL: " + sql);
-        try (Statement st = this.conn.createStatement()) {
-            st.execute(sql);
-        }
+        executeDbCommand(sql, "Failed to import CSV: ");
 
         // Try to convert columns to numbers, where applicable.
         // "HyperSQL allows changing the type if all the existing values can be cast
@@ -515,11 +489,11 @@ public class Cruncher
 
 
         String sql = "SET TABLE " + Utils.escapeSql(tableName) + " SOURCE " + (reattach ? "ON" : "OFF");
-        executeUpdate(sql);
+        executeDbCommand(sql, "Failed to detach/attach the table: ");
 
         if (drop) {
             sql = "DROP TABLE " + Utils.escapeSql(tableName);
-            executeUpdate(sql);
+            executeDbCommand(sql, "Failed to DROP TABLE: ");
         }
     }
 
