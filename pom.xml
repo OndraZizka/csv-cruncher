@@ -172,7 +172,7 @@
                                 --rowNumbers
                                 --combineInputs=concat
                                 --combineDirs=all
-                                -in src/test/data/sampleMultiFilesPerDir/apollo_session
+                                -in src/test/data/sampleMultiFilesPerDir/apollo_session/
                                 -out target/results/result.csv
                                 -sql 'SELECT session_uid, name, session_type, created_time, modified_date
                                 FROM concat_1 ORDER BY session_type, created_time DESC'

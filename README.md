@@ -30,11 +30,11 @@ The SQL operations can be quite powerful – just consider what everything you h
  * Time and date functions
  * Statistical agregate functions
  ...[and more](http://hsqldb.org/doc/2.0/guide/guide.html).
- 
+
 On top of that, CSV Cruncher can:
  * Convert CSV to JSON
  * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
- 
+
 And this is planned:
  * Import and export Excel (XLS) files
  * Import JSON files
@@ -74,15 +74,33 @@ Options:
 Usage example
 =============
 
-    crunch -in myInput.csv -out output.csv \
+Simple SQL operation on a single CSV file:
+
+    crunch -in myInput.csv -out output.csv
         -sql "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
         --json
-        -- j
+
+With input files searched in a directory and concatenated:
+
+    crunch
+        -in src/test/data/sampleMultiFilesPerDir/apollo_session/
+        -out target/results/result.csv
+        --json=entries
+        --rowNumbers
+        --combineInputs=concat
+        --combineDirs=all
+        -sql 'SELECT session_uid, name, session_type, created_time, modified_date
+              FROM concat_1 ORDER BY session_type, created_time DESC'
+
+With input files searched in subdirectories of a directory, concatenated, and used as table-per-subdirectory:
+
+    (Supported, but example to be added)
+
 
 Data and usage example
 ======================
 
-CSV data
+CSV file named `eapData.csv`:
 
     ## jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale
     'eap-5.1.0-perf-deployers', 355,'production','testdata/war/hellothere.war','hellothere.war',10282,14804,1000
@@ -90,24 +108,26 @@ CSV data
     'eap-5.1.0-perf-deployers', 355,'production','testdata-own/war/war-big-1.0.war','war-big-1.0.war',1966,14800,100
     ...
 
-SQL query:
+That would create a table named `eapData` (unless concatenation is used).
+So you may issue such SQL query:
 
     SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
             CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
-        FROM indata ORDER BY deployDur
+     FROM eapData ORDER BY deployDur
 
 
 License
 =======
 
-In case you really want to use this in your project, then beware:
+In case you use this in your project, then beware:
 
 1. I am not responsible for any bugs in this tool and potential damage it may cause.
 2. If you use it, star the repo. I want to be famous :)
 3. If you change the source code, make a pull request with your changes.
+4. Consider donating to [HSQLDB "SupportWare"](http://hsqldb.org/web/supportware.html).
 
 
-*Easter Egg: The original text I sent to JBoss mailing list when introducing the tool :)*
+*Easter Egg: The original text I sent to JBoss mailing list when introducing the tool in 2011 :)*
 
 > Hi,
 >
@@ -117,7 +137,7 @@ In case you really want to use this in your project, then beware:
 >
 > [DOWNLOAD](http://ondra.zizka.cz/stranky/programovani/java/apps/CsvCruncher-1.0.jar)
 >
-> Many tools spit out CSV, or are able to as one of output options. Also, in hudson, you can very simply log any values you get into bash like echo " $val2, $val2" >> data.csv, for each build or part of a build. So it can be kind of integration tool.
+> Many tools spit out CSV, or are able to as one of output options. Also, in Hudson, you can very simply log any values you get into bash like echo " $val2, $val2" >> data.csv, for each build or part of a build. So it can be kind of integration tool.
 >
 > Then you can do quite complex queries - from a flat table, you can actually do subselects and then left joins, which gives you very powerful tool to process the data into something what is ready for plotting as-is - that means, data filtered, cleaned, aggregated, converted, aligned, sorted, etc.
 >
