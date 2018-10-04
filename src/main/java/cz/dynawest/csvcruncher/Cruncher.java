@@ -477,53 +477,64 @@ public class Cruncher
         executeDbCommand(sql, "Failed to import CSV: ");
 
         // Try to convert columns to numbers, where applicable.
-        // "HyperSQL allows changing the type if all the existing values can be cast
-        // into the new type without string truncation or loss of significant digits."
         if (input) {
-            Map<String, String> columnsFitIntoType = new HashMap<>();
+            optimizeTableCoumnsType(tableName, colNames);
+        }
+    }
 
-            // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
-            // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
-            // Maybe I need to duplicate the TEXT table into a native table first?
-            for (String colName : colNames) {
-                String typeUsed = null;
-                for (String sqlType : new String[]{"TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"}) {
-                    // Try CAST( AS ...)
-                    String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
-                    //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
+    /**
+     * This must be called when all data are already in the table!
+     * Try to convert columns to best fitting types.
+     * This speeds up further SQL operations.
+     *
+     // "HyperSQL allows changing the type if all the existing values can be cast
+     // into the new type without string truncation or loss of significant digits."
+     */
+    private void optimizeTableCoumnsType(String tableName, List<String> colNames) throws SQLException
+    {
+        Map<String, String> columnsFitIntoType = new HashMap<>();
 
-                    LOG.finer("Column change attempt SQL: " + sqlCol);
-                    try (Statement st = this.conn.createStatement()) {
-                        st.execute(sqlCol);
-                        LOG.fine(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
-                        columnsFitIntoType.put(colName, sqlType);
-                    }
-                    catch (SQLException ex) {
-                        // LOG.info(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
-                    }
-                }
-            }
+        // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
+        // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
+        // Maybe I need to duplicate the TEXT table into a native table first?
+        for (String colName : colNames) {
+            String typeUsed = null;
+            for (String sqlType : new String[]{"TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"}) {
+                // Try CAST( AS ...)
+                String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
+                //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
 
-            detachTable(tableName, false, false);
-
-            // ALTER COLUMNs
-            for (Map.Entry<String, String> colNameAndType : columnsFitIntoType.entrySet()) {
-                String colName = colNameAndType.getKey();
-                String sqlType = colNameAndType.getValue();
-                String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
-
-                LOG.finer("Column change attempt SQL: " + sqlAlter);
+                LOG.finer("Column change attempt SQL: " + sqlCol);
                 try (Statement st = this.conn.createStatement()) {
-                    st.execute(sqlAlter);
-                    LOG.fine(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
+                    st.execute(sqlCol);
+                    LOG.fine(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
+                    columnsFitIntoType.put(colName, sqlType);
                 }
                 catch (SQLException ex) {
-                    LOG.finer(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                    // LOG.info(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
                 }
             }
-
-            detachTable(tableName, true, false);
         }
+
+        detachTable(tableName, false, false);
+
+        // ALTER COLUMNs
+        for (Map.Entry<String, String> colNameAndType : columnsFitIntoType.entrySet()) {
+            String colName = colNameAndType.getKey();
+            String sqlType = colNameAndType.getValue();
+            String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
+
+            LOG.finer("Column change attempt SQL: " + sqlAlter);
+            try (Statement st = this.conn.createStatement()) {
+                st.execute(sqlAlter);
+                LOG.fine(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
+            }
+            catch (SQLException ex) {
+                LOG.finer(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+            }
+        }
+
+        detachTable(tableName, true, false);
     }
 
     private void detachTable(String tableName, boolean reattach, boolean drop) throws SQLException
