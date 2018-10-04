@@ -125,7 +125,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>false</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
@@ -144,7 +144,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>false</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
