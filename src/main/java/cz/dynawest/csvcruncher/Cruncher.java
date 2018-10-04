@@ -335,6 +335,13 @@ public class Cruncher
     }
 
 
+    /**
+     * Execute a SQL which does not expect a ResultSet,
+     * and help the user with the common errors by parsing the message
+     * and printing out some helpful info in a wrapping exception.
+     *
+     * @return the number of affected rows.
+     */
     private int executeDbCommand(String sql, String errorMsg) throws SQLException
     {
         try (Statement stmt = this.conn.createStatement()){
