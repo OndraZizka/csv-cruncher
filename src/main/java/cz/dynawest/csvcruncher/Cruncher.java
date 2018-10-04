@@ -199,8 +199,7 @@ public class Cruncher
 
                 String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
                 LOG.info(" * User's SQL: " + userSql);
-                statement = this.conn.prepareStatement(userSql);
-                int rowsAffected = statement.executeUpdate();
+                int rowsAffected = executeDbCommand(userSql, "Error executing user SQL: ");
                 reachedStage = ReachedCrunchStage.OUTPUT_TABLE_FILLED;
 
 
@@ -283,20 +282,26 @@ public class Cruncher
     {
         StringBuilder sb = new StringBuilder();
 
-        String sql =
-                "SELECT table_name AS t, column_name AS c " +
+        String sqlTablesMetadata =
+                "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct" +
                     " FROM INFORMATION_SCHEMA.TABLES AS t " +
                     " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
                 " WHERE t.table_schema = 'PUBLIC'";
 
-        try (ResultSet rs = this.conn.createStatement().executeQuery(sql)) {
+        try (Statement st = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            ResultSet rs = st.executeQuery(sqlTablesMetadata);
+
             tables:
             while(rs.next()) {
                 String tableName = rs.getString("T");
                 sb.append(" * ").append(tableName).append('\n');
                 while(tableName == rs.getString("T")) {
                     if (withColumns)
-                        sb.append("    - ").append(rs.getString("C")).append('\n');
+                        sb.append("    - ")
+                            .append(StringUtils.rightPad(rs.getString("C"), 28))
+                            .append(" ")
+                            .append(rs.getString("CT"))
+                            .append('\n');
                     if (!rs.next())
                         break tables;
                 }
@@ -330,18 +335,31 @@ public class Cruncher
     }
 
 
-    private void executeDbCommand(String sql, String errorMsg) throws SQLException
+    private int executeDbCommand(String sql, String errorMsg) throws SQLException
     {
         try (Statement stmt = this.conn.createStatement()){
-            stmt.execute(sql);
+            return stmt.executeUpdate(sql);
         }
         catch (Exception ex) {
+            String addToMsg = "";
+            //if (ex.getMessage().contains("for cast"))
+            {
+                // TODO: List columns with types.
+                addToMsg = "\n  Tables and column types:\n"
+                        + this.formatListOfAvailableTables(true);
+            }
+
+            if (StringUtils.isBlank(errorMsg))
+                errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL.";
+
             if (StringUtils.isBlank(errorMsg))
                 throw ex;
             else {
-                throw new RuntimeException(errorMsg +
-                        "\n  SQL: " + sql +
-                        "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage());
+                throw new RuntimeException(errorMsg
+                        + "\n  SQL: " + sql
+                        + "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage()
+                        + addToMsg
+                );
             }
         }
     }

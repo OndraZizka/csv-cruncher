@@ -174,9 +174,8 @@
                                 --combineDirs=all
                                 -in src/test/data/sampleMultiFilesPerDir/apollo_session
                                 -out target/results/result.csv
-                                -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
-                                CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
-                                FROM concat_1 ORDER BY deployDur'
+                                -sql 'SELECT session_uid, name, session_type, created_time, modified_date
+                                FROM concat_1 ORDER BY session_type, created_time DESC'
                             </commandlineArgs>
                         </configuration>
                     </execution>
