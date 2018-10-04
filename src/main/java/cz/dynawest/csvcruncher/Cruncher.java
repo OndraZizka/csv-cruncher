@@ -224,17 +224,32 @@ public class Cruncher
             }
             finally
             {
-                if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED)) {
+                LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
+
+                //if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED))
+                // I'm removing these stage checks, since the table might have been left
+                // from previous run. Later let's implement a cleanup at start.
+                {
                     for (Map.Entry<String, File> tableAndFile : tablesToFiles.entrySet()) {
-                        this.detachTable(tableAndFile.getKey(), false, true);
+                        try {
+                            this.detachTable(tableAndFile.getKey(), false, true);
+                        } catch (Exception ex) {
+                            LOG.severe("Could not delete the input table: " + ex.getMessage());
+                        }
                     }
                 }
 
-                if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED)) {
-                    this.detachTable(TABLE_NAME__OUTPUT, false, true);
+                //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED))
+                {
+                    try {
+                        this.detachTable(TABLE_NAME__OUTPUT, false, true);
+                    } catch (Exception ex) {
+                        LOG.severe("Could not delete the output table: " + ex.getMessage());
+                    }
                 }
 
-                if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED)) {
+                //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED))
+                {
                     executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
                     this.conn.close();
                 }
@@ -255,6 +270,7 @@ public class Cruncher
 
         public boolean passed(ReachedCrunchStage stage)
         {
+            LOG.info(String.format("%s >= %s?", this.ordinal(), stage.ordinal()));
             return (this.ordinal() >= stage.ordinal());
         }
     }
@@ -314,14 +330,15 @@ public class Cruncher
     {
         try (Statement stmt = this.conn.createStatement()){
             stmt.execute(sql);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             if (StringUtils.isBlank(errorMsg))
                 throw ex;
-            else
+            else {
                 throw new RuntimeException(errorMsg +
-                        "\n  " + sql +
-                        "\n  " + ex.getMessage() +
-                        "\n  " + this.conn.getWarnings().getNextWarning(), ex);
+                        "\n  SQL: " + sql +
+                        "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage());
+            }
         }
     }
 
