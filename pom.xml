@@ -144,7 +144,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
@@ -160,10 +160,32 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>testCrunch-combineInputFiles-perRootSubDir</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                --json=entries
+                                --rowNumbers
+                                --combineInputs=concat
+                                --combineDirs=all
+                                -in src/test/data/sampleMultiFilesPerDir/apollo_session
+                                -out target/results/result.csv
+                                -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
+                                CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
+                                FROM concat_1 ORDER BY deployDur'
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>testVersion</id>
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar

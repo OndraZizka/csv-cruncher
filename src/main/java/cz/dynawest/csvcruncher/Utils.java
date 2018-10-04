@@ -1,16 +1,11 @@
 package cz.dynawest.csvcruncher;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.Properties;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.logging.Logger;
 
 public class Utils
@@ -76,4 +71,24 @@ public class Utils
         }
         return null;
     }
+
+    /* This would need a bit of reflection or using normal class rather than enum to represent an option.
+    public static <EnumClass extends Enum> EnumClass processOptionIfMatches(String arg, Class<EnumClass> enumClass)
+    {
+        if (
+                !arg.equals("--" + enumClass. ...?) &&
+                !arg.startsWith("--" + enumClass. ...? + "=")
+        )
+
+        for each enum option
+            if (arg.endsWith("=" + enumOption.getOptionValue()))
+            return
+        else
+            throw new IllegalArgumentException(String.format(
+                    "Unknown value for %s: %s Try one of %s",
+                    Options.CombineInputFiles.PARAM_NAME, arg,
+                    EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue)));
+
+    }
+    /**/
 }

@@ -1,7 +1,13 @@
 package cz.dynawest.csvcruncher;
 
+import static cz.dynawest.csvcruncher.Options.CombineDirectories.*;
+import static cz.dynawest.csvcruncher.Options.CombineInputFiles.CONCAT;
+import static cz.dynawest.csvcruncher.Options.CombineInputFiles.EXCEPT;
+import static cz.dynawest.csvcruncher.Options.CombineInputFiles.INTERSECT;
 import cz.dynawest.logging.LoggingUtils;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /*
@@ -24,13 +30,13 @@ public class App
 
         try {
             Options options = parseArgs(args);
+            log.info("Options: \n" + options);
             (new Cruncher(options)).crunch();
         }
         catch (IllegalArgumentException var3) {
             System.out.println("" + var3.getMessage());
             System.exit(1);
         }
-
     }
 
     private static Options parseArgs(String[] args)
@@ -46,7 +52,7 @@ public class App
             log.fine(" * " + arg);
 
             // JSON output
-            if (arg.startsWith("--json")) {
+            if (arg.startsWith("--" + Options.JsonExportFormat.PARAM_NAME)) {
                 if (arg.endsWith("=" + Options.JsonExportFormat.ARRAY.getOptionValue()))
                     opt.jsonExportFormat = Options.JsonExportFormat.ARRAY;
                 else
@@ -68,25 +74,46 @@ public class App
             }
 
             // Combine input files
-            else if (arg.startsWith("--" + Options.CombineInputFiles.OPTION)) {
-                if (arg.endsWith("=" + Options.CombineInputFiles.INTERSECT.getOptionValue()))
-                    opt.combineInputFiles = Options.CombineInputFiles.INTERSECT;
-                else if (arg.endsWith("=" + Options.CombineInputFiles.EXCEPT.getOptionValue()))
-                    opt.combineInputFiles = Options.CombineInputFiles.EXCEPT;
+            else if (arg.startsWith("--" + Options.CombineInputFiles.PARAM_NAME)) {
+                if (arg.endsWith("--" + Options.CombineInputFiles.PARAM_NAME) ||
+                        arg.endsWith("=" + CONCAT.getOptionValue() ))
+                    opt.combineInputFiles = CONCAT;
+                else if (arg.endsWith("=" + INTERSECT.getOptionValue()))
+                    opt.combineInputFiles = INTERSECT;
+                else if (arg.endsWith("=" + EXCEPT.getOptionValue()))
+                    opt.combineInputFiles = EXCEPT;
                 else
-                    opt.combineInputFiles = Options.CombineInputFiles.CONCAT;
+                    throw new IllegalArgumentException(String.format(
+                            "Unknown value for %s: %s Try one of %s",
+                            Options.CombineInputFiles.PARAM_NAME, arg,
+                            EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).collect(Collectors.toList())
+                    ));
+                // TODO: Do something like this instead:
+                //opt.combineInputFiles = Utils.processOptionIfMatches(arg, Options.CombineInputFiles.class, Options.CombineInputFiles.CONCAT);
+                // Or move it to the respective enum class.
+                // Enum<Options.CombineDirectories> val = Options.CombineDirectories.COMBINE_ALL_FILES;
             }
 
             // Combine files in input directories
-            else if (arg.startsWith("--" + Options.CombineDirectories.OPTION)) {
-                if (arg.endsWith("=" + Options.CombineDirectories.COMBINE_PER_EACH_DIR.getCombineMode()))
-                    opt.combineDirs = Options.CombineDirectories.COMBINE_PER_EACH_DIR;
-                else if (arg.endsWith("=" + Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR.getCombineMode()))
-                    opt.combineDirs = Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR;
-                else if (arg.endsWith("=" + Options.CombineDirectories.COMBINE_PER_INPUT_DIR.getCombineMode()))
-                    opt.combineDirs = Options.CombineDirectories.COMBINE_PER_INPUT_DIR;
-                else
-                    opt.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES;
+            else if (arg.startsWith("--" + Options.CombineDirectories.PARAM_NAME)) {
+                // Sorted from most fine-grained to least.
+                if (arg.endsWith("=" + COMBINE_PER_EACH_DIR.getOptionValue()))
+                    opt.combineDirs = COMBINE_PER_EACH_DIR;
+                else if (arg.endsWith("=" + COMBINE_PER_INPUT_SUBDIR.getOptionValue()))
+                    opt.combineDirs = COMBINE_PER_INPUT_SUBDIR;
+                else if (arg.endsWith("=" + COMBINE_PER_INPUT_DIR.getOptionValue()))
+                    opt.combineDirs = COMBINE_PER_INPUT_DIR;
+                else if (arg.endsWith("=" + COMBINE_ALL_FILES.getOptionValue()))
+                    opt.combineDirs = COMBINE_ALL_FILES;
+                else if (arg.equals("--" + Options.CombineDirectories.PARAM_NAME))
+                    opt.combineDirs = COMBINE_ALL_FILES;
+                else {
+                    throw new IllegalArgumentException(String.format(
+                        "Unknown value for %s: %s Try one of %s",
+                        Options.CombineDirectories.PARAM_NAME, arg,
+                        EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).collect(Collectors.toList())
+                    ));
+                }
             }
 
             else if ("-in".equals(arg)) {

@@ -23,11 +23,19 @@ class Options
 
     public String toString()
     {
-        return "\n    dbPath: " + this.dbPath + "\n    inputPaths: " + this.inputPaths + "\n    outputPathCsv: " + this.outputPathCsv + "\n    sql: " + this.sql;
+        return   "    dbPath: " + this.dbPath +
+               "\n    inputPaths: " + this.inputPaths +
+               "\n    outputPathCsv: " + this.outputPathCsv +
+               "\n    sql: " + this.sql +
+               "\n    sortInputFiles: " + this.sortInputFiles +
+               "\n    combineInputFiles: " + this.combineInputFiles +
+               "\n    combineDirs: " + this.combineDirs +
+               "\n    initialRowNumber: " + this.initialRowNumber +
+               "\n    jsonExportFormat: " + this.jsonExportFormat;
     }
 
 
-    public enum SortInputFiles {
+    public enum SortInputFiles implements OptionEnum {
         PARAMS_ORDER("paramOrder", "Keep the order from parameters."),
         ALPHA("alpha", "Sort alphabetically."),
         TIME("time", "Sort by modification time, ascending.");
@@ -39,37 +47,38 @@ class Options
             this.optionValue = value;
             this.description = description;
         }
+
+        @Override
+        public String getOptionValue() { return getOptionValue(); }
     }
 
-    public enum CombineDirectories {
+    public enum CombineDirectories implements OptionEnum
+    {
         //USE_EACH_FILE("none"),
         COMBINE_PER_EACH_DIR("perDir"),
         COMBINE_PER_INPUT_DIR("perInputDir"),
-        COMBINE_PER_INPUT_SUBDIR("perRootSubdir"),
+        COMBINE_PER_INPUT_SUBDIR("perInputSubdir"),
         COMBINE_ALL_FILES("all");
 
-        public static final String OPTION = "combineDirs";
+        public static final String PARAM_NAME = "combineDirs";
 
-        private final String combineMode;
+        private final String optionValue;
 
-        CombineDirectories(String combineMode) {
-            this.combineMode = combineMode;
+        CombineDirectories(String optionValue) {
+            this.optionValue = optionValue;
         }
 
-        public String getCombineMode()
-        {
-            return combineMode;
-        }
+        public String getOptionValue() { return optionValue; }
     }
 
-    public enum CombineInputFiles
+    public enum CombineInputFiles implements OptionEnum
     {
         NONE(      null,         "Uses each input files as a separate table."),
         CONCAT(    "concat",     "Joins the CSV files into one and processes it as input."),
         INTERSECT( "intersect",  "Takes the intersection of the CSV files as input."),
         EXCEPT(    "substract",  "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
 
-        public static final String OPTION = "combineInputs";
+        public static final String PARAM_NAME = "combineInputs";
 
         private final String description;
         private final String optionValue;
@@ -79,14 +88,14 @@ class Options
             this.optionValue = value;
         }
 
-        public String getOptionValue() {
-            return optionValue;
-        }
+        public String getOptionValue() { return optionValue; }
     }
 
-    public enum JsonExportFormat
+    public enum JsonExportFormat implements OptionEnum
     {
         NONE(null), ENTRY_PER_LINE("entries"), ARRAY("array");
+
+        public static final String PARAM_NAME = "json";
 
         private final String optionValue;
 
@@ -94,8 +103,6 @@ class Options
             this.optionValue = value;
         }
 
-        public String getOptionValue() {
-            return optionValue;
-        }
+        public String getOptionValue() { return optionValue; }
     }
 }
