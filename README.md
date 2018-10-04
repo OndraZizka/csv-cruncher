@@ -1,7 +1,7 @@
 CSV Cruncher - query and process your CSVs using SQL.
 ====================================================
 
-A tool which treats CSV files AS SQL tables, and exports CSV files using a SQL `SELECT` statement.
+A tool which treats CSV files as SQL tables, and exports CSV and JSON files using a SQL `SELECT` statement.
 
 <img src="./docs/images/icon.png" align="left" style="float: left;">
 
@@ -48,27 +48,47 @@ Usage
 
     crunch [-in] <in-CSV>, <in-CSV-2>, ... [-out] <out-CSV> --<option> [-sql] "<SQL>"
 
-Options:
+### Options:
 
- * -db <pathToDatabaseDirectory>
-    Determines where the files of the underlying database will be stored.
+ * `-in`
+    Input paths. Can be files or directories.
 
- * --rowNumbers[=<firstNumber>|remember]
+ * `-out`
+    Output path. Currently only one output table/file is supported.
+
+ * `-sql`
+    The SQL operation to be performed. The input files (or the results of preprocessing them) are available as tables.
+    See [HSQLDB documentation](http://hsqldb.org/doc/2.0/guide/guide.html#sqlgeneral-chapt) for the vast SQL operations at hand.
+
+ * `-db <pathToDatabaseDirectory>`
+    Determines where the files of the underlying database will be stored. Default is `hsqldb/cruncher`.
+
+##### Pre-processing
+
+ * `--rowNumbers\[=<firstNumber>|remember]`
     Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
     By specifying `<firstNumber>`, the first number to be used can be set.
     By default, a milliseconds-based timestamp times 1000 is used.
     `remember` is yet to be implemented, and will continue where the last run stopped.
 
- * --json[=entries|array]
+ * `--combineInputs\[=concat|intersect|substract]`
+    Combine the input files into one file, optionally computing an intersection or substracting one from another.
+
+ * `--combineDirs\[=perDir|perInputDir|perInputSubdir|all]`
+    Controls which files are combined together.
+
+ * --sortInputs\[=paramsOrder|alpha|time]
+    Controls how files are sorted before combining, and in which order the tables are created.
+
+    Read the logs or `SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
+
+##### Post-processing
+
+ * `--json\[=entries|array]`
     Create the output in JSON format.
     `entries` (default) will create a JSON entry per line, representing the original rows.
     `array` will create a file with a JSON array (`[...,...]`).
 
- * --combineInputs[=]
-
- * --combineDirs[=]
-
- * --sortInputs[=paramsOrder|alpha|time]
 
 
 Usage example
@@ -131,18 +151,25 @@ In case you use this in your project, then beware:
 
 > Hi,
 >
-> I've crafted a tool which transforms a CSV file into another CSV file using a SQL statement (as I did not found such).
+> I've crafted a tool which transforms a CSV file into another CSV file using a SQL statement (as I did not find such).
 >
 > Can be useful for various quick'n'dirty integration during test automation, esp. for data-oriented tasks like perf-tests.
 >
 > [DOWNLOAD](http://ondra.zizka.cz/stranky/programovani/java/apps/CsvCruncher-1.0.jar)
 >
-> Many tools spit out CSV, or are able to as one of output options. Also, in Hudson, you can very simply log any values you get into bash like echo " $val2, $val2" >> data.csv, for each build or part of a build. So it can be kind of integration tool.
+> Many tools spit out CSV, or are able to as one of output options. Also, in Hudson, you can very simply log
+  any values you get into bash like echo " $val2, $val2" >> data.csv, for each build or part of a build.
+  So it can be kind of integration tool.
 >
-> Then you can do quite complex queries - from a flat table, you can actually do subselects and then left joins, which gives you very powerful tool to process the data into something what is ready for plotting as-is - that means, data filtered, cleaned, aggregated, converted, aligned, sorted, etc.
+> Then you can do quite complex queries - from a flat table, you can sactually do subselects and then left joins,
+  which gives you very powerful tool to process the data into something what is ready for plotting as-is - that means,
+  data filtered, cleaned, aggregated, converted, aligned, sorted, etc.
 >
-> That might be my POV, since I like SQL and it's my favorite language not only for querying but also data-oriented procedural programming. But nonetheless, I already shortened my perf test task by ~ 40 minutes of my work for each release. Instead of manual shannanigans in OpenOffice, I run a single command, and voila ;-)
+> That might be my POV, since I like SQL and it's my favorite language not only for querying
+  but also data-oriented procedural programming. But nonetheless, I already shortened my perf test task
+  by ~ 40 minutes of my work for each release. Instead of manual shannanigans in OpenOffice, I run a single command, and voila ;-)
 >
-> HSQL's syntax: http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html (I was very surprised by HSQL's features, it supports much more of SQL than e.g. MySQL.)
+> HSQL's syntax: http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html (I was very surprised by HSQL's features,
+  it supports much more of SQL than e.g. MySQL.)
 >
 > Enjoy :)
