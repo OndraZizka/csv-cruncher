@@ -110,8 +110,8 @@ public class Cruncher
                         throw new IllegalArgumentException("File names normalized to table names collide: " + previousIfAny + ", " + csvInFile);
 
                     List<String> colNames = parseColsFromFirstLine(csvInFile);
-                    // Read the CSV into a table.
-                    this.createTableForCsvFile(tableName, csvInFile, colNames, true);
+                    // Create a table and bind the CSV to it.
+                    this.createTableForInputFile(tableName, csvInFile, colNames, true);
                 }
                 reachedStage = ReachedCrunchStage.INPUT_TABLES_CREATED;
 
@@ -188,7 +188,7 @@ public class Cruncher
 
                 // Write the result into a CSV
                 LOG.info(" * CSV output: " + csvOutFile);
-                this.createTableForCsvFile(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumnDdl, false);
+                this.createTableAndBindCsv(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumnDdl, false);
                 reachedStage = ReachedCrunchStage.OUTPUT_TABLE_CREATED;
 
 
@@ -432,13 +432,13 @@ public class Cruncher
         }
     }
 
-    private void createTableForCsvFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst) throws SQLException, FileNotFoundException
+    private void createTableForInputFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst) throws SQLException, FileNotFoundException
     {
-        createTableForCsvFile(tableName, csvFileToBind, colNames, ignoreFirst, "", true);
+        createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true);
     }
 
 
-    private void createTableForCsvFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, String counterColumnDdl, boolean readOnlyX) throws SQLException
+    private void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, String counterColumnDdl, boolean input) throws SQLException
     {
         boolean readOnly = false;
         boolean csvUsesSingleQuote = true;
@@ -479,7 +479,7 @@ public class Cruncher
         // Try to convert columns to numbers, where applicable.
         // "HyperSQL allows changing the type if all the existing values can be cast
         // into the new type without string truncation or loss of significant digits."
-        if (true) {
+        if (input) {
             Map<String, String> columnsFitIntoType = new HashMap<>();
 
             // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
