@@ -35,7 +35,7 @@ public class Cruncher
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.
     public static final String FILENAME_SUFFIX_CSV = ".csv";
     public static final Pattern REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE);
-    public static final int MAX_STRING_COLUMN_LENGTH = 255;
+    public static final int MAX_STRING_COLUMN_LENGTH = 4092;
 
     private Connection conn;
     private Options options;
