@@ -3,7 +3,6 @@ package cz.dynawest.csvcruncher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -20,7 +19,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class Cruncher
 {
-    private static final Logger log = Logger.getLogger(App.class.getName());
+    private static final Logger LOG = Logger.getLogger(Cruncher.class.getName());
 
     public static final String TABLE_NAME__OUTPUT = "output";
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.
@@ -88,21 +86,23 @@ public class Cruncher
                 // Sort
                 List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
                 inputPaths = FilesUtils.sortInputPaths(inputPaths, this.options.sortInputFiles);
-                log.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).get());
+                LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).get());
 
                 // Combine files. Should we concat the files or UNION the tables?
                 if (this.options.combineInputFiles != Options.CombineInputFiles.NONE) {
-                    List<Path> concatenatedFiles = combineInputFiles(inputPaths, this.options);
+                    List<Path> concatenatedFiles = FilesUtils.combineInputFiles(inputPaths, this.options);
                     inputPaths = concatenatedFiles;
-                    log.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).get());
+                    LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).get());
+                    reachedStage = ReachedCrunchStage.INPUT_FILES_PREPROCESSED;
                 }
 
-                log.info(" --- ===================== --- ");
+
+                LOG.info(" --- ===================== --- ");
 
                 // For each input CSV file...
                 for (Path path : inputPaths) {
                     File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
-                    log.info(" * CSV input: " + csvInFile);
+                    LOG.info(" * CSV input: " + csvInFile);
 
                     String tableName = normalizeFileNameForTableName(csvInFile);
                     File previousIfAny = tablesToFiles.put(tableName, csvInFile);
@@ -113,6 +113,7 @@ public class Cruncher
                     // Read the CSV into a table.
                     this.createTableForCsvFile(tableName, csvInFile, colNames, true);
                 }
+                reachedStage = ReachedCrunchStage.INPUT_TABLES_CREATED;
 
 
                 // Should the result have a unique incremental ID as an added 1st column?
@@ -151,7 +152,7 @@ public class Cruncher
                 }
 
 
-                // Perform the SQL
+                // Get the columns info: Perform the SQL, LIMIT 1.
                 PreparedStatement statement;
                 try {
                     statement = this.conn.prepareStatement(this.options.sql + " LIMIT 1");
@@ -183,12 +184,13 @@ public class Cruncher
                 ResultSet rs = statement.executeQuery();
 
                 // Column names
-                List<String> colNames = getResultSetColumnNames(rs);
+                List<String> colNames = DbUtils.getResultSetColumnNames(rs);
 
                 // Write the result into a CSV
-                log.info(" * CSV output: " + csvOutFile);
+                LOG.info(" * CSV output: " + csvOutFile);
                 this.createTableForCsvFile(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumnDdl, false);
                 reachedStage = ReachedCrunchStage.OUTPUT_TABLE_CREATED;
+
 
                 // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
                 //String selectSql = this.options.sql.replace("@counter", counterColumnVal);
@@ -196,17 +198,16 @@ public class Cruncher
                 String selectSql = this.options.sql.replace("SELECT ", "SELECT " + counterColumnVal + " ");
 
                 String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
-                log.info(" * User's SQL: " + userSql);
+                LOG.info(" * User's SQL: " + userSql);
                 statement = this.conn.prepareStatement(userSql);
                 int rowsAffected = statement.executeUpdate();
                 reachedStage = ReachedCrunchStage.OUTPUT_TABLE_FILLED;
 
 
                 // Now let's convert it to JSON if necessary.
-
                 if (convertResultToJson) {
                     Path destJsonFile = Paths.get(csvOutFile.toPath().toString() + ".json");
-                    log.info(" * JSON output: " + destJsonFile);
+                    LOG.info(" * JSON output: " + destJsonFile);
 
                     try (Statement statement2 = this.conn.createStatement()) {
                         FilesUtils.convertResultToJson(
@@ -215,6 +216,7 @@ public class Cruncher
                                 printAsArray
                         );
                     }
+                    reachedStage = ReachedCrunchStage.OUTPUT_JSON_CONVERTED;
                 }
             }
             catch (Exception ex) {
@@ -238,18 +240,18 @@ public class Cruncher
                 }
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             throw ex;
         }
     }
 
     enum ReachedCrunchStage {
         NONE,
-        FILES_PREPROCESSED,
-        TABLES_CREATED,
+        INPUT_FILES_PREPROCESSED,
+        INPUT_TABLES_CREATED,
         OUTPUT_TABLE_CREATED,
-        OUTPUT_TABLE_FILLED;
+        OUTPUT_TABLE_FILLED,
+        OUTPUT_JSON_CONVERTED;
 
         public boolean passed(ReachedCrunchStage stage)
         {
@@ -275,18 +277,9 @@ public class Cruncher
 
         //String sqlRegex = "[^']*\\[SELECT .*" + notFoundName + ".*FROM.*";
         String sqlRegex = ".*SELECT.*"+notFoundName+".*FROM.*";
-        //log.finer(String.format("\n\tNot found object: %s\n\tMsg: %s\n\tRegex: %s", notFoundName, message.toUpperCase(), sqlRegex));
+        //LOG.finer(String.format("\n\tNot found object: %s\n\tMsg: %s\n\tRegex: %s", notFoundName, message.toUpperCase(), sqlRegex));
 
         return message.toUpperCase().matches(sqlRegex);
-    }
-
-    private List<String> getResultSetColumnNames(ResultSet rs) throws SQLException
-    {
-        String [] colNames_ = new String[rs.getMetaData().getColumnCount()];
-        for (int colIndex = 0; colIndex < colNames_.length; colIndex++) {
-            colNames_[colIndex] = rs.getMetaData().getColumnName(colIndex + 1).toLowerCase();
-        }
-        return Arrays.asList(colNames_);
     }
 
     private String formatListOfAvailableTables(boolean withColumns)
@@ -317,7 +310,7 @@ public class Cruncher
         }
         catch (SQLException ex) {
             String msg = "Failed listing tables: " + ex.getMessage();
-            log.severe(msg);
+            LOG.severe(msg);
             return msg;
         }
     }
@@ -336,101 +329,6 @@ public class Cruncher
             initialNumber = (System.currentTimeMillis() - TIMESTAMP_SUBSTRACT);
         }
         return initialNumber;
-    }
-
-    /**
-     * Combine the input files (typically, concatenate).
-     * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
-     * The combined input files will be witten under the respective "group root directory".
-     * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
-     */
-    private static List<Path> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
-    {
-        switch (options.combineInputFiles) {
-            case NONE: default: return inputPaths;
-            case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
-            case CONCAT:
-                log.fine("Concatenating input files:");
-
-                // First, expand the directories.
-                Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
-                // null will be used as a special key for COMBINE_ALL_FILES.
-                fileGroupsToConcat.putIfAbsent(null, new ArrayList<>());
-
-                List<Path> concatenatedFiles = new ArrayList<>();
-                for (Path inputPath: inputPaths) {
-                    log.info(" * About to concat " + inputPath);
-                    try {
-                        // Put files simply to "global" group. Might be improved in the future.
-                        if (inputPath.toFile().isFile())
-                            fileGroupsToConcat.get(null).add(inputPath);
-                        // Walk directories for CSV, and group them as per options.combineDirs.
-                        if (inputPath.toFile().isDirectory()) {
-
-                            Consumer<Path> fileToGroupSorter = null;
-                            switch (options.combineDirs) {
-                                case COMBINE_ALL_FILES: {
-                                    List<Path> fileGroup = fileGroupsToConcat.get(null);
-                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
-                                    } break;
-                                case COMBINE_PER_INPUT_DIR: {
-                                    List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
-                                    } break;
-                                case COMBINE_PER_EACH_DIR: {
-                                    //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                    fileToGroupSorter = curPath -> { fileGroupsToConcat.get(curPath.toAbsolutePath()).add(curPath); };
-                                }
-                            }
-
-                            log.finer("   *** About to walk" + inputPath);
-                            Files.walk(inputPath)
-                                    .filter(curPath -> Files.isRegularFile(curPath) && curPath.getFileName().toString().endsWith(FILENAME_SUFFIX_CSV))
-                                    .forEach(fileToGroupSorter);
-                            log.finer("   *** After walking: " + fileGroupsToConcat.size());
-                        }
-                    } catch (Exception ex) {
-                        throw new RuntimeException("Failed combining the input files in ");
-                    }
-                }
-
-                // Then combine the file sets.
-
-                Path defaultDestDir = Paths.get(options.outputPathCsv).getParent(); // Paths.get(System.getProperty("user.dir"));
-                int filesCounter = 0;
-
-                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet())
-                {
-                    String dirLabel = fileGroup.getKey() == null ? "all files" : ""+fileGroup.getKey();
-                    log.info("   *** Combining " + dirLabel + ": " + fileGroup.getValue());
-
-                    // Sort
-                    List<Path> sortedPaths = FilesUtils.sortInputPaths(fileGroup.getValue(), options.sortInputFiles).stream().collect(Collectors.toList());
-
-                    Path destDir = fileGroup.getKey();
-                    fileGroupsToConcat.put(destDir, sortedPaths);
-
-                    // Assorted files will be put to the "current dir". Or to the result dir?
-                    if (destDir == null) {
-                        destDir = defaultDestDir.resolve("concat");
-                        Files.createDirectories(destDir);
-                    }
-
-                    // Come up with some good name for the combined file.
-                    Path concatenatedFilePath =
-                        destDir.resolve(destDir.getFileName().toString()
-                            + "_" + ++filesCounter + FILENAME_SUFFIX_CSV);
-                    // TODO: Optionally this should go to to defaultDestDir.
-                    //       1) Find common deepest ancestor dir.
-                    //       2) From each dest path, substract the differentiating subpath.
-                    //       3) Create the subdirs in defaultDestDir and save there.
-
-                    FilesUtils.concatFiles(sortedPaths, concatenatedFilePath);
-                    concatenatedFiles.add(concatenatedFilePath);
-                }
-
-                return concatenatedFiles;
-        }
     }
 
 
@@ -541,7 +439,7 @@ public class Cruncher
         sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
         sb.delete(sb.length() - 2, sb.length());
         sb.append(" )");
-        log.info("Table DDL SQL: " + sb.toString());
+        LOG.info("Table DDL SQL: " + sb.toString());
 
         executeUpdate(sb.toString());
 
@@ -553,7 +451,7 @@ public class Cruncher
         String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
         String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
         String sql = "SET TABLE " + tableName + " SOURCE \'" + csvPath + ";" + csvSettings + "' " + DESC;
-        log.info("CSV import SQL: " + sql);
+        LOG.info("CSV import SQL: " + sql);
         try (Statement st = this.conn.createStatement()) {
             st.execute(sql);
         }
@@ -574,14 +472,14 @@ public class Cruncher
                     String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
                     //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
 
-                    log.finer("Column change attempt SQL: " + sqlCol);
+                    LOG.finer("Column change attempt SQL: " + sqlCol);
                     try (Statement st = this.conn.createStatement()) {
                         st.execute(sqlCol);
-                        log.fine(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
+                        LOG.fine(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
                         columnsFitIntoType.put(colName, sqlType);
                     }
                     catch (SQLException ex) {
-                        // log.info(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                        // LOG.info(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
                     }
                 }
             }
@@ -594,13 +492,13 @@ public class Cruncher
                 String sqlType = colNameAndType.getValue();
                 String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
 
-                log.finer("Column change attempt SQL: " + sqlAlter);
+                LOG.finer("Column change attempt SQL: " + sqlAlter);
                 try (Statement st = this.conn.createStatement()) {
                     st.execute(sqlAlter);
-                    log.fine(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
+                    LOG.fine(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
                 }
                 catch (SQLException ex) {
-                    log.finer(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                    LOG.finer(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
                 }
             }
 
@@ -611,9 +509,9 @@ public class Cruncher
     private void detachTable(String tableName, boolean reattach, boolean drop) throws SQLException
     {
         if (reattach)
-            log.info("Re-ataching table: " + tableName);
+            LOG.info("Re-ataching table: " + tableName);
         else
-            log.info(String.format("Deataching%s table: %s", drop ? " and dropping" : "", tableName));
+            LOG.info(String.format("Deataching%s table: %s", drop ? " and dropping" : "", tableName));
 
 
         String sql = "SET TABLE " + Utils.escapeSql(tableName) + " SOURCE " + (reattach ? "ON" : "OFF");
@@ -654,7 +552,7 @@ public class Cruncher
             case Types.TIME:    val = (""+resultSet.getTime(colIndex)); break;
             case Types.TIMESTAMP:    val = (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T');  break; // JS Date() takes "1995-12-17T03:24:00"
             default:
-                log.severe("Unsupported type of column " + metaData.getColumnLabel(colIndex) + ": " + metaData.getColumnTypeName(colIndex));
+                LOG.severe("Unsupported type of column " + metaData.getColumnLabel(colIndex) + ": " + metaData.getColumnTypeName(colIndex));
                 return null;
         }
         if (resultSet.wasNull())

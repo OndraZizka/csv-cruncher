@@ -4,18 +4,26 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -24,6 +32,8 @@ import org.apache.commons.io.IOUtils;
 
 public class FilesUtils
 {
+    private static final Logger LOG = Logger.getLogger(FilesUtils.class.getName());
+
     /**
      * Concatenates given files into a file in the resultPath, named "CsvCruncherConcat.csv".
      * If some of the input files does not end with a new line, it is appended after that file.
@@ -168,6 +178,101 @@ public class FilesUtils
             case Types.DATE:    builder.add(columnLabel, ""+resultSet.getDate(colIndex)); break;
             case Types.TIME:    builder.add(columnLabel, ""+resultSet.getTime(colIndex)); break;
             case Types.TIMESTAMP:    builder.add(columnLabel, (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T')); break; // JS Date() takes "1995-12-17T03:24:00"
+        }
+    }
+
+    /**
+     * Combine the input files (typically, concatenate).
+     * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
+     * The combined input files will be witten under the respective "group root directory".
+     * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
+     */
+    static List<Path> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
+    {
+        switch (options.combineInputFiles) {
+            case NONE: default: return inputPaths;
+            case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
+            case CONCAT:
+                LOG.fine("Concatenating input files:");
+
+                // First, expand the directories.
+                Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
+                // null will be used as a special key for COMBINE_ALL_FILES.
+                fileGroupsToConcat.putIfAbsent(null, new ArrayList<>());
+
+                List<Path> concatenatedFiles = new ArrayList<>();
+                for (Path inputPath: inputPaths) {
+                    LOG.info(" * About to concat " + inputPath);
+                    try {
+                        // Put files simply to "global" group. Might be improved in the future.
+                        if (inputPath.toFile().isFile())
+                            fileGroupsToConcat.get(null).add(inputPath);
+                        // Walk directories for CSV, and group them as per options.combineDirs.
+                        if (inputPath.toFile().isDirectory()) {
+
+                            Consumer<Path> fileToGroupSorter = null;
+                            switch (options.combineDirs) {
+                                case COMBINE_ALL_FILES: {
+                                    List<Path> fileGroup = fileGroupsToConcat.get(null);
+                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
+                                    } break;
+                                case COMBINE_PER_INPUT_DIR: {
+                                    List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
+                                    } break;
+                                case COMBINE_PER_EACH_DIR: {
+                                    //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                                    fileToGroupSorter = curPath -> { fileGroupsToConcat.get(curPath.toAbsolutePath()).add(curPath); };
+                                }
+                            }
+
+                            LOG.finer("   *** About to walk" + inputPath);
+                            Files.walk(inputPath)
+                                    .filter(curPath -> Files.isRegularFile(curPath) && curPath.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
+                                    .forEach(fileToGroupSorter);
+                            LOG.finer("   *** After walking: " + fileGroupsToConcat.size());
+                        }
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Failed combining the input files in ");
+                    }
+                }
+
+                // Then combine the file sets.
+
+                Path defaultDestDir = Paths.get(options.outputPathCsv).getParent(); // Paths.get(System.getProperty("user.dir"));
+                int filesCounter = 0;
+
+                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet())
+                {
+                    String dirLabel = fileGroup.getKey() == null ? "all files" : ""+fileGroup.getKey();
+                    LOG.info("   *** Combining " + dirLabel + ": " + fileGroup.getValue());
+
+                    // Sort
+                    List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles).stream().collect(Collectors.toList());
+
+                    Path destDir = fileGroup.getKey();
+                    fileGroupsToConcat.put(destDir, sortedPaths);
+
+                    // Assorted files will be put to the "current dir". Or to the result dir?
+                    if (destDir == null) {
+                        destDir = defaultDestDir.resolve("concat");
+                        Files.createDirectories(destDir);
+                    }
+
+                    // Come up with some good name for the combined file.
+                    Path concatenatedFilePath =
+                        destDir.resolve(destDir.getFileName().toString()
+                            + "_" + ++filesCounter + Cruncher.FILENAME_SUFFIX_CSV);
+                    // TODO: Optionally this should go to to defaultDestDir.
+                    //       1) Find common deepest ancestor dir.
+                    //       2) From each dest path, substract the differentiating subpath.
+                    //       3) Create the subdirs in defaultDestDir and save there.
+
+                    concatFiles(sortedPaths, concatenatedFilePath);
+                    concatenatedFiles.add(concatenatedFilePath);
+                }
+
+                return concatenatedFiles;
         }
     }
 }
