@@ -6,6 +6,7 @@ import static cz.dynawest.csvcruncher.Options.CombineInputFiles.EXCEPT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.INTERSECT;
 import cz.dynawest.logging.LoggingUtils;
 import java.io.PrintStream;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.EnumUtils;
@@ -37,6 +38,10 @@ public class App
         catch (IllegalArgumentException var3) {
             System.out.println("" + var3.getMessage());
             System.exit(1);
+        }
+        catch (Throwable ex) {
+            log.log(Level.SEVERE,"CSV Cruncher failed: " + ex.getMessage(), ex);
+            System.exit(127);
         }
     }
 

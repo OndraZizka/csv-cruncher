@@ -125,7 +125,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
@@ -144,7 +144,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
@@ -164,7 +164,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
@@ -176,6 +176,22 @@
                                 -out target/results/result.csv
                                 -sql 'SELECT session_uid, name, session_type, created_time, modified_date
                                 FROM concat_1 ORDER BY session_type, created_time DESC'
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>testCrunch-combineInputFiles-singleDir</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                --json --combineInputs --rowNumbers
+                                -sql 'SELECT * FROM CONCAT_1'
+                                -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
+                                -out target/results/session_telephony_pins.csv
                             </commandlineArgs>
                         </configuration>
                     </execution>

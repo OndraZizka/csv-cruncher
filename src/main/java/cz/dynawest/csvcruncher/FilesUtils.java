@@ -201,40 +201,39 @@ public class FilesUtils
                 fileGroupsToConcat.putIfAbsent(null, new ArrayList<>());
 
                 List<Path> concatenatedFiles = new ArrayList<>();
-                for (Path inputPath: inputPaths) {
+                for (Path inputPath: inputPaths) try {
                     LOG.info(" * About to concat " + inputPath);
-                    try {
-                        // Put files simply to "global" group. Might be improved in the future.
-                        if (inputPath.toFile().isFile())
-                            fileGroupsToConcat.get(null).add(inputPath);
-                        // Walk directories for CSV, and group them as per options.combineDirs.
-                        if (inputPath.toFile().isDirectory()) {
 
-                            Consumer<Path> fileToGroupSorter = null;
-                            switch (options.combineDirs) {
-                                case COMBINE_ALL_FILES: {
-                                    List<Path> fileGroup = fileGroupsToConcat.get(null);
-                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
-                                    } break;
-                                case COMBINE_PER_INPUT_DIR: {
-                                    List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                    fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
-                                    } break;
-                                case COMBINE_PER_EACH_DIR: {
-                                    //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                    fileToGroupSorter = curPath -> { fileGroupsToConcat.get(curPath.toAbsolutePath()).add(curPath); };
-                                }
+                    // Put files simply to "global" group. Might be improved in the future.
+                    if (inputPath.toFile().isFile())
+                        fileGroupsToConcat.get(null).add(inputPath);
+                    // Walk directories for CSV, and group them as per options.combineDirs.
+                    if (inputPath.toFile().isDirectory()) {
+
+                        Consumer<Path> fileToGroupSorter = null;
+                        switch (options.combineDirs) {
+                            case COMBINE_ALL_FILES: {
+                                List<Path> fileGroup = fileGroupsToConcat.get(null);
+                                fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
+                                } break;
+                            case COMBINE_PER_INPUT_DIR: {
+                                List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                                fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
+                                } break;
+                            case COMBINE_PER_EACH_DIR: {
+                                //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                                fileToGroupSorter = curPath -> { fileGroupsToConcat.get(curPath.toAbsolutePath()).add(curPath); };
                             }
-
-                            LOG.finer("   *** About to walk" + inputPath);
-                            Files.walk(inputPath)
-                                    .filter(curPath -> Files.isRegularFile(curPath) && curPath.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
-                                    .forEach(fileToGroupSorter);
-                            LOG.finer("   *** After walking: " + fileGroupsToConcat.size());
                         }
-                    } catch (Exception ex) {
-                        throw new RuntimeException("Failed combining the input files in ");
+
+                        LOG.finer("   *** About to walk" + inputPath);
+                        Files.walk(inputPath)
+                                .filter(curPath -> Files.isRegularFile(curPath) && curPath.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
+                                .forEach(fileToGroupSorter);
+                        LOG.finer("   *** After walking: " + fileGroupsToConcat.size());
                     }
+                } catch (Exception ex) {
+                    throw new RuntimeException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
                 }
 
                 // Then combine the file sets.
