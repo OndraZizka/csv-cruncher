@@ -192,6 +192,19 @@
                             </commandlineArgs>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>testHelp</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>true</skip>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                -h
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 

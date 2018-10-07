@@ -5,6 +5,7 @@ import static cz.dynawest.csvcruncher.Options.CombineInputFiles.CONCAT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.EXCEPT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.INTERSECT;
 import cz.dynawest.logging.LoggingUtils;
+import java.io.PrintStream;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.EnumUtils;
@@ -137,6 +138,13 @@ public class App
                 System.exit(0);
             }
 
+            else if ("-h".equals(arg) || "--vhelp".equals(arg)) {
+                String version = Utils.getVersion();
+                System.out.println(" CSV Cruncher version " + version);
+                printUsage(System.out);
+                System.exit(0);
+            }
+
             else if (arg.startsWith("-")) {
                 System.out.println("ERROR: Unknown parameter: " + arg);
                 System.exit(1);
@@ -174,7 +182,7 @@ public class App
                 }
                 else {
                     if (relPos != 2) {
-                        printUsage();
+                        printUsage(System.out);
                         throw new IllegalArgumentException("Wrong arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...");
                     }
 
@@ -184,7 +192,7 @@ public class App
         }
 
         if (!opt.isFilled()) {
-            printUsage();
+            printUsage(System.out);
             throw new IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...");
         }
         else {
@@ -206,10 +214,10 @@ public class App
         );
     }
 
-    private static void printUsage()
+    private static void printUsage(PrintStream dest)
     {
-        System.out.println("  Usage:");
-        System.out.println("    crunch [-in] <inCSV> [<inCSV> ...] [-out] <outCSV> [--<option> --...] [-sql] <SQL>");
+        dest.println("  Usage:");
+        dest.println("    crunch [-in] <inCSV> [<inCSV> ...] [-out] <outCSV> [--<option> --...] [-sql] <SQL>");
     }
 
     private enum OptionsNext
