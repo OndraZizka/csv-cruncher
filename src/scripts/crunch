@@ -1,7 +1,7 @@
-
+#!/bin/bash
 
 SCRIPT_PATH="$(cd "${0%/*}" 2>/dev/null; echo "$PWD"/"${0##*/}")"
-SCRIPT_DIR=`dirname "$scriptPath"`
+SCRIPT_DIR=`dirname "$SCRIPT_PATH"`
 
 
 #echo "In script PWD:"`pwd`;
