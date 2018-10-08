@@ -8,6 +8,7 @@ import cz.dynawest.logging.LoggingUtils;
 import java.io.PrintStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -76,6 +77,20 @@ public class App
                     } catch (Exception ex) {
                         throw new RuntimeException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
                     }
+                }
+            }
+
+            // Ignore lines matching a regex.
+            else if (arg.startsWith("--ignoreLinesMatching")) {
+                if (!arg.startsWith("--ignoreLinesMatching=")) {
+                    throw new IllegalArgumentException("Option --ignoreLinesMatching has to have a value (regular expression).");
+                }
+
+                String regex = StringUtils.removeStart(arg, "--ignoreFirstLines=");
+                try {
+                    opt.ignoreLineRegex = Pattern.compile(regex);
+                } catch (Exception ex) {
+                    throw new RuntimeException("Not a valid regex: " + regex + ". " + ex.getMessage(), ex);
                 }
             }
 

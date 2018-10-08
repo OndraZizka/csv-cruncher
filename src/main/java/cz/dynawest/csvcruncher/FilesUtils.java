@@ -1,10 +1,13 @@
 package cz.dynawest.csvcruncher;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -25,11 +28,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
-import org.apache.commons.io.IOUtils;
 
 public class FilesUtils
 {
@@ -40,20 +44,37 @@ public class FilesUtils
      * If some of the input files does not end with a new line, it is appended after that file.
      * @return The path to the created file.
      */
-    static Path concatFiles(List<Path> filesToConcat, Path resultPath)
+    static Path concatFiles(List<Path> filesToConcat, Path resultPath, int ignoreFirstLines, Pattern ignoreLineRegex)
     {
         File resultFile = resultPath.toFile();
-        try(FileOutputStream resultOS = new FileOutputStream(resultFile);) {
+        Matcher ignoreLineMatcher = ignoreLineRegex == null ? null : ignoreLineRegex.matcher("");
+        boolean headerIncluded = false;
+
+        //  try(FileOutputStream resultOS = new FileOutputStream(resultFile);) {
+        try(FileWriter resultWriter = new FileWriter(resultFile)) {
             for (Path pathToConcat : filesToConcat) {
-                try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
-                    IOUtils.copy(fileToConcatIS, resultOS);
+                //try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
+                //    IOUtils.copy(fileToConcatReader, resultOS);
+                try (BufferedReader fileToConcatReader = new BufferedReader(new InputStreamReader(new FileInputStream(pathToConcat.toFile())))) {
+                    String line;
+                    while (null != (line = fileToConcatReader.readLine())){
+
+                        if (headerIncluded && ignoreFirstLines-- > 0)
+                            continue;
+                        if (headerIncluded && null != ignoreLineMatcher && ignoreLineMatcher.reset(line).matches())
+                            continue;
+                        headerIncluded |= true; // Take the very first line.
+
+                        resultWriter.append(line).append("\n");
+                    }
                 }
+
                 // Read the last byte, check if it's a \n. If not, let's append one.
-                try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
+                /*try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
                     fileToConcatIS.skip(pathToConcat.toFile().length()-1);
                     if ('\n' != fileToConcatIS.read())
-                        resultOS.write('\n');
-                }
+                        resultWriter.write('\n');
+                }*/
             }
         }
         catch (Exception ex) {
@@ -287,7 +308,7 @@ public class FilesUtils
                     //       3) Create the subdirs in defaultDestDir and save there.
 
                     // Combine the file sets.
-                    concatFiles(sortedPaths, concatenatedFilePath);
+                    concatFiles(sortedPaths, concatenatedFilePath, options.ignoreFirstLines, options.ignoreLineRegex);
                     concatenatedFiles.add(concatenatedFilePath);
                 }
 

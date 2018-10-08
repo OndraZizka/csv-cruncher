@@ -70,8 +70,12 @@ Usage
 
 ##### Pre-processing
 
+ * --ignoreLinesMatching=<regEx>
+    Ignore lines matching given regular expression.
+
  * --ignoreFirstLines[=<number>]
-    Ignore first N lines; the first is considered a header with column names.
+    Ignore first `number` lines; the first is considered a header with column names.
+    This counts regardless of `ignoreLineRegex`.
 
  * `--combineInputs\[=concat|intersect|substract]`
     Combine the input files into one file, optionally computing an intersection or substracting one from another.
@@ -79,7 +83,7 @@ Usage
  * `--combineDirs\[=perDir|perInputDir|perInputSubdir|all]`
     Controls which files are combined together.
 
- * --sortInputs\[=paramsOrder|alpha|time]
+ * `--sortInputs\[=paramsOrder|alpha|time]`
     Controls how files are sorted before combining, and in which order the tables are created.
 
     Read the logs or `SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.

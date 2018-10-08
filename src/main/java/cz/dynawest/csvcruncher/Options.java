@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 class Options
 {
@@ -9,13 +10,16 @@ class Options
     protected String sql;
     protected String outputPathCsv;
     protected String dbPath = null;
-    protected int ignoreFirstLines = 1;
 
-    protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
+    protected int ignoreFirstLines = 1;
+    protected Pattern ignoreLineRegex;
+
     protected Long initialRowNumber = null;
     protected SortInputFiles sortInputFiles = SortInputFiles.PARAMS_ORDER;
     protected CombineInputFiles combineInputFiles = CombineInputFiles.NONE;
     protected CombineDirectories combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR;
+    protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
+
 
     public boolean isFilled()
     {
@@ -28,6 +32,8 @@ class Options
                "\n    inputPaths: " + this.inputPaths +
                "\n    outputPathCsv: " + this.outputPathCsv +
                "\n    sql: " + this.sql +
+               "\n    ignoreLineRegex: " + this.ignoreLineRegex +
+               "\n    ignoreFirstLines: " + this.ignoreFirstLines +
                "\n    sortInputFiles: " + this.sortInputFiles +
                "\n    combineInputFiles: " + this.combineInputFiles +
                "\n    combineDirs: " + this.combineDirs +
