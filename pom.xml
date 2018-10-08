@@ -165,7 +165,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -180,12 +180,13 @@
                             </commandlineArgs>
                         </configuration>
                     </execution>
+                    <!-- SELECT *  used with - -rowNumbers -->
                     <execution>
-                        <id>testCrunch-combineInputFiles-singleDir</id>
+                        <id>testCrunch-combineInputFiles-selectStar-negative</id>
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>false</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -194,12 +195,29 @@
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
                             </commandlineArgs>
-                            <!-- Suppress output. This will fail because the input files don't match.
+                            <!-- Suppress output. This will fail because the input files don't match. -->
                             <outputFile>${project.build.outputDirectory}/testOutput</outputFile>
                             <successCodes>
-                                <code>127</code>
+                                <code>1</code>
+                                <code>2</code>
                             </successCodes>
-                             -->
+                        </configuration>
+                    </execution>
+                    <!-- SELECT myTable.*  used with - -rowNumbers -->
+                    <execution>
+                        <id>testCrunch-combineInputFiles-selectStar-qualified</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${testRunCmd}
+                                --json --combineInputs --rowNumbers
+                                -sql 'SELECT session_telephony_pins.* FROM session_telephony_pins'
+                                -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
+                                -out target/results/session_telephony_pins.csv
+                            </commandlineArgs>
                         </configuration>
                     </execution>
                     <execution>
@@ -223,7 +241,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}

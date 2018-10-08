@@ -230,6 +230,28 @@ public class App
             }
         }
 
+        // HSQLDB bug, see https://stackoverflow.com/questions/52708378/hsqldb-insert-into-select-null-from-leads-to-duplicate-column-name
+        if (opt.initialRowNumber != null && opt.sql != null) {
+
+            boolean itsForSure = opt.sql.matches(".*SELECT +\\*.*|.*[^.]\\* +FROM .*");
+
+            if (itsForSure || opt.sql.matches(".*SELECT.*[^.]\\* .*FROM.*")) {
+                String msg =
+                        "\n    WARNING! It looks like you use --rowNumbers with `SELECT *`." +
+                        "\n    Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'." +
+                        "\n    Use table-qualified way: `SELECT myTable.*`";
+                if (itsForSure) {
+                    //throw new IllegalArgumentException(msg);
+                    log.severe("\n" + msg + "\n\n");
+                    System.exit(1);
+                } else {
+                    String notSure = "\n    (This detection is not reliable so the program will continue, but likely fail.)";
+                    log.warning("\n" + msg + notSure + "\n\n");
+                }
+            }
+        }
+
+
         if (!opt.isFilled()) {
             printUsage(System.out);
             throw new IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...");

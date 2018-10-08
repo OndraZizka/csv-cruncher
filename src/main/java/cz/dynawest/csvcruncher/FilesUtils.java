@@ -261,7 +261,7 @@ public class FilesUtils
                         LOG.finer("   *** About to walk" + inputPath);
                         Files.walk(inputPath)
                                 .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
-                                .peek(path -> System.out.println("fileToGroupSorter " + path))
+                                ///.peek(path -> System.out.println("fileToGroupSorter " + path))
                                 .forEach(fileToGroupSorter);
                         LOG.finer("   *** After walking: " + fileGroupsToConcat);
                     }

@@ -202,6 +202,7 @@ public class Cruncher
 
                 String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
                 LOG.info(" * User's SQL: " + userSql);
+                //LOG.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
                 int rowsAffected = executeDbCommand(userSql, "Error executing user SQL: ");
                 reachedStage = ReachedCrunchStage.OUTPUT_TABLE_FILLED;
 
