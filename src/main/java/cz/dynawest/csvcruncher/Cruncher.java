@@ -97,7 +97,7 @@ public class Cruncher
                 }
 
 
-                LOG.info(" --- ===================== --- ");
+                ///LOG.info(" --- ================================================================ --- ");
 
                 // For each input CSV file...
                 for (Path path : inputPaths) {
@@ -440,6 +440,13 @@ public class Cruncher
     }
 
 
+    /**
+     * Creates the input or output table, with the right column names, and binds the file.<br/>
+     * For output tables, the file is optionally overwritten if exists.<br/>
+     * A header with columns names is added to the output table.<br/>
+     * Input tables columns are optimized after binding the file by attempting to reduce the column type.
+     * (The output table has to be optimized later.)<br/>
+     */
     private void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, String counterColumnDdl, boolean input) throws SQLException
     {
         boolean readOnly = false;
@@ -482,9 +489,16 @@ public class Cruncher
         String ignoreFirstFlag = ignoreFirst ? "ignore_first=true;" : "";
         String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
         String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
-        String sql = "SET TABLE " + tableName + " SOURCE \'" + csvPath + ";" + csvSettings + "' " + DESC;
+        String sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC);
         LOG.info("CSV import SQL: " + sql);
         executeDbCommand(sql, "Failed to import CSV: ");
+
+        // SET TABLE <table name> SOURCE HEADER
+        if (!input) {
+            sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString());
+            LOG.info("CSV source header SQL: " + sql);
+            executeDbCommand(sql, "Failed to set CSV header: ");
+        }
 
         // Try to convert columns to numbers, where applicable.
         if (input) {
