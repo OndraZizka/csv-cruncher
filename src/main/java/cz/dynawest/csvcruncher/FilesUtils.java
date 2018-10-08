@@ -19,11 +19,12 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -214,64 +215,98 @@ public class FilesUtils
                         switch (options.combineDirs) {
                             case COMBINE_ALL_FILES: {
                                 List<Path> fileGroup = fileGroupsToConcat.get(null);
-                                fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
-                                } break;
+                                fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
+                            } break;
                             case COMBINE_PER_INPUT_DIR: {
                                 List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                fileToGroupSorter = curPath -> { fileGroup.add(curPath); };
-                                } break;
+                                fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
+                            } break;
                             case COMBINE_PER_EACH_DIR: {
                                 //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                fileToGroupSorter = curPath -> { fileGroupsToConcat.get(curPath.toAbsolutePath()).add(curPath); };
-                            }
+                                fileToGroupSorter = curFile -> {
+                                    fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<Path>()).add(curFile);
+                                };
+                            } break;
                         }
 
                         LOG.finer("   *** About to walk" + inputPath);
                         Files.walk(inputPath)
-                                .filter(curPath -> Files.isRegularFile(curPath) && curPath.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
+                                .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
+                                .peek(path -> System.out.println("fileToGroupSorter " + path))
                                 .forEach(fileToGroupSorter);
-                        LOG.finer("   *** After walking: " + fileGroupsToConcat.size());
+                        LOG.finer("   *** After walking: " + fileGroupsToConcat);
                     }
                 } catch (Exception ex) {
                     throw new RuntimeException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
                 }
 
-                // Then combine the file sets.
+                // Get the final concatenated file path.
 
-                Path defaultDestDir = Paths.get(options.outputPathCsv).getParent(); // Paths.get(System.getProperty("user.dir"));
+                Path defaultDestDir = Paths.get(options.outputPathCsv).getParent().resolve("concat/"); // System.getProperty("user.dir");
                 int filesCounter = 0;
+
+                Set<Path> usedConcatFilePaths = new HashSet<>();
 
                 for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet())
                 {
                     String dirLabel = fileGroup.getKey() == null ? "all files" : ""+fileGroup.getKey();
-                    LOG.info("   *** Combining " + dirLabel + ": " + fileGroup.getValue());
+                    if (fileGroup.getValue().isEmpty()) {
+                        LOG.info("   *** No files found in " + dirLabel + ".");
+                        continue;
+                    } else
+                        LOG.info("   *** Combining " + dirLabel + ": " + fileGroup.getValue());
 
                     // Sort
-                    List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles).stream().collect(Collectors.toList());
+                    List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);//.stream().collect(Collectors.toList());
+                    fileGroupsToConcat.put(fileGroup.getKey(), sortedPaths); // Replace this group's list with the sorted one?
 
-                    Path destDir = fileGroup.getKey();
-                    fileGroupsToConcat.put(destDir, sortedPaths);
-
-                    // Assorted files will be put to the "current dir". Or to the result dir?
-                    if (destDir == null) {
-                        destDir = defaultDestDir.resolve("concat");
-                        Files.createDirectories(destDir);
-                    }
+                    // Destination directory
+                    Path destDir = defaultDestDir;
+                    Files.createDirectories(destDir);
+                    LOG.info("    Into dest dir: " + destDir);
 
                     // Come up with some good name for the combined file.
-                    Path concatenatedFilePath =
-                        destDir.resolve(destDir.getFileName().toString()
-                            + "_" + ++filesCounter + Cruncher.FILENAME_SUFFIX_CSV);
-                    // TODO: Optionally this should go to to defaultDestDir.
+                    Path concatenatedFilePath;
+                    if (fileGroup.getKey() == null) {
+                        // Assorted files will be combined into resultDir/concat.csv.
+                        concatenatedFilePath = defaultDestDir.resolve("concat" + Cruncher.FILENAME_SUFFIX_CSV);
+                    }
+                    else {
+                        String concatFileName = getNonUsedName(fileGroup.getKey().getFileName().toString(), usedConcatFilePaths);
+                        concatenatedFilePath = defaultDestDir.resolve(concatFileName);
+                    }
+                    usedConcatFilePaths.add(concatenatedFilePath);
+                    LOG.info("    Into dest file: " + concatenatedFilePath);
+
+                    // TODO: Optionally this could be named better:
                     //       1) Find common deepest ancestor dir.
                     //       2) From each dest path, substract the differentiating subpath.
                     //       3) Create the subdirs in defaultDestDir and save there.
 
+                    // Combine the file sets.
                     concatFiles(sortedPaths, concatenatedFilePath);
                     concatenatedFiles.add(concatenatedFilePath);
                 }
 
                 return concatenatedFiles;
         }
+    }
+
+    /**
+     * Checks if a name, e.g. "someOutputFile", is already used; if so, tries "someOutputFile_1", and so on.
+     */
+    private static String getNonUsedName(String nameBase, Set<Path> usedConcatFilePaths)
+    {
+        String concatFileName = nameBase + Cruncher.FILENAME_SUFFIX_CSV;
+        if (!usedConcatFilePaths.contains(concatFileName))
+            return concatFileName;
+
+        int counter = 1;
+        do {
+            concatFileName = nameBase + "_" + counter++ + Cruncher.FILENAME_SUFFIX_CSV;
+        }
+        while (usedConcatFilePaths.contains(concatFileName));
+
+        return concatFileName;
     }
 }

@@ -14,6 +14,7 @@
 
         <jvm.args.debug></jvm.args.debug> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
+        <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
     </properties>
 
 
@@ -128,7 +129,7 @@
                             <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                ${testRunCmd}
                                 --json=entries
                                 --rowNumbers
                                 -in src/test/data/eapBuilds.csv
@@ -147,7 +148,7 @@
                             <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                ${testRunCmd}
                                 --json=entries
                                 --rowNumbers
                                 --combineInputs
@@ -167,7 +168,7 @@
                             <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                ${testRunCmd}
                                 --json=entries
                                 --rowNumbers
                                 --combineInputs=concat
@@ -187,9 +188,9 @@
                             <skip>false</skip>
                             <executable>java</executable>
                             <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
+                                ${testRunCmd}
                                 --json --combineInputs --rowNumbers
-                                -sql 'SELECT * FROM CONCAT_1'
+                                -sql 'SELECT * FROM session_telephony_pins'
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
                             </commandlineArgs>
@@ -202,10 +203,7 @@
                         <configuration>
                             <skip>true</skip>
                             <executable>java</executable>
-                            <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
-                                -v
-                            </commandlineArgs>
+                            <commandlineArgs>${testRunCmd} -v</commandlineArgs>
                         </configuration>
                     </execution>
                     <execution>
@@ -215,10 +213,7 @@
                         <configuration>
                             <skip>true</skip>
                             <executable>java</executable>
-                            <commandlineArgs>
-                                ${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar
-                                -h
-                            </commandlineArgs>
+                            <commandlineArgs>${testRunCmd} -h</commandlineArgs>
                         </configuration>
                     </execution>
                 </executions>

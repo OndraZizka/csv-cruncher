@@ -224,11 +224,10 @@ public class Cruncher
             finally
             {
                 LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
-
                 cleanUpInputOutputTables(tablesToFiles);
-
                 executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
                 this.conn.close();
+                LOG.info(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
             }
         }
         catch (Exception ex) {
@@ -240,7 +239,7 @@ public class Cruncher
     {
         //if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED))
         // I'm removing these stage checks, since the table might have been left
-        // from previous run. Later let's implement a cleanup at start.
+        // from previous run. Later let's implement a cleanup at start. TODO
         {
             for (Map.Entry<String, File> tableAndFile : inputTablesToFiles.entrySet()) {
                 try {
@@ -256,7 +255,7 @@ public class Cruncher
             try {
                 this.detachTable(TABLE_NAME__OUTPUT, false, true);
             } catch (Exception ex) {
-                LOG.severe("Could not delete the output table: " + ex.getMessage());
+                LOG.fine("Could not delete the output table: " + ex.getMessage());
             }
         }
 
