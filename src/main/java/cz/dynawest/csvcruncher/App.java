@@ -65,6 +65,20 @@ public class App
                     opt.jsonExportFormat = Options.JsonExportFormat.ENTRY_PER_LINE;
             }
 
+            // Ignore first N lines
+            else if (arg.startsWith("--ignoreFirstLines")) {
+                opt.ignoreFirstLines = 1;
+                if (arg.startsWith("--ignoreFirstLines=")) {
+                    String numberStr = StringUtils.removeStart(arg, "--ignoreFirstLines=");
+                    try {
+                        long number = Integer.parseInt(numberStr);
+                        opt.initialRowNumber = number;
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
+                    }
+                }
+            }
+
             // Row numbers
             else if (arg.startsWith("--rowNumbers")) {
                 opt.initialRowNumber = -1L;
@@ -223,6 +237,13 @@ public class App
     {
         dest.println("  Usage:");
         dest.println("    crunch [-in] <inCSV> [<inCSV> ...] [-out] <outCSV> [--<option> --...] [-sql] <SQL>");
+        /*
+        dest.println("  Options:");
+        dest.println("    --ignoreFirstLines[=<number>]     Ignore first N lines; the first is considered a header with column names.");
+        dest.println("    --rowNumbers[=<firstNumber>]      Add an unique incrementing number as a first column.");
+        dest.println("    --json[=<firstNumber>]      ");
+        TODO: Copy from the README.
+        */
     }
 
     private enum OptionsNext

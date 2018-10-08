@@ -9,6 +9,7 @@ class Options
     protected String sql;
     protected String outputPathCsv;
     protected String dbPath = null;
+    protected int ignoreFirstLines = 1;
 
     protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
     protected Long initialRowNumber = null;
@@ -49,7 +50,7 @@ class Options
         }
 
         @Override
-        public String getOptionValue() { return getOptionValue(); }
+        public String getOptionValue() { return optionValue; }
     }
 
     public enum CombineDirectories implements OptionEnum

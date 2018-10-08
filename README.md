@@ -70,11 +70,8 @@ Usage
 
 ##### Pre-processing
 
- * `--rowNumbers\[=<firstNumber>|remember]`
-    Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
-    By specifying `<firstNumber>`, the first number to be used can be set.
-    By default, a milliseconds-based timestamp times 1000 is used.
-    `remember` is yet to be implemented, and will continue where the last run stopped.
+ * --ignoreFirstLines[=<number>]
+    Ignore first N lines; the first is considered a header with column names.
 
  * `--combineInputs\[=concat|intersect|substract]`
     Combine the input files into one file, optionally computing an intersection or substracting one from another.
@@ -88,6 +85,12 @@ Usage
     Read the logs or `SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
 
 ##### Post-processing
+
+ * `--rowNumbers\[=<firstNumber>|remember]`
+    Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
+    By specifying `<firstNumber>`, the first number to be used can be set.
+    By default, a milliseconds-based timestamp times 1000 is used.
+    `remember` is yet to be implemented, and will continue where the last run stopped.
 
  * `--json\[=entries|array]`
     Create the output in JSON format.
