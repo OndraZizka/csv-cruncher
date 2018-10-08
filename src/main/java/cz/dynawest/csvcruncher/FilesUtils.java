@@ -155,6 +155,9 @@ public class FilesUtils
      */
     private static void addTheRightTypeToJavaxJsonBuilder(ResultSet resultSet, int colIndex, JsonObjectBuilder builder) throws SQLException
     {
+        if (resultSet.getObject(colIndex) == null)
+            return;
+
         ResultSetMetaData metaData = resultSet.getMetaData();
         String columnLabel = metaData.getColumnLabel(colIndex);
         if (columnLabel.matches("[A-Z]+"))
