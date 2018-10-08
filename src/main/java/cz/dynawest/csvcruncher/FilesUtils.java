@@ -85,7 +85,7 @@ public class FilesUtils
 
             // Cache which cols are numbers.
 
-            boolean[] colsAreNumbers = cacheWhichColumnsNeedJsonQuotes(metaData);
+            //boolean[] colsAreNumbers = cacheWhichColumnsNeedJsonQuotes(metaData);
 
 
             if (printAsArray)
