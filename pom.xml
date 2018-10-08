@@ -194,6 +194,11 @@
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
                             </commandlineArgs>
+                            <!-- Suppress output. This will fail because the input files don't match. -->
+                            <outputFile>${project.build.outputDirectory}/testOutput</outputFile>
+                            <successCodes>
+                                <code>127</code>
+                            </successCodes>
                         </configuration>
                     </execution>
                     <execution>

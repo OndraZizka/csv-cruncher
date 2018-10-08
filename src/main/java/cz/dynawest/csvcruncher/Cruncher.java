@@ -181,6 +181,9 @@ public class Cruncher
                     }
                     throw new RuntimeException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
                 }
+                catch (SQLException ex) {
+                    throw new RuntimeException("Failed executing the SQL:\n" + ex.getMessage(), ex);
+                }
                 ResultSet rs = statement.executeQuery();
 
                 // Column names
@@ -355,18 +358,18 @@ public class Cruncher
                         + this.formatListOfAvailableTables(true);
             }
 
+            if (ex.getMessage().contains("cannot be converted to target type")) {
+                errorMsg = StringUtils.defaultString(errorMsg) + " Looks like the data in the input files do not match.";
+            }
+
             if (StringUtils.isBlank(errorMsg))
                 errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL.";
 
-            if (StringUtils.isBlank(errorMsg))
-                throw ex;
-            else {
-                throw new RuntimeException(errorMsg
-                        + "\n  SQL: " + sql
-                        + "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage()
-                        + addToMsg
-                );
-            }
+            throw new RuntimeException(errorMsg
+                    + "\n  SQL: " + sql
+                    + "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage()
+                    + addToMsg
+            );
         }
     }
 
