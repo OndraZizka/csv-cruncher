@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -44,7 +45,7 @@ public class FilesUtils
      * If some of the input files does not end with a new line, it is appended after that file.
      * @return The path to the created file.
      */
-    static Path concatFiles(List<Path> filesToConcat, Path resultPath, int ignoreFirstLines, Pattern ignoreLineRegex)
+    static Path concatFiles(List<Path> filesToConcat, final Path resultPath, final int ignoreFirstLines, final Pattern ignoreLineRegex)
     {
         File resultFile = resultPath.toFile();
         Matcher ignoreLineMatcher = ignoreLineRegex == null ? null : ignoreLineRegex.matcher("");
@@ -55,15 +56,19 @@ public class FilesUtils
             for (Path pathToConcat : filesToConcat) {
                 //try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
                 //    IOUtils.copy(fileToConcatReader, resultOS);
+                int linesCountDown = ignoreFirstLines;
                 try (BufferedReader fileToConcatReader = new BufferedReader(new InputStreamReader(new FileInputStream(pathToConcat.toFile())))) {
                     String line;
-                    while (null != (line = fileToConcatReader.readLine())){
-
-                        if (headerIncluded && ignoreFirstLines-- > 0)
+                    while (null != (line = fileToConcatReader.readLine()))
+                    {
+                        linesCountDown--;
+                        ///System.out.printf("LINE: h: %b lcd: %d LINE:  %s\n", headerIncluded, linesCountDown, line); //
+                        if (headerIncluded && linesCountDown >= 0)
                             continue;
                         if (headerIncluded && null != ignoreLineMatcher && ignoreLineMatcher.reset(line).matches())
                             continue;
                         headerIncluded |= true; // Take the very first line.
+                        ///System.out.println("MADE IT...");
 
                         resultWriter.append(line).append("\n");
                     }
@@ -275,10 +280,16 @@ public class FilesUtils
                 {
                     String dirLabel = fileGroup.getKey() == null ? "all files" : ""+fileGroup.getKey();
                     if (fileGroup.getValue().isEmpty()) {
-                        LOG.info("   *** No files found in " + dirLabel + ".");
+                        if (null == fileGroup.getKey() && fileGroupsToConcat.size() == 1) {
+                            // There is just one catch-all group and it's empty -> we pre-create that one.
+                            LOG.info("   *** No files found.");
+                        }
+                        else
+                            LOG.info("   *** No files found in " + dirLabel + ".");
                         continue;
                     } else
-                        LOG.info("   *** Combining " + dirLabel + ": " + fileGroup.getValue());
+                        LOG.info("   *** Combining " + dirLabel + ": "
+                            + fileGroup.getValue().stream().map(path -> "\n\t* "+path).collect(Collectors.joining()));
 
                     // Sort
                     List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);//.stream().collect(Collectors.toList());

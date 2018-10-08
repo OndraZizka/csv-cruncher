@@ -445,6 +445,14 @@ public class Cruncher
         boolean readOnly = false;
         boolean csvUsesSingleQuote = true;
 
+        // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
+
+        if ((!input) && csvFileToBind.exists())
+            if (true || options.overwrite) // TODO: Obey --overwrite.
+                csvFileToBind.delete();
+            else
+                throw new IllegalArgumentException("The output file already exists. Use --overwrite or delete: " + csvFileToBind);
+
         // We are also building a header for the CSV file.
         StringBuilder sbCsvHeader = new StringBuilder("# ");
         StringBuilder sb = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");

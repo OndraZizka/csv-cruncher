@@ -165,7 +165,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -185,7 +185,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -199,6 +199,38 @@
                             <successCodes>
                                 <code>127</code>
                             </successCodes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>testCrunch-collab-ARG</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>true</skip>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${testRunCmd}
+                                --json --combineInputs
+                                -sql 'SELECT * FROM apollo_recording_group'
+                                -in src/test/data/sample-collab/apollo_recording_group/
+                                -out target/results/apollo_recording_group.csv
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>testCrunch-collab-STP</id>
+                        <phase>integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <executable>java</executable>
+                            <commandlineArgs>
+                                ${testRunCmd}
+                                --json --combineInputs
+                                -in src/test/data/sample-collab/session_telephony_pins/
+                                -out target/results/session_telephony_pins.csv
+                                -sql 'SELECT * FROM session_telephony_pins'
+                            </commandlineArgs>
                         </configuration>
                     </execution>
                     <execution>

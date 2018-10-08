@@ -66,6 +66,11 @@ public class App
                     opt.jsonExportFormat = Options.JsonExportFormat.ENTRY_PER_LINE;
             }
 
+            // Overwrite the output file(s), if they exist.
+            else if (arg.startsWith("--overwrite")) {
+                opt.overwrite = true;
+            }
+
             // Ignore first N lines
             else if (arg.startsWith("--ignoreFirstLines")) {
                 opt.ignoreFirstLines = 1;

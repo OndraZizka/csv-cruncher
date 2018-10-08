@@ -9,6 +9,7 @@ class Options
     protected List<String> inputPaths = new ArrayList<>();
     protected String sql;
     protected String outputPathCsv;
+    protected boolean overwrite = false;
     protected String dbPath = null;
 
     protected int ignoreFirstLines = 1;
@@ -31,6 +32,7 @@ class Options
         return   "    dbPath: " + this.dbPath +
                "\n    inputPaths: " + this.inputPaths +
                "\n    outputPathCsv: " + this.outputPathCsv +
+               "\n    overwrite: " + this.overwrite +
                "\n    sql: " + this.sql +
                "\n    ignoreLineRegex: " + this.ignoreLineRegex +
                "\n    ignoreFirstLines: " + this.ignoreFirstLines +
