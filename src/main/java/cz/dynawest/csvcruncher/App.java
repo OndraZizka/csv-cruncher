@@ -77,8 +77,8 @@ public class App
                 if (arg.startsWith("--ignoreFirstLines=")) {
                     String numberStr = StringUtils.removeStart(arg, "--ignoreFirstLines=");
                     try {
-                        long number = Integer.parseInt(numberStr);
-                        opt.initialRowNumber = number;
+                        int number = Integer.parseInt(numberStr);
+                        opt.ignoreFirstLines = number;
                     } catch (Exception ex) {
                         throw new RuntimeException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
                     }

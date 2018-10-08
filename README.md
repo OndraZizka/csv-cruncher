@@ -34,6 +34,7 @@ The SQL operations can be quite powerful – just consider what everything you h
 On top of that, CSV Cruncher can:
  * Convert CSV to JSON
  * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
+ * Add an unique incrementing column to the result
 
 And this is planned:
  * Import and export Excel (XLS) files
