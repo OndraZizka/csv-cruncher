@@ -262,6 +262,14 @@ public class FilesUtils
                         Files.walk(inputPath)
                                 .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
                                 ///.peek(path -> System.out.println("fileToGroupSorter " + path))
+                                .filter(file -> {
+                                    if (file.toFile().canRead()) return true;
+                                    if (options.skipNonReadable) {
+                                        LOG.info("Skipping non-readable file: " + file);
+                                        return false;
+                                    }
+                                    throw new IllegalArgumentException("Unreadable file (try --skipNonReadable): " + file);
+                                } )
                                 .forEach(fileToGroupSorter);
                         LOG.finer("   *** After walking: " + fileGroupsToConcat);
                     }

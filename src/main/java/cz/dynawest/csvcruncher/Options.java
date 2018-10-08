@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 class Options
 {
     protected List<String> inputPaths = new ArrayList<>();
+    protected boolean skipNonReadable = false;
     protected String sql;
     protected String outputPathCsv;
     protected boolean overwrite = false;
@@ -40,7 +41,8 @@ class Options
                "\n    combineInputFiles: " + this.combineInputFiles +
                "\n    combineDirs: " + this.combineDirs +
                "\n    initialRowNumber: " + this.initialRowNumber +
-               "\n    jsonExportFormat: " + this.jsonExportFormat;
+               "\n    jsonExportFormat: " + this.jsonExportFormat +
+               "\n    skipNonReadable: " + this.skipNonReadable;
     }
 
 

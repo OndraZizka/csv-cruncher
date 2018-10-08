@@ -159,6 +159,9 @@ public class App
             else if ("-in".equals(arg)) {
                 next = App.OptionsNext.IN;
             }
+            else if ("--skipNonReadable".equals(arg)) {
+                opt.skipNonReadable = true;
+            }
             else if ("-out".equals(arg)) {
                 next = App.OptionsNext.OUT;
                 relPos = 2;
