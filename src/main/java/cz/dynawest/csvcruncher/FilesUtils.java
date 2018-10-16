@@ -20,6 +20,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,9 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.StringUtils;
 
 public class FilesUtils
 {
@@ -91,7 +95,7 @@ public class FilesUtils
     static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputFiles sortMethod)
     {
         switch (sortMethod) {
-            case PARAMS_ORDER: return inputPaths;
+            case PARAMS_ORDER: return Collections.unmodifiableList(inputPaths);
             case ALPHA: inputPaths = new ArrayList<>(inputPaths); Collections.sort(inputPaths); return inputPaths;
             case TIME: throw new UnsupportedOperationException("Sorting by time not implemented yet.");
             default: throw new UnsupportedOperationException("Unkown sorting method.");
@@ -301,8 +305,15 @@ public class FilesUtils
                         + fileGroup.getValue().stream().map(path -> "\n\t* "+path).collect(Collectors.joining()));
 
                     // Sort
-                    List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);//.stream().collect(Collectors.toList());
+                    List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);
                     fileGroupsToConcat.put(fileGroup.getKey(), sortedPaths); // Replace this group's list with the sorted one?
+
+                    // Check if all files have the same columns header.
+                    for (Path fileToConcat : sortedPaths) {
+                        List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
+                        /// TBD
+                    }
+
 
                     // Destination directory
                     Path destDir = defaultDestDir;
@@ -363,5 +374,48 @@ public class FilesUtils
         while (usedConcatFilePaths.contains(concatFileName));
 
         return concatFileName;
+    }
+
+
+    /**
+     * Parse the first lien of given file, ignoring the initial #'s, NOT respecting quotes and escaping.
+     *
+     * @return A list of columns in the order from the file.
+     */
+    static List<String> parseColsFromFirstCsvLine(File file) throws IOException
+    {
+        Matcher mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("");
+        ArrayList<String> cols = new ArrayList();
+        LineIterator lineIterator = FileUtils.lineIterator(file);
+        if (!lineIterator.hasNext())
+        {
+            throw new IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.getPath());
+        }
+        else
+        {
+            String line = lineIterator.nextLine().trim();
+            line = StringUtils.stripStart(line, "#");
+            String[] colNames = StringUtils.splitPreserveAllTokens(line, ",;");
+
+            for (String colName : Arrays.asList(colNames))
+            {
+                colName = colName.trim();
+                if (colName.isEmpty())
+                    throw new IllegalStateException(String.format(
+                            "Empty column name (separators: ,; ) in: %s\n  The line was: %s",
+                            file.getPath(), line
+                    ));
+
+                if (!mat.reset(colName).matches())
+                    throw new IllegalStateException(String.format(
+                            "Colname '%s' must be valid SQL identifier, i.e. must match /%s/i in: %s",
+                            colName, Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern(), file.getPath()
+                    ));
+
+                cols.add(colName);
+            }
+
+            return cols;
+        }
     }
 }
