@@ -186,3 +186,5 @@ In case you use this in your project, then beware:
   it supports much more of SQL than e.g. MySQL.)
 >
 > Enjoy :)
+
+<img src="http://c1.navrcholu.cz/hit?site=144925;t=lb14;ref=;jss=0" width="14" height="14" alt="NAVRCHOLU.cz" style="border:none" />
