@@ -162,6 +162,9 @@ public class App
             else if ("--skipNonReadable".equals(arg)) {
                 opt.skipNonReadable = true;
             }
+            else if ("--keepWorkFiles".equals(arg)) {
+                opt.keepWorkFiles = true;
+            }
             else if ("-out".equals(arg)) {
                 next = App.OptionsNext.OUT;
                 relPos = 2;

@@ -149,6 +149,8 @@ public class Cruncher
                                 destJsonFile,
                                 printAsArray
                         );
+                        if (!this.options.keepWorkFiles)
+                            csvOutFile.deleteOnExit();
                     }
                     reachedStage = ReachedCrunchStage.OUTPUT_JSON_CONVERTED;
                 }

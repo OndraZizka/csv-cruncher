@@ -12,6 +12,7 @@ class Options
     protected String outputPathCsv;
     protected boolean overwrite = false;
     protected String dbPath = null;
+    public boolean keepWorkFiles = false;
 
     protected int ignoreFirstLines = 1;
     protected Pattern ignoreLineRegex;
