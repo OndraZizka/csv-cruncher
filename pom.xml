@@ -363,15 +363,6 @@
         </dependency>
 
 
-
-        <!--
-        <dependency>
-            <groupId>cz.dynawest.lib</groupId>
-            <artifactId>DwLib</artifactId>
-            <version>1.01</version>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

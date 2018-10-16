@@ -295,9 +295,10 @@ public class FilesUtils
                         else
                             LOG.info("   *** No files found in " + dirLabel + ".");
                         continue;
-                    } else
-                        LOG.info("   *** Combining " + dirLabel + ": "
-                            + fileGroup.getValue().stream().map(path -> "\n\t* "+path).collect(Collectors.joining()));
+                    }
+
+                    LOG.info("   *** Combining " + dirLabel + ": "
+                        + fileGroup.getValue().stream().map(path -> "\n\t* "+path).collect(Collectors.joining()));
 
                     // Sort
                     List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);//.stream().collect(Collectors.toList());
@@ -307,17 +308,8 @@ public class FilesUtils
                     Path destDir = defaultDestDir;
                     Files.createDirectories(destDir);
                     LOG.info("    Into dest dir: " + destDir);
+                    Path concatenatedFilePath = deriveNameForCombinedFile(defaultDestDir, usedConcatFilePaths, fileGroup);
 
-                    // Come up with some good name for the combined file.
-                    Path concatenatedFilePath;
-                    if (fileGroup.getKey() == null) {
-                        // Assorted files will be combined into resultDir/concat.csv.
-                        concatenatedFilePath = defaultDestDir.resolve("concat" + Cruncher.FILENAME_SUFFIX_CSV);
-                    }
-                    else {
-                        String concatFileName = getNonUsedName(fileGroup.getKey().getFileName().toString(), usedConcatFilePaths);
-                        concatenatedFilePath = defaultDestDir.resolve(concatFileName);
-                    }
                     usedConcatFilePaths.add(concatenatedFilePath);
                     LOG.info("    Into dest file: " + concatenatedFilePath);
 
@@ -333,6 +325,26 @@ public class FilesUtils
 
                 return concatenatedFiles;
         }
+    }
+
+    /**
+     * Come up with some good name for the combined file.
+     * If the name was used, append an incrementing number until it is unique.
+     *
+     * @param fileGroup  A group of files to combine in the value, and the originating input path in the value.
+     */
+    private static Path deriveNameForCombinedFile(Path destinationDir, Set<Path> usedConcatFilePaths, Map.Entry<Path, List<Path>> fileGroup)
+    {
+        Path concatenatedFilePath;
+        if (fileGroup.getKey() == null) {
+            // Assorted files will be combined into resultDir/concat.csv.
+            concatenatedFilePath = destinationDir.resolve("concat" + Cruncher.FILENAME_SUFFIX_CSV);
+        }
+        else {
+            String concatFileName = getNonUsedName(fileGroup.getKey().getFileName().toString(), usedConcatFilePaths);
+            concatenatedFilePath = destinationDir.resolve(concatFileName);
+        }
+        return concatenatedFilePath;
     }
 
     /**
