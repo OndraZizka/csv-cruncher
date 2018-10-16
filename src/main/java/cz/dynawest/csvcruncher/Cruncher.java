@@ -118,23 +118,7 @@ public class Cruncher
                     counterColumn.setDdlAndVal();
 
                 // Get the columns info: Perform the SQL, LIMIT 1.
-                PreparedStatement statement;
-                try {
-                    statement = this.conn.prepareStatement(this.options.sql + " LIMIT 1");
-                }
-                catch (SQLSyntaxErrorException ex) {
-                    if (ex.getMessage().contains("object not found:")) {
-                        throw throwHintForObjectNotFound(ex);
-                    }
-                    throw new RuntimeException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
-                }
-                catch (SQLException ex) {
-                    throw new RuntimeException("Failed executing the SQL:\n" + ex.getMessage(), ex);
-                }
-                ResultSet rs = statement.executeQuery();
-
-                // Column names
-                List<String> colNames = DbUtils.getResultSetColumnNames(rs);
+                List<String> colNames = extractColumnsInfoFrom1LineSelect(this.options.sql);
 
                 // Write the result into a CSV
                 LOG.info(" * CSV output: " + csvOutFile);
@@ -184,6 +168,30 @@ public class Cruncher
         catch (Exception ex) {
             throw ex;
         }
+    }
+
+    /**
+     * Get the columns info: Perform the SQL, LIMIT 1.
+     */
+    private List<String> extractColumnsInfoFrom1LineSelect(String sql) throws SQLException
+    {
+        PreparedStatement statement;
+        try {
+            statement = this.conn.prepareStatement(sql + " LIMIT 1");
+        }
+        catch (SQLSyntaxErrorException ex) {
+            if (ex.getMessage().contains("object not found:")) {
+                throw throwHintForObjectNotFound(ex);
+            }
+            throw new RuntimeException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
+        }
+        catch (SQLException ex) {
+            throw new RuntimeException("Failed executing the SQL:\n" + ex.getMessage(), ex);
+        }
+        ResultSet rs = statement.executeQuery();
+
+        // Column names
+        return DbUtils.getResultSetColumnNames(rs);
     }
 
     private RuntimeException throwHintForObjectNotFound(SQLSyntaxErrorException ex)
