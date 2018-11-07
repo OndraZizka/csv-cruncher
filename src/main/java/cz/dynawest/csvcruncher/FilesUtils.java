@@ -311,7 +311,8 @@ public class FilesUtils
                     // Check if all files have the same columns header.
                     for (Path fileToConcat : sortedPaths) {
                         List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
-                        /// TBD
+                        // TODO
+
                     }
 
 
@@ -393,6 +394,12 @@ public class FilesUtils
         }
         else
         {
+            /*  I could employ CSVReader if needed.
+                CSVReader csvReader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+                String[] header = csvReader.readNext();
+                csvReader.close();
+             */
+
             String line = lineIterator.nextLine().trim();
             line = StringUtils.stripStart(line, "#");
             String[] colNames = StringUtils.splitPreserveAllTokens(line, ",;");

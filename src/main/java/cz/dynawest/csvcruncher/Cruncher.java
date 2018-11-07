@@ -333,7 +333,7 @@ public class Cruncher
             String addToMsg = "";
             //if (ex.getMessage().contains("for cast"))
             {
-                // TODO: List columns with types.
+                // List columns with types.
                 addToMsg = "\n  Tables and column types:\n"
                         + this.formatListOfAvailableTables(true);
             }
