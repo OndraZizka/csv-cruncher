@@ -230,74 +230,26 @@ public class FilesUtils
                 LOG.fine("Concatenating input files:");
 
                 // First, expand the directories.
-                Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
-                // null will be used as a special key for COMBINE_ALL_FILES.
-                fileGroupsToConcat.putIfAbsent(null, new ArrayList<>());
+                Map<Path, List<Path>> fileGroupsToConcat = expandDirectories(inputPaths, options);
 
-                List<Path> concatenatedFiles = new ArrayList<>();
-                for (Path inputPath: inputPaths) try {
-                    LOG.info(" * About to concat " + inputPath);
-
-                    // Put files simply to "global" group. Might be improved in the future.
-                    if (inputPath.toFile().isFile())
-                        fileGroupsToConcat.get(null).add(inputPath);
-                    // Walk directories for CSV, and group them as per options.combineDirs.
-                    if (inputPath.toFile().isDirectory()) {
-
-                        Consumer<Path> fileToGroupSorter = null;
-                        switch (options.combineDirs) {
-                            case COMBINE_ALL_FILES: {
-                                List<Path> fileGroup = fileGroupsToConcat.get(null);
-                                fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
-                            } break;
-                            case COMBINE_PER_INPUT_DIR: {
-                                List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
-                            } break;
-                            case COMBINE_PER_EACH_DIR: {
-                                //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                                fileToGroupSorter = curFile -> {
-                                    fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<Path>()).add(curFile);
-                                };
-                            } break;
-                        }
-
-                        LOG.finer("   *** About to walk" + inputPath);
-                        Files.walk(inputPath)
-                                .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
-                                ///.peek(path -> System.out.println("fileToGroupSorter " + path))
-                                .filter(file -> {
-                                    if (file.toFile().canRead()) return true;
-                                    if (options.skipNonReadable) {
-                                        LOG.info("Skipping non-readable file: " + file);
-                                        return false;
-                                    }
-                                    throw new IllegalArgumentException("Unreadable file (try --skipNonReadable): " + file);
-                                } )
-                                .forEach(fileToGroupSorter);
-                        LOG.finer("   *** After walking: " + fileGroupsToConcat);
-                    }
-                } catch (Exception ex) {
-                    throw new RuntimeException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
+                // No files found.
+                if (fileGroupsToConcat.size() == 1 && fileGroupsToConcat.keySet().iterator().next() == null) {
+                    // There is just one catch-all group and it's empty -> we pre-create that one.
+                    LOG.info("   *** No files found.");
+                    return Collections.emptyList();
                 }
 
                 // Get the final concatenated file path.
-
                 Path defaultDestDir = Paths.get(options.outputPathCsv).getParent().resolve("concat/"); // System.getProperty("user.dir");
                 int filesCounter = 0;
-
+                List<Path> concatenatedFiles = new ArrayList<>();
                 Set<Path> usedConcatFilePaths = new HashSet<>();
 
                 for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet())
                 {
                     String dirLabel = fileGroup.getKey() == null ? "all files" : ""+fileGroup.getKey();
                     if (fileGroup.getValue().isEmpty()) {
-                        if (null == fileGroup.getKey() && fileGroupsToConcat.size() == 1) {
-                            // There is just one catch-all group and it's empty -> we pre-create that one.
-                            LOG.info("   *** No files found.");
-                        }
-                        else
-                            LOG.info("   *** No files found in " + dirLabel + ".");
+                        LOG.info("   *** No files found in " + dirLabel + ".");
                         continue;
                     }
 
@@ -317,13 +269,12 @@ public class FilesUtils
 
 
                     // Destination directory
-                    Path destDir = defaultDestDir;
-                    Files.createDirectories(destDir);
-                    LOG.info("    Into dest dir: " + destDir);
-                    Path concatenatedFilePath = deriveNameForCombinedFile(defaultDestDir, usedConcatFilePaths, fileGroup);
-
-                    usedConcatFilePaths.add(concatenatedFilePath);
+                    LOG.info("    Into dest dir: " + defaultDestDir);
+                    Files.createDirectories(defaultDestDir);
+                    String concatFileName = deriveNameForCombinedFile(usedConcatFilePaths, fileGroup);
+                    Path concatenatedFilePath = defaultDestDir.resolve(concatFileName);
                     LOG.info("    Into dest file: " + concatenatedFilePath);
+                    usedConcatFilePaths.add(concatenatedFilePath);
 
                     // TODO: Optionally this could be named better:
                     //       1) Find common deepest ancestor dir.
@@ -339,24 +290,78 @@ public class FilesUtils
         }
     }
 
+    private static Map<Path, List<Path>> expandDirectories(List<Path> inputPaths, Options options)
+    {
+        Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
+        // null will be used as a special key for COMBINE_ALL_FILES.
+        fileGroupsToConcat.put(null, new ArrayList<>());
+
+        for (Path inputPath: inputPaths) try {
+            LOG.info(" * About to concat " + inputPath);
+
+            // Put files simply to "global" group. Might be improved in the future.
+            if (inputPath.toFile().isFile())
+                fileGroupsToConcat.get(null).add(inputPath);
+            // Walk directories for CSV, and group them as per options.combineDirs.
+            if (inputPath.toFile().isDirectory()) {
+
+                Consumer<Path> fileToGroupSorter = null;
+                switch (options.combineDirs) {
+                    case COMBINE_ALL_FILES: {
+                        List<Path> fileGroup = fileGroupsToConcat.get(null);
+                        fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
+                    } break;
+                    case COMBINE_PER_INPUT_DIR: {
+                        List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                        fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
+                    } break;
+                    case COMBINE_PER_EACH_DIR: {
+                        //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                        fileToGroupSorter = curFile -> {
+                            fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<Path>()).add(curFile);
+                        };
+                    } break;
+                }
+
+                LOG.finer("   *** About to walk" + inputPath);
+                Files.walk(inputPath)
+                        .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
+                        ///.peek(path -> System.out.println("fileToGroupSorter " + path))
+                        .filter(file -> {
+                            if (file.toFile().canRead()) return true;
+                            if (options.skipNonReadable) {
+                                LOG.info("Skipping non-readable file: " + file);
+                                return false;
+                            }
+                            throw new IllegalArgumentException("Unreadable file (try --skipNonReadable): " + file);
+                        } )
+                        .forEach(fileToGroupSorter);
+                LOG.finer("   *** After walking: " + fileGroupsToConcat);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
+        }
+        return fileGroupsToConcat;
+    }
+
     /**
      * Come up with some good name for the combined file.
      * If the name was used, append an incrementing number until it is unique.
      *
      * @param fileGroup  A group of files to combine in the value, and the originating input path in the value.
      */
-    private static Path deriveNameForCombinedFile(Path destinationDir, Set<Path> usedConcatFilePaths, Map.Entry<Path, List<Path>> fileGroup)
+    private static String deriveNameForCombinedFile(Set<Path> usedConcatFilePaths, Map.Entry<Path, List<Path>> fileGroup)
     {
         Path concatenatedFilePath;
+        String concatFileName;
         if (fileGroup.getKey() == null) {
             // Assorted files will be combined into resultDir/concat.csv.
-            concatenatedFilePath = destinationDir.resolve("concat" + Cruncher.FILENAME_SUFFIX_CSV);
+            concatFileName = "concat" + Cruncher.FILENAME_SUFFIX_CSV;
         }
         else {
-            String concatFileName = getNonUsedName(fileGroup.getKey().getFileName().toString(), usedConcatFilePaths);
-            concatenatedFilePath = destinationDir.resolve(concatFileName);
+            concatFileName = getNonUsedName(fileGroup.getKey().getFileName().toString(), usedConcatFilePaths);
         }
-        return concatenatedFilePath;
+        return concatFileName;
     }
 
     /**
