@@ -53,7 +53,7 @@ public class Cruncher
             FileUtils.forceMkdir(new File(dbPath));
         }
         catch (IOException e) {
-            throw new RuntimeException(String.format("Can't create HSQLDB data dir %s: %s", dbPath, e.getMessage()));
+            throw new CsvCruncherException(String.format("Can't create HSQLDB data dir %s: %s", dbPath, e.getMessage()));
         }
         this.conn = DriverManager.getConnection("jdbc:hsqldb:file:" + dbPath + ";shutdown=true", "SA", "");
     }
@@ -156,7 +156,7 @@ public class Cruncher
                 }
             }
             catch (Exception ex) {
-                throw new RuntimeException("(DB tables and files cleanup was performed.)", ex);
+                throw new CsvCruncherException("(DB tables and files cleanup was performed.)", ex);
             }
             finally
             {
@@ -185,10 +185,10 @@ public class Cruncher
             if (ex.getMessage().contains("object not found:")) {
                 throw throwHintForObjectNotFound(ex);
             }
-            throw new RuntimeException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
+            throw new CsvCruncherException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
         }
         catch (SQLException ex) {
-            throw new RuntimeException("Failed executing the SQL:\n" + ex.getMessage(), ex);
+            throw new CsvCruncherException("Failed executing the SQL:\n" + ex.getMessage(), ex);
         }
         ResultSet rs = statement.executeQuery();
 
@@ -196,7 +196,7 @@ public class Cruncher
         return DbUtils.getResultSetColumnNames(rs);
     }
 
-    private RuntimeException throwHintForObjectNotFound(SQLSyntaxErrorException ex)
+    private CsvCruncherException throwHintForObjectNotFound(SQLSyntaxErrorException ex)
     {
         boolean notFoundIsColumn = DbUtils.analyzeWhatWasNotFound(ex.getMessage(), this.options.sql);
 
@@ -212,7 +212,7 @@ public class Cruncher
                 + "  or maybe you use --combineInputs but try to use the original inputs.\n"
                 + "  These tables are actually available:\n";
 
-        return new RuntimeException(
+        return new CsvCruncherException(
                 hintMsg
                 + tableNames + "\nMessage from the database:\n  "
                 + ex.getMessage(), ex);
@@ -345,7 +345,7 @@ public class Cruncher
             if (StringUtils.isBlank(errorMsg))
                 errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL.";
 
-            throw new RuntimeException(errorMsg
+            throw new CsvCruncherException(errorMsg
                     + "\n  SQL: " + sql
                     + "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage()
                     + addToMsg

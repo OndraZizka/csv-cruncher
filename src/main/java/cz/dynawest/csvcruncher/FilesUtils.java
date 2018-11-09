@@ -88,7 +88,7 @@ public class FilesUtils
             }
         }
         catch (Exception ex) {
-            throw new RuntimeException("Failed concatenating files into " + resultPath + ": " + ex.getMessage(), ex);
+            throw new CsvCruncherException("Failed concatenating files into " + resultPath + ": " + ex.getMessage(), ex);
         }
         return  resultFile.toPath();
     }
@@ -162,7 +162,7 @@ public class FilesUtils
                 outW.append("]\n");
         }
         catch (Exception ex) {
-            throw new RuntimeException("Failed browsing the final query results: " + ex.getMessage(), ex);
+            throw new CsvCruncherException("Failed browsing the final query results: " + ex.getMessage(), ex);
         }
     }
 
@@ -311,7 +311,7 @@ public class FilesUtils
                 LOG.finer("   *** After walking: " + fileGroupsToConcat);
             }
         } catch (Exception ex) {
-            throw new RuntimeException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
+            throw new CsvCruncherException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
         }
         return fileGroupsToConcat;
     }

@@ -80,7 +80,7 @@ public class App
                         int number = Integer.parseInt(numberStr);
                         opt.ignoreFirstLines = number;
                     } catch (Exception ex) {
-                        throw new RuntimeException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
+                        throw new CsvCruncherException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
                     }
                 }
             }
@@ -95,7 +95,7 @@ public class App
                 try {
                     opt.ignoreLineRegex = Pattern.compile(regex);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Not a valid regex: " + regex + ". " + ex.getMessage(), ex);
+                    throw new CsvCruncherException("Not a valid regex: " + regex + ". " + ex.getMessage(), ex);
                 }
             }
 
@@ -108,7 +108,7 @@ public class App
                         long number = Long.parseLong(numberStr);
                         opt.initialRowNumber = number;
                     } catch (Exception ex) {
-                        throw new RuntimeException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
+                        throw new CsvCruncherException("Not a valid number: " + numberStr + ". " + ex.getMessage(), ex);
                     }
                 }
             }
