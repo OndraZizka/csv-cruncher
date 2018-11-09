@@ -41,6 +41,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 
+
+/**
+ * TODO: Convert the concat related methods to a context-based class.
+ */
 public class FilesUtils
 {
     private static final Logger LOG = Logger.getLogger(FilesUtils.class.getName());
@@ -326,19 +330,20 @@ public class FilesUtils
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             Path origin = fileGroup.getKey();
-            if (fileGroup.getValue().isEmpty()) {
+            List<Path> paths = fileGroup.getValue();
+            if (paths.isEmpty()) {
                 if (origin != null)
                     LOG.info("   *** No files found in " + origin + ".");
                 continue;
             }
 
             // Sort
-            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);
+            List<Path> sortedPaths = sortInputPaths(paths, options.sortInputFiles);
             fileGroupsToConcat2.put(origin, sortedPaths);
 
             String dirLabel = origin == null ? "all files" : "" + origin;
             LOG.info("   *** Will combine files from " + dirLabel + ": "
-                    + fileGroup.getValue().stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
+                    + sortedPaths.stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
         }
         return fileGroupsToConcat2;
     }
