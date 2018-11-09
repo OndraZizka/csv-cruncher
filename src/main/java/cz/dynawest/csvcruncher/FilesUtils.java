@@ -245,32 +245,58 @@ public class FilesUtils
                 List<Path> concatenatedFiles = new ArrayList<>();
                 Set<Path> usedConcatFilePaths = new HashSet<>();
 
-                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet())
-                {
-                    String dirLabel = fileGroup.getKey() == null ? "all files" : ""+fileGroup.getKey();
+
+
+                Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
+
+                // Skip the empty, sort the rest.
+                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
+                    String dirLabel = fileGroup.getKey() == null ? "all files" : "" + fileGroup.getKey();
                     if (fileGroup.getValue().isEmpty()) {
                         LOG.info("   *** No files found in " + dirLabel + ".");
                         continue;
                     }
 
                     LOG.info("   *** Combining " + dirLabel + ": "
-                        + fileGroup.getValue().stream().map(path -> "\n\t* "+path).collect(Collectors.joining()));
+                            + fileGroup.getValue().stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
 
                     // Sort
                     List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);
-                    fileGroupsToConcat.put(fileGroup.getKey(), sortedPaths); // Replace this group's list with the sorted one?
+                    fileGroupsToConcat2.put(fileGroup.getKey(), sortedPaths); // Replace this group's list with the sorted one
+                    // FIXME: This could break the iteration.
+                }
+                fileGroupsToConcat = fileGroupsToConcat2;
 
+
+                Map<Path, List<Path>> fileGroupsToConcat_withSubgroups = new HashMap<>();
+
+                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
                     // Check if all files have the same columns header.
-                    for (Path fileToConcat : sortedPaths) {
+                    Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new HashMap<>();
+                    List<String> previousHeaders = null;
+                    for (Path fileToConcat : fileGroup.getValue()) {
                         List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
-                        // TODO
-
+                        subGroups_headerStructureToFiles.putIfAbsent(headers, new ArrayList<>()).add(fileToConcat);
                     }
+                    if (subGroups_headerStructureToFiles.size() == 1) {
+                        fileGroupsToConcat_withSubgroups.put(fileGroup.getKey(), fileGroup.getValue());
+                    }
+                    else {
+                        // Replaces the original group with few subgroups, with paths suffixed with counter: originalPath_1, originalPath_2, ...
+                        int counter = 1;
+                        for (List<Path> filesWithSameHeaders : subGroups_headerStructureToFiles.values()) {
+                            Path subgroupKey = Paths.get(fileGroup.getKey().toString() + "_" + counter++);
+                            fileGroupsToConcat_withSubgroups.putIfAbsent(subgroupKey, filesWithSameHeaders);
+                        }
+                    }
+                }
+                fileGroupsToConcat = fileGroupsToConcat_withSubgroups;
 
-
+                for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
                     // Destination directory
                     LOG.info("    Into dest dir: " + defaultDestDir);
                     Files.createDirectories(defaultDestDir);
+
                     String concatFileName = deriveNameForCombinedFile(usedConcatFilePaths, fileGroup);
                     Path concatenatedFilePath = defaultDestDir.resolve(concatFileName);
                     LOG.info("    Into dest file: " + concatenatedFilePath);
@@ -282,7 +308,7 @@ public class FilesUtils
                     //       3) Create the subdirs in defaultDestDir and save there.
 
                     // Combine the file sets.
-                    concatFiles(sortedPaths, concatenatedFilePath, options.ignoreFirstLines, options.ignoreLineRegex);
+                    concatFiles(fileGroup.getValue(), concatenatedFilePath, options.ignoreFirstLines, options.ignoreLineRegex);
                     concatenatedFiles.add(concatenatedFilePath);
                 }
 
