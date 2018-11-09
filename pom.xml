@@ -17,7 +17,6 @@
         <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
     </properties>
 
-
     <build>
         <resources>
             <resource>
@@ -391,4 +390,13 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>debug</id>
+            <properties>
+                <jvm.args.debug>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050</jvm.args.debug>
+            </properties>
+        </profile>
+    </profiles>
 </project>

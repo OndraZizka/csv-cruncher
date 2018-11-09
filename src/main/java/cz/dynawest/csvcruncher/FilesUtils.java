@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -333,10 +334,10 @@ public class FilesUtils
 
             // Sort
             List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);
-            String dirLabel = origin == null ? "all files" : "" + origin;
             fileGroupsToConcat2.put(origin, sortedPaths);
 
-            LOG.info("   *** Combining files from " + dirLabel + ": "
+            String dirLabel = origin == null ? "all files" : "" + origin;
+            LOG.info("   *** Will combine files from " + dirLabel + ": "
                     + fileGroup.getValue().stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
         }
         return fileGroupsToConcat2;
@@ -353,15 +354,14 @@ public class FilesUtils
      */
     private static Map<Path, List<Path>> splitToSubgroupsPerSameHeaders(Map<Path, List<Path>> fileGroupsToConcat) throws IOException
     {
-        Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
+        Map<Path, List<Path>> fileGroupsToConcat2 = new LinkedHashMap<>();
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             // Check if all files have the same columns header.
             Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new HashMap<>();
-            List<String> previousHeaders = null;
             for (Path fileToConcat : fileGroup.getValue()) {
                 List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
-                subGroups_headerStructureToFiles.putIfAbsent(headers, new ArrayList<>()).add(fileToConcat);
+                subGroups_headerStructureToFiles.computeIfAbsent(headers, x -> new ArrayList<>()).add(fileToConcat);
             }
             if (subGroups_headerStructureToFiles.size() == 1) {
                 fileGroupsToConcat2.put(fileGroup.getKey(), fileGroup.getValue());
@@ -385,13 +385,14 @@ public class FilesUtils
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             // Destination directory
-            LOG.info("    Into dest dir: " + defaultDestDir);
+            //LOG.info("    Into dest dir: " + defaultDestDir);
             Files.createDirectories(defaultDestDir);
 
             String concatFileName = deriveNameForCombinedFile(usedConcatFilePaths, fileGroup);
             Path concatenatedFilePath = defaultDestDir.resolve(concatFileName);
-            LOG.info("    Into dest file: " + concatenatedFilePath);
             usedConcatFilePaths.add(concatenatedFilePath);
+            LOG.info("    Into dest file: " + concatenatedFilePath + " will combine files from: "
+                    + fileGroup.getValue().stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
 
             // TODO: Optionally this could be named better:
             //       1) Find common deepest ancestor dir.
