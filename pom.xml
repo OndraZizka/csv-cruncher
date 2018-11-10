@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cz.dynawest.csvcruncher</groupId>
     <artifactId>CsvCruncher</artifactId>
-    <version>1.9.0</version>
+    <version>1.10.0</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
