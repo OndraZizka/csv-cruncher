@@ -249,7 +249,9 @@ public class FilesUtils
                 int filesCounter = 0;
 
 
-                fileGroupsToConcat = filterAndSortFileGroups(options, fileGroupsToConcat);
+                fileGroupsToConcat = filterFileGroups(options, fileGroupsToConcat);
+
+                fileGroupsToConcat = sortFileGroups(options, fileGroupsToConcat);
 
                 fileGroupsToConcat = splitToSubgroupsPerSameHeaders(fileGroupsToConcat);
 
@@ -321,14 +323,16 @@ public class FilesUtils
     }
 
     /**
-     * Sorts the files within the groups by the configured sorting - see {@link Options.SortInputFiles}. Skips the empty groups.
-     * @return A map with one entry per group, containing the files in sorted order.
+     * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see {@link Options#includePathsRegex}.
+     * Also, skips the empty groups.
      */
-    private static Map<Path, List<Path>> filterAndSortFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
+    private static Map<Path, List<Path>> filterFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
     {
         Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
+            List<Path> filteredPaths = filterPaths(options, fileGroup.getValue());
+
             Path origin = fileGroup.getKey();
             List<Path> paths = fileGroup.getValue();
             if (paths.isEmpty()) {
@@ -337,8 +341,33 @@ public class FilesUtils
                 continue;
             }
 
-            // Sort
-            List<Path> sortedPaths = sortInputPaths(paths, options.sortInputFiles);
+            fileGroupsToConcat2.put(origin, filteredPaths);
+        }
+        return fileGroupsToConcat2;
+    }
+
+    static List<Path> filterPaths(Options options, List<Path> paths)
+    {
+        if (options.includePathsRegex == null && options.excludePathsRegex == null)
+            return paths;
+
+        return paths.stream()
+                .filter(path -> options.includePathsRegex == null || options.includePathsRegex.matcher(path.toString()).matches())
+                .filter(path -> options.excludePathsRegex == null || !options.excludePathsRegex.matcher(path.toString()).matches())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Sorts the files within the groups by the configured sorting - see {@link Options.SortInputFiles}. Skips the empty groups.
+     * @return A map with one entry per group, containing the files in sorted order.
+     */
+    private static Map<Path, List<Path>> sortFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
+    {
+        Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
+
+        for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
+            Path origin = fileGroup.getKey();
+            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);
             fileGroupsToConcat2.put(origin, sortedPaths);
 
             String dirLabel = origin == null ? "all files" : "" + origin;

@@ -213,6 +213,7 @@
                             <commandlineArgs>
                                 ${testRunCmd}
                                 --json --combineInputs --rowNumbers
+                                --exclude=.*/LOAD.*\.csv
                                 -sql 'SELECT session_telephony_pins.* FROM session_telephony_pins'
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
@@ -389,13 +390,18 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.22</version>
+        </dependency>
     </dependencies>
 
     <profiles>
         <profile>
             <id>debug</id>
             <properties>
-                <jvm.args.debug>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050</jvm.args.debug>
+                <jvm.args.debug>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5050</jvm.args.debug>
             </properties>
         </profile>
     </profiles>

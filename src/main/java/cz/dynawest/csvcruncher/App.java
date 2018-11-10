@@ -66,6 +66,30 @@ public class App
                     opt.jsonExportFormat = Options.JsonExportFormat.ENTRY_PER_LINE;
             }
 
+            // Include / exclude file paths
+            else if (arg.startsWith("--include")) {
+                if (!arg.startsWith("--include=")) {
+                    throw new IllegalArgumentException("Option --include has to have a value (regular expression).");
+                }
+                String regex = StringUtils.removeStart(arg, "--include=");
+                try {
+                    opt.includePathsRegex = Pattern.compile(regex);
+                } catch (Exception ex) {
+                    throw new CsvCruncherException("Not a valid regex: " + regex + ". " + ex.getMessage(), ex);
+                }
+            }
+            else if (arg.startsWith("--exclude")) {
+                if (!arg.startsWith("--exclude=")) {
+                    throw new IllegalArgumentException("Option --exclude has to have a value (regular expression).");
+                }
+                String regex = StringUtils.removeStart(arg, "--exclude=");
+                try {
+                    opt.excludePathsRegex = Pattern.compile(regex);
+                } catch (Exception ex) {
+                    throw new CsvCruncherException("Not a valid regex: " + regex + ". " + ex.getMessage(), ex);
+                }
+            }
+
             // Overwrite the output file(s), if they exist.
             else if (arg.startsWith("--overwrite")) {
                 opt.overwrite = true;

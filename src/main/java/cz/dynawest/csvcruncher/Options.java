@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@lombok.Setter
 class Options
 {
     protected List<String> inputPaths = new ArrayList<>();
+    protected Pattern includePathsRegex;
+    protected Pattern excludePathsRegex;
     protected boolean skipNonReadable = false;
     protected String sql;
     protected String outputPathCsv;
@@ -33,6 +36,8 @@ class Options
     {
         return   "    dbPath: " + this.dbPath +
                "\n    inputPaths: " + this.inputPaths +
+               "\n    includePathsRegex: " + this.includePathsRegex +
+               "\n    excludePathsRegex: " + this.excludePathsRegex +
                "\n    outputPathCsv: " + this.outputPathCsv +
                "\n    overwrite: " + this.overwrite +
                "\n    sql: " + this.sql +
