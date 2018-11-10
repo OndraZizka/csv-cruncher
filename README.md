@@ -34,11 +34,14 @@ The SQL operations can be quite powerful – just consider what everything you h
 On top of that, CSV Cruncher can:
  * Convert CSV to JSON
  * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
- * Add an unique incrementing column to the result
+ * Deal with CSV structure changes between files
+ * Filter the CSV lines using regular expression
+ * Add a unique incrementing number to each row of the result
 
 And this is planned:
  * Import and export Excel (XLS) files
  * Import JSON files
+ * Import any text files, parsed into columns by a regular expression groups
  * Export HTML tables
 
 All this is backed by [HyperSQL database](http://hsqldb.org/).
@@ -69,6 +72,12 @@ Usage
  * `-db <pathToDatabaseDirectory>`
     Determines where the files of the underlying database will be stored. Default is `hsqldb/cruncher`.
 
+ * `--include=<regex>`, `--exclude=<regex>`
+    Filters which input files are taken as input.
+    The whole path relative to the is matched, so make sure to use `.*` at the beginning.
+    The `--exclude` is applied after `--include`, so include does not override excluded files.
+    If not specified, CSV Cruncher behaves as if `--include` was `.*\.csv$` and `--exclude` had no match.
+
 ##### Pre-processing
 
  * --ignoreLinesMatching=<regEx>
@@ -82,12 +91,15 @@ Usage
     Combine the input files into one file, optionally computing an intersection or substracting one from another.
 
  * `--combineDirs\[=perDir|perInputDir|perInputSubdir|all]`
-    Controls which files are combined together.
+    Controls which files are combined together. Default is `all`.
+    If the files within one resulting group have different structure (different columns),
+    they are automatically divided into subgroups per structure.
+    This can be used to process database incremental change logs which sometomes change the schema.
 
  * `--sortInputs\[=paramsOrder|alpha|time]`
     Controls how files are sorted before combining, and in which order the tables are created.
 
-    Read the logs or `SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
+    Read the logs or use `-sql SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
 
 ##### Post-processing
 
@@ -102,6 +114,9 @@ Usage
     `entries` (default) will create a JSON entry per line, representing the original rows.
     `array` will create a file with a JSON array (`[...,...]`).
 
+
+This README may be slightly obsolete; For a full list of options, check the
+[`Options`](https://github.com/OndraZizka/csv-cruncher/blob/master/src/main/java/cz/dynawest/csvcruncher/Options.java) class.
 
 
 Usage example
