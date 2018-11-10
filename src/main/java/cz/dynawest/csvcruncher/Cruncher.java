@@ -79,7 +79,7 @@ public class Cruncher
 
             try
             {
-                // Sort
+                // Sort the input paths.
                 List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
                 inputPaths = FilesUtils.sortInputPaths(inputPaths, this.options.sortInputFiles);
                 LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).get());
@@ -88,12 +88,15 @@ public class Cruncher
                 if (this.options.combineInputFiles != Options.CombineInputFiles.NONE) {
                     List<Path> concatenatedFiles = FilesUtils.combineInputFiles(inputPaths, this.options);
                     inputPaths = concatenatedFiles;
-                    LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).get());
+                    LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * "+ p).reduce(String::concat).orElse("NONE"));
                     reachedStage = ReachedCrunchStage.INPUT_FILES_PREPROCESSED;
                 }
 
+                if (inputPaths.isEmpty())
+                    return;
 
-                ///LOG.info(" --- ================================================================ --- ");
+
+                //LOG.info(" --- ================================================================ --- ");
 
                 // For each input CSV file...
                 for (Path path : inputPaths) {
@@ -578,8 +581,8 @@ public class Cruncher
 
     private class CounterColumn
     {
-        protected String ddl;
-        protected String value;
+        protected String ddl = "";
+        protected String value = "";
 
         public CounterColumn setDdlAndVal() throws SQLException
         {

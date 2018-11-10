@@ -156,7 +156,7 @@
                                 -out target/results/result.csv
                                 -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
                                 CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
-                                FROM concat ORDER BY deployDur'
+                                FROM eapBuilds ORDER BY deployDur'
                             </commandlineArgs>
                         </configuration>
                     </execution>
@@ -173,6 +173,7 @@
                                 --rowNumbers
                                 --combineInputs=concat
                                 --combineDirs=all
+                                --exclude=.*/LOAD.*\.csv
                                 -in src/test/data/sampleMultiFilesPerDir/apollo_session/
                                 -out target/results/result.csv
                                 -sql 'SELECT session_uid, name, session_type, created_time, modified_date
@@ -192,6 +193,7 @@
                                 ${testRunCmd}
                                 --json --combineInputs --rowNumbers
                                 -sql 'SELECT * FROM session_telephony_pins'
+                                --exclude=.*/LOAD.*\.csv
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
                             </commandlineArgs>
@@ -231,6 +233,7 @@
                             <commandlineArgs>
                                 ${testRunCmd}
                                 --json --combineInputs
+                                --exclude=.*/LOAD.*\.csv
                                 -sql 'SELECT * FROM apollo_recording_group'
                                 -in src/test/data/sample-collab/apollo_recording_group/
                                 -out target/results/apollo_recording_group.csv
