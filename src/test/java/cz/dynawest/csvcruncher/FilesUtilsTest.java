@@ -15,19 +15,38 @@ public class FilesUtilsTest
     @Test
     public void filterFilePaths()
     {
-        Options options = new Options();
-        options.setIncludePathsRegex(Pattern.compile("^foo\\..*"));
-        options.setExcludePathsRegex(Pattern.compile(".*\\.bar$"));
         List<Path> paths = new ArrayList<>();
         paths.add(Paths.get("foo.bar"));
         paths.add(Paths.get("foo.foo"));
         paths.add(Paths.get("bar.foo"));
         paths.add(Paths.get("bar.bar"));
 
-        List<Path> paths1 = FilesUtils.filterPaths(options, paths);
+        Options options = new Options();
+        options.setIncludePathsRegex(Pattern.compile("^foo\\..*"));
+        options.setExcludePathsRegex(Pattern.compile(".*\\.bar$"));
 
+        List<Path> paths1 = FilesUtils.filterPaths(options, paths);
         assertFalse(paths1.contains(Paths.get("foo.bar")));
         assertFalse(paths1.contains(Paths.get("bar.foo")));
+        assertFalse(paths1.contains(Paths.get("bar.bar")));
+        assertTrue(paths1.contains(Paths.get("foo.foo")));
+
+        // Nulls
+        options.setIncludePathsRegex(null);
+        options.setExcludePathsRegex(null);
+
+        paths1 = FilesUtils.filterPaths(options, paths);
+        assertTrue(paths1.contains(Paths.get("foo.bar")));
+        assertTrue(paths1.contains(Paths.get("bar.foo")));
+        assertTrue(paths1.contains(Paths.get("bar.bar")));
+        assertTrue(paths1.contains(Paths.get("foo.foo")));
+
+        options.setIncludePathsRegex(null);
+        options.setExcludePathsRegex(Pattern.compile(".*\\.bar$"));
+
+        paths1 = FilesUtils.filterPaths(options, paths);
+        assertFalse(paths1.contains(Paths.get("foo.bar")));
+        assertTrue(paths1.contains(Paths.get("bar.foo")));
         assertFalse(paths1.contains(Paths.get("bar.bar")));
         assertTrue(paths1.contains(Paths.get("foo.foo")));
     }
