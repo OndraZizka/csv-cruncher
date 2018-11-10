@@ -15,6 +15,7 @@
         <jvm.args.debug></jvm.args.debug> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
         <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
+        <skipE2E>false</skipE2E>
     </properties>
 
     <build>
@@ -125,7 +126,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -144,7 +145,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -164,7 +165,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -185,7 +186,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -208,7 +209,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -225,7 +226,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
@@ -241,11 +242,12 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>
                                 ${testRunCmd}
                                 --json --combineInputs
+                                --exclude=.*/LOAD.*\.csv
                                 -in src/test/data/sample-collab/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
                                 -sql 'SELECT * FROM session_telephony_pins'
@@ -257,7 +259,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>${testRunCmd} -v</commandlineArgs>
                         </configuration>
@@ -267,7 +269,7 @@
                         <phase>integration-test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>${skipE2E}</skip>
                             <executable>java</executable>
                             <commandlineArgs>${testRunCmd} -h</commandlineArgs>
                         </configuration>
