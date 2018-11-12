@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 @lombok.Setter
-class Options
+public final class Options
 {
     protected List<String> inputPaths = new ArrayList<>();
     protected Pattern includePathsRegex;

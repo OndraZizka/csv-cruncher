@@ -419,7 +419,7 @@ public class FilesUtils
                 // Replaces the original group with few subgroups, with paths suffixed with counter: originalPath_1, originalPath_2, ...
                 int counter = 1;
                 for (List<Path> filesWithSameHeaders : subGroups_headerStructureToFiles.values()) {
-                    Path subgroupKey = Paths.get(fileGroup.getKey().toString() + "_" + counter++);
+                    Path subgroupKey = Paths.get("" + fileGroup.getKey() + "_" + counter++);
                     fileGroupsToConcat2.putIfAbsent(subgroupKey, filesWithSameHeaders);
                 }
             }
@@ -504,6 +504,7 @@ public class FilesUtils
     {
         Matcher mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("");
         ArrayList<String> cols = new ArrayList();
+
         LineIterator lineIterator = FileUtils.lineIterator(file);
         if (!lineIterator.hasNext())
         {

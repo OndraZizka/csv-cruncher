@@ -1,0 +1,3 @@
+Op,NEW_COLUMN,recording_group_id,status,storage_base_url,owner_id,room_id,session_id,requested_ts,created_ts,deleted_ts,updated_ts,is_deleted,acc_consumer_id
+I,NEW_COLUMN,1357,1,logingroup/1854/session/7394/room/7799/recording,,7799,7394,,2018-10-08 11:57:23.848000,,2018-10-08 11:57:23.848000,false,
+I,NEW_COLUMN,1358,1,logingroup/1854/session/7395/room/7801/recording,,7801,7395,,2018-10-08 11:58:17.124000,,2018-10-08 11:58:17.124000,false,

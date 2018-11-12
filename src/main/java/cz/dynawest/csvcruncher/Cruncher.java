@@ -36,26 +36,35 @@ public class Cruncher
     private Connection conn;
     private Options options;
 
-    public Cruncher(Options options) throws ClassNotFoundException, SQLException
+    public Cruncher(Options options)
     {
         this.options = options;
         this.init();
     }
 
-    private void init() throws ClassNotFoundException, SQLException
+    private void init()
     {
         System.setProperty("textdb.allow_full_path", "true");
         //System.setProperty("hsqldb.reconfig_logging", "false");
 
-        Class.forName("org.hsqldb.jdbc.JDBCDriver");
+        try {
+            Class.forName("org.hsqldb.jdbc.JDBCDriver");
+        }
+        catch (ClassNotFoundException e) {
+            throw new CsvCruncherException("Couldn't find JDBC driver: " + e.getMessage(), e);
+        }
+
         String dbPath = StringUtils.defaultIfEmpty(this.options.dbPath, "hsqldb") + "/cruncher";
         try {
             FileUtils.forceMkdir(new File(dbPath));
+            this.conn = DriverManager.getConnection("jdbc:hsqldb:file:" + dbPath + ";shutdown=true", "SA", "");
         }
         catch (IOException e) {
-            throw new CsvCruncherException(String.format("Can't create HSQLDB data dir %s: %s", dbPath, e.getMessage()));
+            throw new CsvCruncherException(String.format("Can't create HSQLDB data dir %s: %s", dbPath, e.getMessage()), e);
         }
-        this.conn = DriverManager.getConnection("jdbc:hsqldb:file:" + dbPath + ";shutdown=true", "SA", "");
+        catch (SQLException e) {
+            throw new CsvCruncherException(String.format("Can't connect to the database %s: %s", dbPath, e.getMessage()), e);
+        }
     }
 
     /**
