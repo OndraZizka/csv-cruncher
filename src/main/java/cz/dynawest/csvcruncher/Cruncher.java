@@ -26,7 +26,6 @@ public final class Cruncher
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.
     public static final String FILENAME_SUFFIX_CSV = ".csv";
     public static final Pattern REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE);
-    public static final int MAX_STRING_COLUMN_LENGTH = 4092;
 
     private Connection jdbcConn;
     private HsqlDbHelper dbHelper;
@@ -107,14 +106,14 @@ public final class Cruncher
                     File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
                     LOG.info(" * CSV input: " + csvInFile);
 
-                    String tableName = normalizeFileNameForTableName(csvInFile);
+                    String tableName = HsqlDbHelper.normalizeFileNameForTableName(csvInFile);
                     File previousIfAny = tablesToFiles.put(tableName, csvInFile);
                     if (previousIfAny != null)
                         throw new IllegalArgumentException("File names normalized to table names collide: " + previousIfAny + ", " + csvInFile);
 
                     List<String> colNames = FilesUtils.parseColsFromFirstCsvLine(csvInFile);
                     // Create a table and bind the CSV to it.
-                    this.createTableForInputFile(tableName, csvInFile, colNames, true);
+                    dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, this.options.overwrite);
                 }
                 reachedStage = ReachedCrunchStage.INPUT_TABLES_CREATED;
 
@@ -129,7 +128,7 @@ public final class Cruncher
 
                 // Write the result into a CSV
                 LOG.info(" * CSV output: " + csvOutFile);
-                this.createTableAndBindCsv(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumn.ddl, false);
+                dbHelper.createTableAndBindCsv(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumn.ddl, false, this.options.overwrite);
                 reachedStage = ReachedCrunchStage.OUTPUT_TABLE_CREATED;
 
 
@@ -196,6 +195,10 @@ public final class Cruncher
         //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED))
     }
 
+    /**
+     * @return The initial number to use for unique row IDs.
+     *         Takes the value from options, or generates from timestamp if not set.
+     */
     private long getInitialNumber()
     {
         long initialNumber;
@@ -213,82 +216,6 @@ public final class Cruncher
     }
 
 
-    private static String normalizeFileNameForTableName(File fileName)
-    {
-        return fileName.getName().replaceFirst(".csv$", "").replaceAll("[^a-zA-Z0-9_]", "_");
-    }
-
-
-    private void createTableForInputFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst) throws SQLException
-    {
-        createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true);
-    }
-
-
-    /**
-     * Creates the input or output table, with the right column names, and binds the file.<br/>
-     * For output tables, the file is optionally overwritten if exists.<br/>
-     * A header with columns names is added to the output table.<br/>
-     * Input tables columns are optimized after binding the file by attempting to reduce the column type.
-     * (The output table has to be optimized later.)<br/>
-     */
-    private void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, String counterColumnDdl, boolean input) throws SQLException
-    {
-        boolean readOnly = false;
-        boolean csvUsesSingleQuote = true;
-
-        // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
-        if ((!input) && csvFileToBind.exists())
-            if (true || options.overwrite) // TODO: Obey --overwrite.
-                csvFileToBind.delete();
-            else
-                throw new IllegalArgumentException("The output file already exists. Use --overwrite or delete: " + csvFileToBind);
-
-        // We are also building a header for the CSV file.
-        StringBuilder sbCsvHeader = new StringBuilder("# ");
-        StringBuilder sb = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");
-
-        // The counter column, if any.
-        sb.append(counterColumnDdl);
-
-        // Columns
-        for (String colName : colNames)
-        {
-            sbCsvHeader.append(colName).append(", ");
-
-            colName = Utils.escapeSql(colName);
-            sb.append(colName).append(" VARCHAR(" + MAX_STRING_COLUMN_LENGTH + "), ");
-        }
-        sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
-        sb.delete(sb.length() - 2, sb.length());
-        sb.append(" )");
-        LOG.info("Table DDL SQL: " + sb.toString());
-        dbHelper.executeDbCommand(sb.toString(), "Failed to CREATE TEXT TABLE: ");
-
-
-        // Bind the table to the CSV file.
-        String csvPath = csvFileToBind.getPath();
-        csvPath = Utils.escapeSql(csvPath);
-        String quoteCharacter = csvUsesSingleQuote ? "\\quote" : "\"";
-        String ignoreFirstFlag = ignoreFirst ? "ignore_first=true;" : "";
-        String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
-        String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
-        String sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC);
-        LOG.info("CSV import SQL: " + sql);
-        dbHelper.executeDbCommand(sql, "Failed to import CSV: ");
-
-        // SET TABLE <table name> SOURCE HEADER
-        if (!input) {
-            sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString());
-            LOG.info("CSV source header SQL: " + sql);
-            dbHelper.executeDbCommand(sql, "Failed to set CSV header: ");
-        }
-
-        // Try to convert columns to numbers, where applicable.
-        if (input) {
-            dbHelper.optimizeTableCoumnsType(tableName, colNames);
-        }
-    }
 
 
     private class CounterColumn

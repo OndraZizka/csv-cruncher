@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 public class HsqlDbHelper
 {
     private static final Logger LOG = Logger.getLogger(HsqlDbHelper.class.getName());
+    public static final int MAX_STRING_COLUMN_LENGTH = 4092;
 
 
     private Connection jdbcConn;
@@ -23,6 +25,78 @@ public class HsqlDbHelper
     public HsqlDbHelper(Connection jdbcConn)
     {
         this.jdbcConn = jdbcConn;
+    }
+
+
+    void createTableForInputFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, boolean overwrite) throws SQLException
+    {
+        createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true, overwrite);
+    }
+
+
+    /**
+     * Creates the input or output table, with the right column names, and binds the file.<br/>
+     * For output tables, the file is optionally overwritten if exists.<br/>
+     * A header with columns names is added to the output table.<br/>
+     * Input tables columns are optimized after binding the file by attempting to reduce the column type.
+     * (The output table has to be optimized later.)<br/>
+     */
+    void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, String counterColumnDdl, boolean isInputTable, boolean overwrite) throws SQLException
+    {
+        boolean readOnly = false;
+        boolean csvUsesSingleQuote = true;
+
+        // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
+        if ((!isInputTable) && csvFileToBind.exists())
+            if (true || overwrite) // TODO: Obey --overwrite.
+                csvFileToBind.delete();
+            else
+                throw new IllegalArgumentException("The output file already exists. Use --overwrite or delete: " + csvFileToBind);
+
+        // We are also building a header for the CSV file.
+        StringBuilder sbCsvHeader = new StringBuilder("# ");
+        StringBuilder sb = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");
+
+        // The counter column, if any.
+        sb.append(counterColumnDdl);
+
+        // Columns
+        for (String colName : colNames)
+        {
+            sbCsvHeader.append(colName).append(", ");
+
+            colName = Utils.escapeSql(colName);
+            sb.append(colName).append(" VARCHAR(" + MAX_STRING_COLUMN_LENGTH + "), ");
+        }
+        sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append(" )");
+        LOG.info("Table DDL SQL: " + sb.toString());
+        this.executeDbCommand(sb.toString(), "Failed to CREATE TEXT TABLE: ");
+
+
+        // Bind the table to the CSV file.
+        String csvPath = csvFileToBind.getPath();
+        csvPath = Utils.escapeSql(csvPath);
+        String quoteCharacter = csvUsesSingleQuote ? "\\quote" : "\"";
+        String ignoreFirstFlag = ignoreFirst ? "ignore_first=true;" : "";
+        String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
+        String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
+        String sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC);
+        LOG.info("CSV import SQL: " + sql);
+        this.executeDbCommand(sql, "Failed to import CSV: ");
+
+        // SET TABLE <table name> SOURCE HEADER
+        if (!isInputTable) {
+            sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString());
+            LOG.info("CSV source header SQL: " + sql);
+            this.executeDbCommand(sql, "Failed to set CSV header: ");
+        }
+
+        // Try to convert columns to numbers, where applicable.
+        if (isInputTable) {
+            this.optimizeTableCoumnsType(tableName, colNames);
+        }
     }
 
 
@@ -250,4 +324,11 @@ public class HsqlDbHelper
         }
 
     }
+
+
+    static String normalizeFileNameForTableName(File fileName)
+    {
+        return fileName.getName().replaceFirst(".csv$", "").replaceAll("[^a-zA-Z0-9_]", "_");
+    }
+
 }
