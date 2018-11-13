@@ -1,5 +1,7 @@
 package cz.dynawest.csvcruncher;
 
+import cz.dynawest.csvcruncher.util.DbUtils;
+import cz.dynawest.csvcruncher.util.Utils;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -5,8 +5,11 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import lombok.Getter;
+import lombok.Setter;
 
-@lombok.Setter
+@Setter
+@Getter
 public final class Options
 {
     protected List<String> inputPaths = new ArrayList<>();

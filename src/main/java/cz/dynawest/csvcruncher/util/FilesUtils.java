@@ -1,5 +1,8 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher.util;
 
+import cz.dynawest.csvcruncher.Cruncher;
+import cz.dynawest.csvcruncher.CsvCruncherException;
+import cz.dynawest.csvcruncher.Options;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -99,7 +102,7 @@ public class FilesUtils
         return  resultFile.toPath();
     }
 
-    static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputFiles sortMethod)
+    public static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputFiles sortMethod)
     {
         switch (sortMethod) {
             case PARAMS_ORDER: return Collections.unmodifiableList(inputPaths);
@@ -112,7 +115,7 @@ public class FilesUtils
     /**
      * Writes the given resultset to a JSON file at given path, one entry per line, optionally as an JSON array.
      */
-    static void convertResultToJson(ResultSet resultSet, Path destFile, boolean printAsArray)
+    public static void convertResultToJson(ResultSet resultSet, Path destFile, boolean printAsArray)
     {
         try (
                 OutputStream outS = new BufferedOutputStream(new FileOutputStream(destFile.toFile()));
@@ -228,9 +231,9 @@ public class FilesUtils
      * The combined input files will be witten under the respective "group root directory".
      * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
      */
-    static List<Path> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
+    public static List<Path> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
     {
-        switch (options.combineInputFiles) {
+        switch (options.getCombineInputFiles()) {
             case NONE: default: return inputPaths;
             case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
             case CONCAT:
@@ -260,7 +263,7 @@ public class FilesUtils
                 logFileGroups(fileGroupsToConcat, Level.INFO, "File groups split per header structure:");
 
                 // Get the final concatenated file path.
-                Path defaultDestDir = Paths.get(options.outputPathCsv).getParent().resolve(CONCAT_WORK_SUBDIR); // System.getProperty("user.dir");
+                Path defaultDestDir = Paths.get(options.getOutputPathCsv()).getParent().resolve(CONCAT_WORK_SUBDIR); // System.getProperty("user.dir");
                 List<Path> concatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToConcat, defaultDestDir);
 
                 return concatenatedFiles;
@@ -300,21 +303,24 @@ public class FilesUtils
             if (inputPath.toFile().isDirectory()) {
 
                 Consumer<Path> fileToGroupSorter = null;
-                switch (options.combineDirs) {
+                switch (options.getCombineDirs()) {
                     case COMBINE_ALL_FILES: {
                         List<Path> fileGroup = fileGroupsToConcat.get(null);
-                        fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
+                        fileToGroupSorter = fileGroup::add;
                     } break;
                     case COMBINE_PER_INPUT_DIR: {
                         List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                        fileToGroupSorter = curFile -> { fileGroup.add(curFile); };
+                        fileToGroupSorter = fileGroup::add;
                     } break;
                     case COMBINE_PER_EACH_DIR: {
                         //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
                         fileToGroupSorter = curFile -> {
-                            fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<Path>()).add(curFile);
+                            fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<>()).add(curFile);
                         };
                     } break;
+                    case COMBINE_PER_INPUT_SUBDIR: {
+                        throw new UnsupportedOperationException("Not yet implemented"); // TODO
+                    }
                 }
 
                 log.trace("   *** About to walk" + inputPath);
@@ -323,7 +329,7 @@ public class FilesUtils
                         ///.peek(path -> System.out.println("fileToGroupSorter " + path))
                         .filter(file -> {
                             if (file.toFile().canRead()) return true;
-                            if (options.skipNonReadable) {
+                            if (options.isSkipNonReadable()) {
                                 log.info("Skipping non-readable file: " + file);
                                 return false;
                             }
@@ -362,14 +368,14 @@ public class FilesUtils
         return fileGroupsToConcat2;
     }
 
-    static List<Path> filterPaths(Options options, List<Path> paths)
+    public static List<Path> filterPaths(Options options, List<Path> paths)
     {
-        if (options.includePathsRegex == null && options.excludePathsRegex == null)
+        if (options.getIncludePathsRegex() == null && options.getExcludePathsRegex() == null)
             return paths;
 
         return paths.stream()
-                .filter(path -> options.includePathsRegex == null || options.includePathsRegex.matcher(path.toString()).matches())
-                .filter(path -> options.excludePathsRegex == null || !options.excludePathsRegex.matcher(path.toString()).matches())
+                .filter(path -> options.getIncludePathsRegex() == null || options.getIncludePathsRegex().matcher(path.toString()).matches())
+                .filter(path -> options.getExcludePathsRegex() == null || !options.getExcludePathsRegex().matcher(path.toString()).matches())
                 .collect(Collectors.toList());
     }
 
@@ -383,7 +389,7 @@ public class FilesUtils
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             Path origin = fileGroup.getKey();
-            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.sortInputFiles);
+            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.getSortInputFiles());
             fileGroupsToConcat2.put(origin, sortedPaths);
 
             String dirLabel = origin == null ? "all files" : "" + origin;
@@ -450,7 +456,7 @@ public class FilesUtils
             //       3) Create the subdirs in defaultDestDir and save there.
 
             // Combine the file sets.
-            concatFiles(fileGroup.getValue(), concatenatedFilePath, options.ignoreFirstLines, options.ignoreLineRegex);
+            concatFiles(fileGroup.getValue(), concatenatedFilePath, options.getIgnoreFirstLines(), options.getIgnoreLineRegex());
             concatenatedFiles.add(concatenatedFilePath);
         }
         return concatenatedFiles;
@@ -501,7 +507,7 @@ public class FilesUtils
      *
      * @return A list of columns in the order from the file.
      */
-    static List<String> parseColsFromFirstCsvLine(File file) throws IOException
+    public static List<String> parseColsFromFirstCsvLine(File file) throws IOException
     {
         Matcher mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("");
         ArrayList<String> cols = new ArrayList();

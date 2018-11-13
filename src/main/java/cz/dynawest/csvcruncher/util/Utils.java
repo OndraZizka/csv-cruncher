@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher.util;
 
 import java.io.File;
 import java.io.InputStream;
@@ -18,12 +18,12 @@ public class Utils
 {
     private static final Logger LOG = log;
 
-    static File resolvePathToUserDirIfRelative(Path path)
+    public static File resolvePathToUserDirIfRelative(Path path)
     {
         return path.isAbsolute() ? path.toFile() : Paths.get(System.getProperty("user.dir")).resolve(path).toFile();
     }
 
-    static String escapeSql(String str)
+    public static String escapeSql(String str)
     {
         return str.replace("'", "''");
     }

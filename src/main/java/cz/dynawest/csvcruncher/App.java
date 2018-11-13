@@ -4,7 +4,7 @@ import static cz.dynawest.csvcruncher.Options.CombineDirectories.*;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.CONCAT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.EXCEPT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.INTERSECT;
-import cz.dynawest.logging.LoggingUtils;
+import cz.dynawest.csvcruncher.util.Utils;
 import java.io.PrintStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -27,8 +27,6 @@ public class App
 
     public static void main(String[] args) throws Exception
     {
-        LoggingUtils.initLogging();
-
         try {
             Options options = parseArgs(args);
             log.info("Options: \n" + options);

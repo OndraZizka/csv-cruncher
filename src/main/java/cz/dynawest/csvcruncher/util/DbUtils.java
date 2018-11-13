@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher.util;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
