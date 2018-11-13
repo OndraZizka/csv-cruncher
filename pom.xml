@@ -303,32 +303,6 @@
         </plugins>
     </build>
 
-    <!--
-    <pluginRepositories>
-        <pluginRepository>
-            <id>codehaus</id>
-            <name>Codehaus Release Repo</name>
-            <url>http://repository.codehaus.org</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>codehaus-snapshot</id>
-            <name>Codehaus Snapshot Repo</name>
-            <url>http://snapshots.repository.codehaus.org</url>
-        </pluginRepository>
-    </pluginRepositories>
-    -->
-
-
-    <!--
-    <repositories>
-        <repository>
-            <id>ondrazizka</id>
-            <url>http://ondrazizka.googlecode.com/svn/maven</url>
-        </repository>
-    </repositories>
-    -->
-
-
     <dependencyManagement>
         <dependencies>
             <dependency>
