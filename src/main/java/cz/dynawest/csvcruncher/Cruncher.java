@@ -209,7 +209,7 @@ public class Cruncher
     {
         boolean notFoundIsColumn = DbUtils.analyzeWhatWasNotFound(ex.getMessage(), this.options.sql);
 
-        String tableNames = formatListOfAvailableTables(notFoundIsColumn);
+        String tableNames = DbUtils.formatListOfAvailableTables(notFoundIsColumn, this.conn);
 
         String hintMsg = notFoundIsColumn ?
                 "\n  Looks like you are referring to a column that is not present in the table(s).\n"
@@ -269,46 +269,6 @@ public class Cruncher
         }
     }
 
-    private String formatListOfAvailableTables(boolean withColumns)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        String sqlTablesMetadata =
-                "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct" +
-                    " FROM INFORMATION_SCHEMA.TABLES AS t " +
-                    " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
-                " WHERE t.table_schema = 'PUBLIC'";
-
-        try (Statement st = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-            ResultSet rs = st.executeQuery(sqlTablesMetadata);
-
-            tables:
-            while(rs.next()) {
-                String tableName = rs.getString("T");
-                sb.append(" * ").append(tableName).append('\n');
-                while(tableName == rs.getString("T")) {
-                    if (withColumns)
-                        sb.append("    - ")
-                            .append(StringUtils.rightPad(rs.getString("C"), 28))
-                            .append(" ")
-                            .append(rs.getString("CT"))
-                            .append('\n');
-                    if (!rs.next())
-                        break tables;
-                }
-                rs.previous();
-            }
-            if (sb.length() == 0)
-                return "    (No tables)";
-            return sb.toString();
-        }
-        catch (SQLException ex) {
-            String msg = "Failed listing tables: " + ex.getMessage();
-            LOG.severe(msg);
-            return msg;
-        }
-    }
-
     private long getInitialNumber()
     {
         long initialNumber;
@@ -344,7 +304,7 @@ public class Cruncher
             {
                 // List columns with types.
                 addToMsg = "\n  Tables and column types:\n"
-                        + this.formatListOfAvailableTables(true);
+                        + DbUtils.formatListOfAvailableTables(true, this.conn);
             }
 
             if (ex.getMessage().contains("cannot be converted to target type")) {
