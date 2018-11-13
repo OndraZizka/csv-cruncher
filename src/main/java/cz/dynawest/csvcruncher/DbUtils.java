@@ -7,13 +7,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 
 public final class DbUtils
 {
-    private static final Logger LOG = Logger.getLogger(DbUtils.class.getName());
-
     public static List<String> getResultSetColumnNames(ResultSet rs) throws SQLException
     {
         String [] colNames_ = new String[rs.getMetaData().getColumnCount()];

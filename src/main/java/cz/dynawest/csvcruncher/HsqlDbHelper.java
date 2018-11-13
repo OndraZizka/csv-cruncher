@@ -11,12 +11,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 
+@Slf4j
 public class HsqlDbHelper
 {
-    private static final Logger LOG = Logger.getLogger(HsqlDbHelper.class.getName());
+    private static final Logger LOG = log;
     public static final int MAX_STRING_COLUMN_LENGTH = 4092;
 
 
@@ -175,7 +177,7 @@ public class HsqlDbHelper
         }
         catch (SQLException ex) {
             String msg = "Failed listing tables: " + ex.getMessage();
-            LOG.severe(msg);
+            LOG.error(msg);
             return msg;
         }
     }
@@ -279,10 +281,10 @@ public class HsqlDbHelper
                 String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
                 //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
 
-                LOG.finer("Column change attempt SQL: " + sqlCol);
+                LOG.trace("Column change attempt SQL: " + sqlCol);
                 try (Statement st = jdbcConn.createStatement()) {
                     st.execute(sqlCol);
-                    LOG.fine(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
+                    LOG.debug(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
                     columnsFitIntoType.put(colName, sqlType);
                 }
                 catch (SQLException ex) {
@@ -300,13 +302,13 @@ public class HsqlDbHelper
             String sqlType = colNameAndType.getValue();
             String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
 
-            LOG.finer("Column change attempt SQL: " + sqlAlter);
+            LOG.trace("Column change attempt SQL: " + sqlAlter);
             try (Statement st = jdbcConn.createStatement()) {
                 st.execute(sqlAlter);
-                LOG.fine(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
+                LOG.debug(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
             }
             catch (SQLException ex) {
-                LOG.finer(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                LOG.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
             }
         }
 
@@ -319,7 +321,7 @@ public class HsqlDbHelper
             try {
                 detachTable(tableName, true);
             } catch (Exception ex) {
-                LOG.severe(msgOnError + ex.getMessage());
+                LOG.error(msgOnError + ex.getMessage());
             }
         }
 

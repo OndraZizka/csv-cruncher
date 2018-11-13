@@ -6,10 +6,9 @@ import static cz.dynawest.csvcruncher.Options.CombineInputFiles.EXCEPT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.INTERSECT;
 import cz.dynawest.logging.LoggingUtils;
 import java.io.PrintStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -17,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
  * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
  * So please be lenient with the code below :)
  */
-
+@Slf4j
 public class App
 {
     static {
@@ -25,7 +24,6 @@ public class App
     }
 
     public static final String STR_USAGE = "Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>";
-    private static final Logger log = Logger.getLogger(App.class.getName());
 
     public static void main(String[] args) throws Exception
     {
@@ -41,7 +39,7 @@ public class App
             System.exit(1);
         }
         catch (Throwable ex) {
-            log.log(Level.SEVERE,"CSV Cruncher failed: " + ex.getMessage(), ex);
+            log.error("CSV Cruncher failed: " + ex.getMessage(), ex);
             System.exit(127);
         }
     }
@@ -52,11 +50,11 @@ public class App
         int relPos = -1;
         App.OptionsNext next = null;
 
-        log.fine(" Parameters: ");
+        log.debug(" Parameters: ");
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
             //System.out.println(" * " + arg);
-            log.fine(" * " + arg);
+            log.debug(" * " + arg);
 
             // JSON output
             if (arg.startsWith("--" + Options.JsonExportFormat.PARAM_NAME)) {
@@ -272,11 +270,11 @@ public class App
                         "\n    Use table-qualified way: `SELECT myTable.*`";
                 if (itsForSure) {
                     //throw new IllegalArgumentException(msg);
-                    log.severe("\n" + msg + "\n\n");
+                    log.error("\n" + msg + "\n\n");
                     System.exit(1);
                 } else {
                     String notSure = "\n    (This detection is not reliable so the program will continue, but likely fail.)";
-                    log.warning("\n" + msg + notSure + "\n\n");
+                    log.warn("\n" + msg + notSure + "\n\n");
                 }
             }
         }

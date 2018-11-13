@@ -1,0 +1,19 @@
+<configuration
+        xmlns="http://ch.qos.logback/xml/ns/logback"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://ch.qos.logback/xml/ns/logback https://raw.githubusercontent.com/enricopulatzo/logback-XSD/master/src/main/xsd/logback.xsd"
+>
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <!-- Encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default. -->
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{35}: %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="WARN">
+        <appender-ref ref="STDERR" />
+    </root>
+
+    <logger name="com.blackboard" level="INFO"/>
+</configuration>

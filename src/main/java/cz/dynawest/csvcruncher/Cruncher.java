@@ -12,15 +12,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 
+@Slf4j
 public final class Cruncher
 {
-    private static final Logger LOG = Logger.getLogger(Cruncher.class.getName());
+    private static final Logger LOG = log;
 
     public static final String TABLE_NAME__OUTPUT = "output";
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.

@@ -1,7 +1,9 @@
 package cz.dynawest.csvcruncher;
 
-import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
+@Slf4j
 enum ReachedCrunchStage
 {
     NONE,
@@ -11,7 +13,7 @@ enum ReachedCrunchStage
     OUTPUT_TABLE_FILLED,
     OUTPUT_JSON_CONVERTED;
 
-    private static final Logger LOG = Logger.getLogger(ReachedCrunchStage.class.getName());
+    private static final Logger LOG = log;
 
     public boolean passed(ReachedCrunchStage stage)
     {

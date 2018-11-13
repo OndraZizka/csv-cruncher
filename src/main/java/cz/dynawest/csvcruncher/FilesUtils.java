@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,6 +37,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
@@ -46,9 +46,9 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * TODO: Convert the concat related methods to a context-based class.
  */
+@Slf4j
 public class FilesUtils
 {
-    private static final Logger LOG = Logger.getLogger(FilesUtils.class.getName());
     public static final String CONCAT_WORK_SUBDIR = "concat/";
 
     /**
@@ -234,7 +234,7 @@ public class FilesUtils
             case NONE: default: return inputPaths;
             case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
             case CONCAT:
-                LOG.fine("Concatenating input files:");
+                log.debug("Concatenating input files:");
 
                 // First, expand the directories.
                 Map<Path, List<Path>> fileGroupsToConcat = expandDirectories(inputPaths, options);
@@ -246,7 +246,7 @@ public class FilesUtils
                 if (fileGroupsToConcat.size() == 1 && fileGroupsToConcat.keySet().iterator().next() == null) {
                     List<Path> paths = fileGroupsToConcat.get(null);
                     if (paths.isEmpty()) {
-                        LOG.info("   *** No files found.");
+                        log.info("   *** No files found.");
                         return paths;
                     }
                     if (paths.size() == 1)
@@ -269,9 +269,10 @@ public class FilesUtils
 
     private static void logFileGroups(Map<Path, List<Path>> fileGroupsToConcat, Level level, String label)
     {
-        LOG.log(level, "--- " + label + " ---" );
+        // TBD: Apply level.
+        log.debug("--- " + label + " ---" );
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            LOG.log(level, " * Path: " + fileGroup.getKey() + ": "
+            log.debug(" * Path: " + fileGroup.getKey() + ": "
                 + fileGroup.getValue().stream().map(path -> "\n\t- " + path).collect(Collectors.joining()));
         }
     }
@@ -290,7 +291,7 @@ public class FilesUtils
         fileGroupsToConcat.put(null, new ArrayList<>());
 
         for (Path inputPath: inputPaths) try {
-            LOG.info(" * About to concat " + inputPath);
+            log.info(" * About to concat " + inputPath);
 
             // Put files simply to "global" group. Might be improved in the future.
             if (inputPath.toFile().isFile())
@@ -316,20 +317,20 @@ public class FilesUtils
                     } break;
                 }
 
-                LOG.finer("   *** About to walk" + inputPath);
+                log.trace("   *** About to walk" + inputPath);
                 Files.walk(inputPath)
                         .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
                         ///.peek(path -> System.out.println("fileToGroupSorter " + path))
                         .filter(file -> {
                             if (file.toFile().canRead()) return true;
                             if (options.skipNonReadable) {
-                                LOG.info("Skipping non-readable file: " + file);
+                                log.info("Skipping non-readable file: " + file);
                                 return false;
                             }
                             throw new IllegalArgumentException("Unreadable file (try --skipNonReadable): " + file);
                         } )
                         .forEach(fileToGroupSorter);
-                LOG.finer("   *** After walking: " + fileGroupsToConcat);
+                log.trace("   *** After walking: " + fileGroupsToConcat);
             }
         } catch (Exception ex) {
             throw new CsvCruncherException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
@@ -352,7 +353,7 @@ public class FilesUtils
             List<Path> paths = fileGroup.getValue();
             if (paths.isEmpty()) {
                 if (origin != null)
-                    LOG.info("   *** No files found in " + origin + ".");
+                    log.info("   *** No files found in " + origin + ".");
                 continue;
             }
 
@@ -386,7 +387,7 @@ public class FilesUtils
             fileGroupsToConcat2.put(origin, sortedPaths);
 
             String dirLabel = origin == null ? "all files" : "" + origin;
-            LOG.info("   *** Will combine files from " + dirLabel + ": "
+            log.info("   *** Will combine files from " + dirLabel + ": "
                     + sortedPaths.stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
         }
         return fileGroupsToConcat2;
@@ -434,13 +435,13 @@ public class FilesUtils
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             // Destination directory
-            //LOG.info("    Into dest dir: " + defaultDestDir);
+            //log.info("    Into dest dir: " + defaultDestDir);
             Files.createDirectories(defaultDestDir);
 
             String concatFileName = deriveNameForCombinedFile(usedConcatFilePaths, fileGroup);
             Path concatenatedFilePath = defaultDestDir.resolve(concatFileName);
             usedConcatFilePaths.add(concatenatedFilePath);
-            LOG.info("    Into dest file: " + concatenatedFilePath + " will combine files from: "
+            log.info("    Into dest file: " + concatenatedFilePath + " will combine files from: "
                     + fileGroup.getValue().stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
 
             // TODO: Optionally this could be named better:

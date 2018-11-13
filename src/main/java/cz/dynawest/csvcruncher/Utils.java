@@ -10,11 +10,13 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
 import java.util.Properties;
-import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
+@Slf4j
 public class Utils
 {
-    private static final Logger LOG = Logger.getLogger(Utils.class.getName());
+    private static final Logger LOG = log;
 
     static File resolvePathToUserDirIfRelative(Path path)
     {
@@ -71,7 +73,7 @@ public class Utils
                 }
             }*/
         } catch (Exception ex) {
-            LOG.warning("Invalid " + versionFilePath + ": " + ex.getMessage());
+            LOG.warn("Invalid " + versionFilePath + ": " + ex.getMessage());
         }
         return null;
     }
@@ -125,7 +127,7 @@ public class Utils
             case Types.TIME:    val = (""+resultSet.getTime(colIndex)); break;
             case Types.TIMESTAMP:    val = (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T');  break; // JS Date() takes "1995-12-17T03:24:00"
             default:
-                LOG.severe("Unsupported type of column " + metaData.getColumnLabel(colIndex) + ": " + metaData.getColumnTypeName(colIndex));
+                LOG.error("Unsupported type of column " + metaData.getColumnLabel(colIndex) + ": " + metaData.getColumnTypeName(colIndex));
                 return null;
         }
         if (resultSet.wasNull())
