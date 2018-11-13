@@ -4,13 +4,17 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 public class Utils
 {
-    private static final Logger log = Logger.getLogger(Utils.class.getName());
+    private static final Logger LOG = Logger.getLogger(Utils.class.getName());
 
     static File resolvePathToUserDirIfRelative(Path path)
     {
@@ -46,10 +50,10 @@ public class Utils
             /*resEnum = Thread.currentThread().getContextClassLoader().getResources(versionFilePath);
             while (resEnum.hasMoreElements()) {
                 URL url = (URL)resEnum.nextElement();
-                //log.info("AAA" + url);
+                //LOG.info("AAA" + url);
                 InputStream is = url.openStream();
                 if (is == null) {
-                    log.warning("Can't read resource at " + url.toString());
+                    LOG.warning("Can't read resource at " + url.toString());
                     return null;
                 }
                 if (isManifest) {
@@ -67,7 +71,7 @@ public class Utils
                 }
             }*/
         } catch (Exception ex) {
-            log.warning("Invalid " + versionFilePath + ": " + ex.getMessage());
+            LOG.warning("Invalid " + versionFilePath + ": " + ex.getMessage());
         }
         return null;
     }
@@ -91,4 +95,42 @@ public class Utils
 
     }
     /**/
+
+
+    /**
+     * This is for the case we use hand-made JSON marshalling.
+     * Returns null if the column value was null, or if the returned type is not supported.
+     */
+    private static String formatValueForJson(ResultSet resultSet, int colIndex, boolean[] colsAreNumbers) throws SQLException
+    {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        String val;
+        switch (metaData.getColumnType(colIndex)) {
+            case Types.VARCHAR:
+            case Types.CHAR:
+            case Types.CLOB:
+                val = resultSet.getString(colIndex); break;
+            case Types.TINYINT:
+            case Types.BIT:
+                val = (""+resultSet.getByte(colIndex)); break;
+            case Types.SMALLINT: val = (""+resultSet.getShort(colIndex)); break;
+            case Types.INTEGER:  val = (""+resultSet.getInt(colIndex)); break;
+            case Types.BIGINT:   val = (""+resultSet.getLong(colIndex)); break;
+            case Types.BOOLEAN:  val = (""+resultSet.getBoolean(colIndex)); break;
+            case Types.FLOAT:    val = (""+resultSet.getFloat(colIndex)); break;
+            case Types.DOUBLE:
+            case Types.DECIMAL:  val = (""+resultSet.getDouble(colIndex)); break;
+            case Types.NUMERIC:  val = (""+resultSet.getBigDecimal(colIndex)); break;
+            case Types.DATE:    val = (""+resultSet.getDate(colIndex)); break;
+            case Types.TIME:    val = (""+resultSet.getTime(colIndex)); break;
+            case Types.TIMESTAMP:    val = (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T');  break; // JS Date() takes "1995-12-17T03:24:00"
+            default:
+                LOG.severe("Unsupported type of column " + metaData.getColumnLabel(colIndex) + ": " + metaData.getColumnTypeName(colIndex));
+                return null;
+        }
+        if (resultSet.wasNull())
+            return null;
+        return val;
+    }
+
 }

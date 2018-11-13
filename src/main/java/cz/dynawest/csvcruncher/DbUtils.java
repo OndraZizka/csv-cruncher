@@ -1,19 +1,20 @@
 package cz.dynawest.csvcruncher;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 
-public class DbUtils
+public final class DbUtils
 {
     private static final Logger LOG = Logger.getLogger(DbUtils.class.getName());
 
-    static List<String> getResultSetColumnNames(ResultSet rs) throws SQLException
+    public static List<String> getResultSetColumnNames(ResultSet rs) throws SQLException
     {
         String [] colNames_ = new String[rs.getMetaData().getColumnCount()];
         for (int colIndex = 0; colIndex < colNames_.length; colIndex++) {
@@ -31,7 +32,7 @@ public class DbUtils
      *
      * @return true if column, false if table (or something else).
      */
-    static boolean analyzeWhatWasNotFound(String message, String sql)
+    public static boolean analyzeWhatWasNotFound(String message)
     {
         String notFoundName = StringUtils.substringAfter(message, "object not found: ");
         notFoundName = StringUtils.substringBefore(notFoundName, " in statement [");
@@ -47,46 +48,23 @@ public class DbUtils
 
 
     /**
-     * Prepares a list of tables in the given JDBC connections, in the PUBLIC schema.
+     * Dump the content of a table. Debug code.
      */
-    static String formatListOfAvailableTables(boolean withColumns, Connection jdbcConn)
+    private void testDumpSelect(String tableName, Connection jdbcConn) throws SQLException
     {
-        String schema = "'PUBLIC'";
+        PreparedStatement ps = jdbcConn.prepareStatement("SELECT * FROM " + tableName);
+        ResultSet rs = ps.executeQuery();
+        ResultSetMetaData metaData = rs.getMetaData();
 
-        StringBuilder sb = new StringBuilder();
-        String sqlTablesMetadata =
-                "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct" +
-                    " FROM INFORMATION_SCHEMA.TABLES AS t " +
-                    " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
-                        " WHERE t.table_schema = " + schema;
+        while (rs.next())
+        {
+            System.out.println(" ------- ");
 
-        try (Statement st = jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-            ResultSet rs = st.executeQuery(sqlTablesMetadata);
-
-            tables:
-            while(rs.next()) {
-                String tableName = rs.getString("T");
-                sb.append(" * ").append(tableName).append('\n');
-                while(tableName == rs.getString("T")) {
-                    if (withColumns)
-                        sb.append("    - ")
-                            .append(StringUtils.rightPad(rs.getString("C"), 28))
-                            .append(" ")
-                            .append(rs.getString("CT"))
-                            .append('\n');
-                    if (!rs.next())
-                        break tables;
-                }
-                rs.previous();
+            for (int i = 1; i <= metaData.getColumnCount(); ++i)
+            {
+                System.out.println(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i));
             }
-            if (sb.length() == 0)
-                return "    (No tables)";
-            return sb.toString();
-        }
-        catch (SQLException ex) {
-            String msg = "Failed listing tables: " + ex.getMessage();
-            LOG.severe(msg);
-            return msg;
         }
     }
+
 }
