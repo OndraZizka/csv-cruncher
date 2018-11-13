@@ -72,15 +72,15 @@ public class Cruncher
      */
     public void crunch() throws Exception
     {
-        validateParameters();
+        this.options.validate();
 
-        Map<String, File> tablesToFiles = new HashMap<>();
         try
         {
             boolean addCounterColumn = options.initialRowNumber != null;
             boolean convertResultToJson = options.jsonExportFormat != Options.JsonExportFormat.NONE;
             boolean printAsArray = options.jsonExportFormat == Options.JsonExportFormat.ARRAY;
 
+            Map<String, File> tablesToFiles = new HashMap<>();
             ReachedCrunchStage reachedStage = ReachedCrunchStage.NONE;
 
             File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
@@ -103,9 +103,6 @@ public class Cruncher
 
                 if (inputPaths.isEmpty())
                     return;
-
-
-                //LOG.info(" --- ================================================================ --- ");
 
                 // For each input CSV file...
                 for (Path path : inputPaths) {
@@ -212,7 +209,7 @@ public class Cruncher
     {
         boolean notFoundIsColumn = DbUtils.analyzeWhatWasNotFound(ex.getMessage(), this.options.sql);
 
-        String tableNames = formatListOfAvailableTables(notFoundIsColumn); // TODO
+        String tableNames = formatListOfAvailableTables(notFoundIsColumn);
 
         String hintMsg = notFoundIsColumn ?
                 "\n  Looks like you are referring to a column that is not present in the table(s).\n"
@@ -370,24 +367,6 @@ public class Cruncher
         return fileName.getName().replaceFirst(".csv$", "").replaceAll("[^a-zA-Z0-9_]", "_");
     }
 
-    private void validateParameters() throws FileNotFoundException
-    {
-        if (this.options.inputPaths == null || this.options.inputPaths.isEmpty())
-            throw new IllegalArgumentException(" -in is not set.");
-
-        if (this.options.sql == null)
-            throw new IllegalArgumentException(" -sql is not set.");
-
-        if (this.options.outputPathCsv == null)
-            throw new IllegalArgumentException(" -out is not set.");
-
-
-        for (String path : this.options.inputPaths) {
-            File ex = new File(path);
-            if (!ex.exists())
-                throw new FileNotFoundException("CSV file not found: " + ex.getPath());
-        }
-    }
 
     private void createTableForInputFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst) throws SQLException, FileNotFoundException
     {

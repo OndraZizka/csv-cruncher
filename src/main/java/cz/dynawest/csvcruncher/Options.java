@@ -1,5 +1,7 @@
 package cz.dynawest.csvcruncher;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -32,6 +34,33 @@ public final class Options
         return this.inputPaths != null && this.outputPathCsv != null && this.sql != null;
     }
 
+
+    public void validate() throws FileNotFoundException
+    {
+        if (this.inputPaths == null || this.inputPaths.isEmpty())
+            throw new IllegalArgumentException(" -in is not set.");
+
+        // SQL may be omitted if there is a request to combine files or convert to JSON. Otherwise it would be a no-op.
+        if (this.sql == null && (
+                !Options.CombineInputFiles.NONE.equals(this.combineInputFiles)
+                        ||
+                        !Options.JsonExportFormat.NONE.equals(this.jsonExportFormat)
+        ))
+            throw new IllegalArgumentException(" -sql is not set.");
+
+        if (this.outputPathCsv == null)
+            throw new IllegalArgumentException(" -out is not set.");
+
+
+        for (String path : this.inputPaths) {
+            File ex = new File(path);
+            if (!ex.exists())
+                throw new FileNotFoundException("CSV file not found: " + ex.getPath());
+        }
+    }
+
+
+
     public String toString()
     {
         return   "    dbPath: " + this.dbPath +
@@ -50,6 +79,10 @@ public final class Options
                "\n    jsonExportFormat: " + this.jsonExportFormat +
                "\n    skipNonReadable: " + this.skipNonReadable;
     }
+
+
+
+
 
 
     public enum SortInputFiles implements OptionEnum {
