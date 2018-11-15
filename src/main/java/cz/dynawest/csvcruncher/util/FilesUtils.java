@@ -40,6 +40,8 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -259,7 +261,7 @@ public class FilesUtils
                 fileGroupsToConcat = sortFileGroups(options, fileGroupsToConcat);
                 logFileGroups(fileGroupsToConcat, Level.INFO, "Sorted file groups:");
 
-                fileGroupsToConcat = splitToSubgroupsPerSameHeaders(fileGroupsToConcat);
+                fileGroupsToConcat = splitToSubgroupsPerSameHeaders(fileGroupsToConcat).getFileGroupsToConcat();
                 logFileGroups(fileGroupsToConcat, Level.INFO, "File groups split per header structure:");
 
                 // Get the final concatenated file path.
@@ -408,9 +410,13 @@ public class FilesUtils
      *
      * @return A map with one entry per group, containing the files in the original order, but split per CSV header structure.
      */
-    private static Map<Path, List<Path>> splitToSubgroupsPerSameHeaders(Map<Path, List<Path>> fileGroupsToConcat) throws IOException
+    private static FileGroupsSplitBySchemaResult splitToSubgroupsPerSameHeaders(Map<Path, List<Path>> fileGroupsToConcat) throws IOException
     {
+        // TODO: Record information about what groups were splitted and to what subgroups.
         Map<Path, List<Path>> fileGroupsToConcat2 = new LinkedHashMap<>();
+        Map<Path, List<Path>> splittedGroupsInfo_oldGroupToNewGroups = new LinkedHashMap<>();
+        FileGroupsSplitBySchemaResult result = new FileGroupsSplitBySchemaResult(fileGroupsToConcat2, splittedGroupsInfo_oldGroupToNewGroups);
+        // TODO: Refactor this into proper models. InputGroup, PerHeaderInputSubgroup, etc.
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             // Check if all files have the same columns header.
@@ -419,19 +425,26 @@ public class FilesUtils
                 List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
                 subGroups_headerStructureToFiles.computeIfAbsent(headers, x -> new ArrayList<>()).add(fileToConcat);
             }
+
+            Path originalGroupPath = fileGroup.getKey();
             if (subGroups_headerStructureToFiles.size() == 1) {
-                fileGroupsToConcat2.put(fileGroup.getKey(), fileGroup.getValue());
+                fileGroupsToConcat2.put(originalGroupPath, fileGroup.getValue());
             }
             else {
                 // Replaces the original group with few subgroups, with paths suffixed with counter: originalPath_1, originalPath_2, ...
                 int counter = 1;
-                for (List<Path> filesWithSameHeaders : subGroups_headerStructureToFiles.values()) {
-                    Path subgroupKey = Paths.get("" + fileGroup.getKey() + "_" + counter++);
+                for (List<Path> filesWithSameHeaders : subGroups_headerStructureToFiles.values())
+                {
+                    Path subgroupKey = Paths.get("" + originalGroupPath + "_" + counter++);
                     fileGroupsToConcat2.putIfAbsent(subgroupKey, filesWithSameHeaders);
+                    // Keep information about what groups were splitted and to what subgroups.
+                    splittedGroupsInfo_oldGroupToNewGroups
+                            .computeIfAbsent(originalGroupPath, x -> new ArrayList<>())
+                            .add(subgroupKey);
                 }
             }
         }
-        return fileGroupsToConcat2;
+        return result;
     }
 
     private static List<Path> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path defaultDestDir) throws IOException
@@ -550,4 +563,25 @@ public class FilesUtils
             return cols;
         }
     }
+
+    /**
+     * Result of a split into subgroups.
+     * When combining CSV files, if they do not match in structure (which is derived from the header names),
+     * they are split into subgroups.
+     *
+     * TODO: Refactor. Previously this was done into a flat structure, but it seems at least 2 levels will be needed.
+     *       For now I am only putting it to two flat maps "joined" by the subgroup names.
+     */
+    @Getter
+    @AllArgsConstructor
+    static class FileGroupsSplitBySchemaResult
+    {
+        private Map<Path, List<Path>> fileGroupsToConcat = new LinkedHashMap<>();
+
+        /**
+         * Old group to new subgroups.
+         */
+        private Map<Path, List<Path>> splittedGroupsInfo = new LinkedHashMap<>();
+    }
+
 }

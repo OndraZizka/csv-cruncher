@@ -72,7 +72,10 @@
                         <textdb.allow_full_path>true</textdb.allow_full_path>
                     </systemPropertyVariables>
                 </configuration>
-                <executions><execution><id>it</id><goals><goal>integration-test</goal></goals></execution></executions>
+                <executions>
+                    <execution><id>it</id><goals><goal>integration-test</goal></goals></execution>
+                    <execution><id>ve</id><goals><goal>verify</goal></goals></execution>
+                </executions>
             </plugin>
 
             <!-- Better - uses the Assembly plugin with built-in jar-with-dependencies descriptor.
