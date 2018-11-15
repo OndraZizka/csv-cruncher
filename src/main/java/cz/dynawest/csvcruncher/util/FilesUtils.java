@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.util;
 
+import ch.qos.logback.classic.Logger;
 import cz.dynawest.csvcruncher.Cruncher;
 import cz.dynawest.csvcruncher.CsvCruncherException;
 import cz.dynawest.csvcruncher.Options;
@@ -232,12 +233,21 @@ public class FilesUtils
      * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
      * The combined input files will be witten under the respective "group root directory".
      * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
+     *
+     * @return Mapping from the concatenated file to the files that ended up in it.
      */
-    public static List<Path> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
+    public static Map<Path, List<Path>> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
     {
         switch (options.getCombineInputFiles()) {
-            case NONE: default: return inputPaths;
-            case INTERSECT: case EXCEPT: throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
+            case NONE:
+            default:
+                // No splitting - return a list with the same item.
+                return mapOfIdentityToSingletonList(inputPaths);
+
+            case INTERSECT:
+            case EXCEPT:
+                throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
+
             case CONCAT:
                 log.debug("Concatenating input files:");
 
@@ -252,32 +262,41 @@ public class FilesUtils
                     List<Path> paths = fileGroupsToConcat.get(null);
                     if (paths.isEmpty()) {
                         log.info("   *** No files found.");
-                        return paths;
+                        return Collections.emptyMap();
                     }
                     if (paths.size() == 1)
-                        return paths;
+                        return mapOfIdentityToSingletonList(paths);
                 }
 
                 fileGroupsToConcat = sortFileGroups(options, fileGroupsToConcat);
                 logFileGroups(fileGroupsToConcat, Level.INFO, "Sorted file groups:");
 
-                fileGroupsToConcat = splitToSubgroupsPerSameHeaders(fileGroupsToConcat).getFileGroupsToConcat();
+                FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToConcat);
+                fileGroupsToConcat = splitResult.getFileGroupsToConcat();
                 logFileGroups(fileGroupsToConcat, Level.INFO, "File groups split per header structure:");
 
-                // Get the final concatenated file path.
-                Path defaultDestDir = Paths.get(options.getOutputPathCsv()).getParent().resolve(CONCAT_WORK_SUBDIR); // System.getProperty("user.dir");
-                List<Path> concatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToConcat, defaultDestDir);
+                // At this point, the group keys are the original group + _<counter>.
+                // TODO: Again, refactor this to something more sane.
 
-                return concatenatedFiles;
+                // Get the final concatenated file path. Currently, "-out" /../concat.
+                Path defaultDestDir = options.getMainOutputDir().resolve(CONCAT_WORK_SUBDIR);
+                Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToConcat, defaultDestDir);
+
+                return resultingFilePathToConcatenatedFiles;
         }
+    }
+
+    private static Map<Path, List<Path>> mapOfIdentityToSingletonList(List<Path> inputPaths)
+    {
+        return inputPaths.stream().collect(Collectors.toMap(x -> x, Collections::singletonList));
     }
 
     private static void logFileGroups(Map<Path, List<Path>> fileGroupsToConcat, Level level, String label)
     {
         // TBD: Apply level.
-        log.debug("--- " + label + " ---" );
+        ((Logger) log).info("--- " + label + " ---" );
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            log.debug(" * Path: " + fileGroup.getKey() + ": "
+            log.info(" * Path: " + fileGroup.getKey() + ": "
                 + fileGroup.getValue().stream().map(path -> "\n\t- " + path).collect(Collectors.joining()));
         }
     }
@@ -447,9 +466,15 @@ public class FilesUtils
         return result;
     }
 
-    private static List<Path> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path defaultDestDir) throws IOException
+    /**
+     * @param options Used to filter the files, like "skip 1st line" or regex line matches.
+     * @param fileGroupsToConcat Mapping from file group "key" (original group path + counter suffix) to the list of files to be concatenated.
+     * @param defaultDestDir
+     * @return Mapping from the resulting concatenated file to the files that were concatenated.
+     */
+    private static Map<Path, List<Path>> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path defaultDestDir) throws IOException
     {
-        List<Path> concatenatedFiles = new ArrayList<>();
+        Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = new LinkedHashMap<>();
         Set<Path> usedConcatFilePaths = new HashSet<>();
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
@@ -470,9 +495,9 @@ public class FilesUtils
 
             // Combine the file sets.
             concatFiles(fileGroup.getValue(), concatenatedFilePath, options.getIgnoreFirstLines(), options.getIgnoreLineRegex());
-            concatenatedFiles.add(concatenatedFilePath);
+            resultingFilePathToConcatenatedFiles.put(concatenatedFilePath, fileGroup.getValue());
         }
-        return concatenatedFiles;
+        return resultingFilePathToConcatenatedFiles;
     }
 
 

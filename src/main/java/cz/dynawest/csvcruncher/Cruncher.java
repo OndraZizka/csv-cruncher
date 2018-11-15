@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -95,8 +96,8 @@ public final class Cruncher
 
                 // Combine files. Should we concat the files or UNION the tables?
                 if (this.options.combineInputFiles != Options.CombineInputFiles.NONE) {
-                    List<Path> concatenatedFiles = FilesUtils.combineInputFiles(inputPaths, this.options);
-                    inputPaths = concatenatedFiles;
+                    Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputPaths, this.options);
+                    inputPaths = new ArrayList(resultingFilePathToConcatenatedFiles.keySet());
                     LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
                     reachedStage = ReachedCrunchStage.INPUT_FILES_PREPROCESSED;
                 }
@@ -108,8 +109,6 @@ public final class Cruncher
                 CounterColumn counterColumn = new CounterColumn();
                 if (addCounterColumn)
                     counterColumn.setDdlAndVal();
-
-                //
 
                 // For each input CSV file...
                 for (Path path : inputPaths) {

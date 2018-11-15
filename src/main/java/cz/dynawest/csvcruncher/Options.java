@@ -2,6 +2,8 @@ package cz.dynawest.csvcruncher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -83,9 +85,15 @@ public final class Options
                "\n    skipNonReadable: " + this.skipNonReadable;
     }
 
+    public Path getMainOutputDir()
+    {
+        Path outPath = Paths.get(this.getOutputPathCsv());
 
-
-
+        if (outPath.toFile().isFile())
+            return outPath.getParent();
+        else
+            return outPath;
+    }
 
 
     public enum SortInputFiles implements OptionEnum {
