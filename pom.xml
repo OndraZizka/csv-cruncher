@@ -67,6 +67,7 @@
                 <version>2.22.1</version>
                 <configuration>
                     <systemPropertyVariables>
+                        <test.cruncher.runCmd>${testRunCmd}</test.cruncher.runCmd>
                         <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
                         <target.dir>${project.build.directory}</target.dir>
                         <textdb.allow_full_path>true</textdb.allow_full_path>

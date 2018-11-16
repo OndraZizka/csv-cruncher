@@ -272,9 +272,8 @@ public class App
                         "\n    Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'." +
                         "\n    Use table-qualified way: `SELECT myTable.*`";
                 if (itsForSure) {
-                    //throw new IllegalArgumentException(msg);
                     log.error("\n" + msg + "\n\n");
-                    System.exit(1);
+                    throw new IllegalArgumentException(msg);
                 } else {
                     String notSure = "\n    (This detection is not reliable so the program will continue, but likely fail.)";
                     log.warn("\n" + msg + notSure + "\n\n");
