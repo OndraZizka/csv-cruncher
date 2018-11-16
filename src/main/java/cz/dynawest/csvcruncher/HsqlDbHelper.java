@@ -286,7 +286,7 @@ public class HsqlDbHelper
                 LOG.trace("Column change attempt SQL: " + sqlCol);
                 try (Statement st = jdbcConn.createStatement()) {
                     st.execute(sqlCol);
-                    LOG.debug(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
+                    LOG.trace(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
                     columnsFitIntoType.put(colName, sqlType);
                 }
                 catch (SQLException ex) {

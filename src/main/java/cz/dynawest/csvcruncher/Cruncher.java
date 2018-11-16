@@ -104,6 +104,7 @@ public final class Cruncher
 
                 if (inputPaths.isEmpty())
                     return;
+                validateInputFiles(inputPaths);
 
                 // Should the result have a unique incremental ID as an added 1st column?
                 CounterColumn counterColumn = new CounterColumn();
@@ -188,6 +189,15 @@ public final class Cruncher
         }
         catch (Exception ex) {
             throw ex; // Debug purposes
+        }
+    }
+
+    private void validateInputFiles(List<Path> inputPaths)
+    {
+        List<Path> notFiles = inputPaths.stream().filter(path -> !path.toFile().isFile()).collect(Collectors.toList());
+        if (notFiles.isEmpty()) {
+            String msg = "Some input paths do not point to files: " + notFiles.stream().map(Path::toString).collect(Collectors.joining(", "));
+            throw new IllegalStateException(msg);
         }
     }
 
