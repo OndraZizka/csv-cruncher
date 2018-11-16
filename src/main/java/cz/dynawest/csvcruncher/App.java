@@ -25,15 +25,20 @@ public class App
 
     public static final String STR_USAGE = "Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>";
 
+    public static void mainNoExit(String[] args) throws Exception
+    {
+        Options options = parseArgs(args);
+        log.info("Options: \n" + options);
+        new Cruncher(options).crunch();
+    }
+
     public static void main(String[] args) throws Exception
     {
         try {
-            Options options = parseArgs(args);
-            log.info("Options: \n" + options);
-            (new Cruncher(options)).crunch();
+            mainNoExit(args);
         }
-        catch (IllegalArgumentException var3) {
-            System.out.println("" + var3.getMessage());
+        catch (IllegalArgumentException ex) {
+            System.out.println("" + ex.getMessage());
             System.exit(1);
         }
         catch (Throwable ex) {
