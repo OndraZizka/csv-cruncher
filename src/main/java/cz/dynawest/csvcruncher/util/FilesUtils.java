@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher.util;
 
 import ch.qos.logback.classic.Logger;
 import cz.dynawest.csvcruncher.Cruncher;
+import cz.dynawest.csvcruncher.Cruncher.CruncherInputSubpart;
 import cz.dynawest.csvcruncher.CsvCruncherException;
 import cz.dynawest.csvcruncher.Options;
 import java.io.BufferedOutputStream;
@@ -273,7 +274,7 @@ public class FilesUtils
      *
      * @return Mapping from the concatenated file to the files that ended up in it.
      */
-    public static Map<Path, List<Path>> combineInputFiles(Map<Path, List<Path>> fileGroupsToCombine, Options options) throws IOException
+    public static List<CruncherInputSubpart> combineInputFiles(Map<Path, List<Path>> fileGroupsToCombine, Options options) throws IOException
     {
         // Split into subgroups by column names in the CSV header.
         FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine);
@@ -294,9 +295,10 @@ public class FilesUtils
             case CONCAT:
                 log.debug("Concatenating input files.");
 
-                Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
+                ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
+                List<CruncherInputSubpart> resultingInputSubsets = concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
 
-                return resultingFilePathToConcatenatedFiles;
+                return resultingInputSubsets;
         }
 
         throw new IllegalStateException("Did we miss some CombineInputFiles choice?");
@@ -494,9 +496,10 @@ public class FilesUtils
      * @param tmpConcatDir
      * @return Mapping from the resulting concatenated file to the files that were concatenated.
      */
-    private static Map<Path, List<Path>> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path tmpConcatDir) throws IOException
+    private static List<CruncherInputSubpart> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path tmpConcatDir) throws IOException
     {
-        Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = new LinkedHashMap<>();
+        ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = new LinkedHashMap<>();
+        List<CruncherInputSubpart> inputSubparts = new ArrayList<>();
         Set<Path> usedConcatFilePaths = new HashSet<>();
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
@@ -517,9 +520,17 @@ public class FilesUtils
 
             // Combine the file sets.
             concatFiles(fileGroup.getValue(), concatenatedFilePath, options.getIgnoreFirstLines(), options.getIgnoreLineRegex());
-            resultingFilePathToConcatenatedFiles.put(concatenatedFilePath, fileGroup.getValue());
+            ///resultingFilePathToConcatenatedFiles.put(concatenatedFilePath, fileGroup.getValue());
+
+            CruncherInputSubpart inputPart = new CruncherInputSubpart();
+            inputPart.setOriginalInputPath(fileGroup.getKey());
+            inputPart.setCombinedFile(concatenatedFilePath);
+            inputPart.setCombinedFromFiles(fileGroup.getValue());
+
+            inputSubparts.add(inputPart);
         }
-        return resultingFilePathToConcatenatedFiles;
+        ///return resultingFilePathToConcatenatedFiles;
+        return inputSubparts;
     }
 
 

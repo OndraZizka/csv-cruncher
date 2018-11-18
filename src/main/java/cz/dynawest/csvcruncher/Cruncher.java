@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,9 @@ public final class Cruncher
     public static final long TIMESTAMP_SUBSTRACT = 1_530_000_000_000L; // To make the unique ID a smaller number.
     public static final String FILENAME_SUFFIX_CSV = ".csv";
     public static final Pattern REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE);
+
+    private static final String SQL_PLACEHOLDER = "$table";
+    private static final String DEFAULT_SQL = "SELECT "+ SQL_PLACEHOLDER + " FROM " + SQL_PLACEHOLDER;
 
     private Connection jdbcConn;
     private HsqlDbHelper dbHelper;
@@ -85,6 +89,12 @@ public final class Cruncher
         File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
         csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
 
+        // Should the result have a unique incremental ID as an added 1st column?
+        CounterColumn counterColumn = new CounterColumn();
+        if (addCounterColumn)
+            counterColumn.setDdlAndVal();
+
+
         try {
             // Sort the input paths.
             List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
@@ -96,19 +106,15 @@ public final class Cruncher
             {
                 Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
 
-                Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
-                inputPaths = new ArrayList(resultingFilePathToConcatenatedFiles.keySet());
+                ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
+                List<CruncherInputSubpart> inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, this.options);
+                inputPaths = new ArrayList(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
                 LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
             }
 
             if (inputPaths.isEmpty())
                 return;
             validateInputFiles(inputPaths);
-
-            // Should the result have a unique incremental ID as an added 1st column?
-            CounterColumn counterColumn = new CounterColumn();
-            if (addCounterColumn)
-                counterColumn.setDdlAndVal();
 
             // For each input CSV file...
             for (Path path : inputPaths) {
@@ -133,6 +139,10 @@ public final class Cruncher
             {
                 // Prepare the SQL. If it should be executed per-table, replace a placeholder '$combined'.
 
+                String sql = StringUtils.defaultString(this.options.sql, DEFAULT_SQL);
+
+                // TODO: sql = sql.replace(SQL_PLACEHOLDER, )
+
 
                 // Get the columns info: Perform the SQL, LIMIT 1.
                 List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(this.options.sql);
@@ -145,7 +155,7 @@ public final class Cruncher
                 // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
                 //String selectSql = this.options.sql.replace("@counter", value);
                 // On the other hand, that's too much space for the user to screw up. Let's force it:
-                String selectSql = this.options.sql.replace("SELECT ", "SELECT " + counterColumn.value + " ");
+                String selectSql = sql.replace("SELECT ", "SELECT " + counterColumn.value + " ");
 
                 String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
                 LOG.info(" * User's SQL: " + userSql);
@@ -230,8 +240,22 @@ public final class Cruncher
     }
 
 
+    /**
+     * One part of input data, maps to one or more SQL tables. Can be created out of multiple input files.
+     */
+    @Data
+    public static class CruncherInputSubpart
+    {
+        private Path originalInputPath;
+        private Path combinedFile;
+        private List<Path> combinedFromFiles;
+        private String tableName;
+    }
 
 
+    /**
+     * Information for the extra column used to add a unique id to each row.
+     */
     private class CounterColumn
     {
         String ddl = "";

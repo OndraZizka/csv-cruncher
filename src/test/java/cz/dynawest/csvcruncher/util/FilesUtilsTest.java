@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.util;
 
+import cz.dynawest.csvcruncher.Cruncher;
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
 import cz.dynawest.csvcruncher.Options;
 import java.io.IOException;
@@ -89,15 +90,15 @@ public class FilesUtilsTest
         List<Path> inputPaths = Collections.singletonList(testDataDir.resolve("sample-changedSchema"));
 
         Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
-        Map<Path, List<Path>> fileGroups = FilesUtils.combineInputFiles(inputFileGroups, options);
+        List<Cruncher.CruncherInputSubpart> inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options);
 
-        assertNotNull(fileGroups);
-        assertEquals(2, fileGroups.size());
+        assertNotNull(inputSubparts);
+        assertEquals(2, inputSubparts.size());
 
-        fileGroups.forEach((concatenatedFile, sourceFiles) -> {
-            assertTrue(concatenatedFile.toFile().isFile());
-            assertTrue(concatenatedFile.toFile().length() > 0);
-            sourceFiles.forEach(sourceFile -> sourceFile.toFile().isFile());
+        inputSubparts.forEach((inputSubpart) -> {
+            assertTrue(inputSubpart.getCombinedFile().toFile().isFile());
+            assertTrue(inputSubpart.getCombinedFile().toFile().length() > 0);
+            inputSubpart.getCombinedFromFiles().forEach(sourceFile -> sourceFile.toFile().isFile());
         });
     }
 
