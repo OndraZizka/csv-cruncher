@@ -277,7 +277,7 @@ public class FilesUtils
     {
         // Split into subgroups by column names in the CSV header.
         FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine);
-        fileGroupsToCombine = splitResult.getFileGroupsToConcat();
+        fileGroupsToCombine = splitResult.getFileGroupsToCombine();
         logFileGroups(fileGroupsToCombine, Level.FINE, "File groups split per header structure:");
 
         // At this point, the group keys are the original group + _<counter>.
@@ -314,7 +314,7 @@ public class FilesUtils
         // TBD: Apply level.
         ((Logger) log).debug("--- " + label + " ---" );
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            log.debug(" * Path: " + fileGroup.getKey() + ": "
+            log.debug("\n * Path: " + fileGroup.getKey() + ": "
                 + fileGroup.getValue().stream().map(path -> "\n\t- " + path).collect(Collectors.joining()));
         }
     }
@@ -356,7 +356,7 @@ public class FilesUtils
                         fileToGroupSorter = fileGroup::add;
                     } break;
                     case COMBINE_PER_EACH_DIR: {
-                        //List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
+                        //List<Path> fileGroup = fileGroupsToCombine.get(inputPath);
                         fileToGroupSorter = curFile -> {
                             fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<>()).add(curFile);
                         };
@@ -548,7 +548,8 @@ public class FilesUtils
      */
     private static String getNonUsedName(String nameBase, Set<Path> usedConcatFilePaths)
     {
-        String concatFileName = nameBase + Cruncher.FILENAME_SUFFIX_CSV;
+        String concatFileName = StringUtils.appendIfMissing(nameBase, Cruncher.FILENAME_SUFFIX_CSV);
+
         if (!usedConcatFilePaths.contains(concatFileName))
             return concatFileName;
 
@@ -623,7 +624,7 @@ public class FilesUtils
     @AllArgsConstructor
     static class FileGroupsSplitBySchemaResult
     {
-        private Map<Path, List<Path>> fileGroupsToConcat = new LinkedHashMap<>();
+        private Map<Path, List<Path>> fileGroupsToCombine = new LinkedHashMap<>();
 
         /**
          * Old group to new subgroups.
