@@ -238,52 +238,56 @@ public class FilesUtils
      */
     public static Map<Path, List<Path>> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
     {
-        switch (options.getCombineInputFiles()) {
-            case NONE:
-            default:
-                // No splitting - return a list with the same item.
-                return mapOfIdentityToSingletonList(inputPaths);
+        if (Options.CombineInputFiles.NONE.equals(options.getCombineInputFiles()) )
+        {
+            // No splitting - return a list with the same item.
+            return mapOfIdentityToSingletonList(inputPaths);
+        }
 
+        // First, expand the directories.
+        Map<Path, List<Path>> fileGroupsToCombine = expandDirectories(inputPaths, options);
+
+        fileGroupsToCombine = filterFileGroups(options, fileGroupsToCombine);
+        logFileGroups(fileGroupsToCombine, Level.INFO, "Filtered file groups:");
+
+        // If there is just one catch-all group...
+        if (fileGroupsToCombine.size() == 1 && fileGroupsToCombine.keySet().iterator().next() == null) {
+            List<Path> paths = fileGroupsToCombine.get(null);
+            if (paths.isEmpty()) {
+                log.info("   *** No files found.");
+                return Collections.emptyMap();
+            }
+            if (paths.size() == 1)
+                return mapOfIdentityToSingletonList(paths);
+        }
+
+        fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine);
+        logFileGroups(fileGroupsToCombine, Level.FINE, "Sorted file groups:");
+
+        FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine);
+        fileGroupsToCombine = splitResult.getFileGroupsToConcat();
+        logFileGroups(fileGroupsToCombine, Level.FINE, "File groups split per header structure:");
+
+        // At this point, the group keys are the original group + _<counter>.
+        // TODO: Again, refactor this to something more sane.
+
+        // Get the final concatenated file path. Currently, "-out" + _concat.
+        Path destDir = Paths.get(options.getMainOutputDir().toString() + "_" + CONCAT_WORK_SUBDIR_NAME);
+
+        switch (options.getCombineInputFiles()) {
             case INTERSECT:
             case EXCEPT:
                 throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
 
             case CONCAT:
-                log.debug("Concatenating input files:");
+                log.debug("Concatenating input files.");
 
-                // First, expand the directories.
-                Map<Path, List<Path>> fileGroupsToConcat = expandDirectories(inputPaths, options);
-
-                fileGroupsToConcat = filterFileGroups(options, fileGroupsToConcat);
-                logFileGroups(fileGroupsToConcat, Level.INFO, "Filtered file groups:");
-
-                // If there is just one catch-all group...
-                if (fileGroupsToConcat.size() == 1 && fileGroupsToConcat.keySet().iterator().next() == null) {
-                    List<Path> paths = fileGroupsToConcat.get(null);
-                    if (paths.isEmpty()) {
-                        log.info("   *** No files found.");
-                        return Collections.emptyMap();
-                    }
-                    if (paths.size() == 1)
-                        return mapOfIdentityToSingletonList(paths);
-                }
-
-                fileGroupsToConcat = sortFileGroups(options, fileGroupsToConcat);
-                logFileGroups(fileGroupsToConcat, Level.FINE, "Sorted file groups:");
-
-                FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToConcat);
-                fileGroupsToConcat = splitResult.getFileGroupsToConcat();
-                logFileGroups(fileGroupsToConcat, Level.FINE, "File groups split per header structure:");
-
-                // At this point, the group keys are the original group + _<counter>.
-                // TODO: Again, refactor this to something more sane.
-
-                // Get the final concatenated file path. Currently, "-out" + _concat.
-                Path defaultDestDir = Paths.get(options.getMainOutputDir().toString() + "_" + CONCAT_WORK_SUBDIR_NAME);
-                Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToConcat, defaultDestDir);
+                Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
 
                 return resultingFilePathToConcatenatedFiles;
         }
+
+        throw new IllegalStateException("Did we miss some CombineInputFiles choice?");
     }
 
     private static Map<Path, List<Path>> mapOfIdentityToSingletonList(List<Path> inputPaths)
