@@ -1,17 +1,23 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher.util;
 
-import cz.dynawest.csvcruncher.util.FilesUtils;
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
+import cz.dynawest.csvcruncher.Options;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class FilesUtilsTest
 {
+    static Path testDataDir = CsvCruncherTestUtils.getTestDataDir();
+    static Path testOutputDir = CsvCruncherTestUtils.getTestOutputDir();
 
     @Test
     public void filterFilePaths()
@@ -69,12 +75,40 @@ public class FilesUtilsTest
     }
 
     @Test
-    public void combineInputFiles()
+    public void combineInputFiles() throws IOException
     {
+        List<Path> paths = new ArrayList<>();
+
+        Options options = new Options();
+        options.setInputPaths(Arrays.asList(testDataDir.resolve("sample-changedSchema").toString()));
+        options.setCombineDirs(Options.CombineDirectories.COMBINE_ALL_FILES);
+        options.setCombineInputFiles(Options.CombineInputFiles.CONCAT);
+        options.setOutputPathCsv(testOutputDir.resolve("combineInputFilesTest.csv").toString());
+        options.setOverwrite(true);
+        options.setInitialRowNumber(1L);
+        options.setSql("SELECT * FROM concat");
+
+        Map<Path, List<Path>> fileGroups = FilesUtils.combineInputFiles(paths, options);
     }
+
+    @Test
+    public void expandDirectories() {
+        Options options = new Options();
+        List<Path> inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema"));
+        options.setInputPaths(Collections.singletonList(inputPaths.get(0).toString()));
+        options.setCombineDirs(Options.CombineDirectories.COMBINE_ALL_FILES);
+
+        Map<Path, List<Path>> fileGroupsToConcat = FilesUtils.expandDirectories(inputPaths, options);
+
+        assertEquals("Just one catchall group expected", 1, fileGroupsToConcat.size());
+        assertNotNull("Just one catchall group expected", fileGroupsToConcat.get(null));
+        assertEquals("4 files found", 4, fileGroupsToConcat.get(null).size());
+    }
+
 
     @Test
     public void parseColsFromFirstCsvLine()
     {
     }
+
 }
