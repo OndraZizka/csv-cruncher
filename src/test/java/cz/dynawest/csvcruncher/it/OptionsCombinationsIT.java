@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * TODO: Add the verifications.
+ */
 public class OptionsCombinationsIT
 {
     @BeforeClass

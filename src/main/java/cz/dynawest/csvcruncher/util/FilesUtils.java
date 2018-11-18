@@ -229,14 +229,11 @@ public class FilesUtils
     }
 
     /**
-     * Combine the input files (typically, concatenate).
-     * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
-     * The combined input files will be witten under the respective "group root directory".
-     * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
+     * Expands the input paths if they are directories, sorts the resulting groups, filters by the options includes/excludes.
      *
-     * @return Mapping from the concatenated file to the files that ended up in it.
+     * @return Input files grouped by the given input paths. CSV headers are not yet checked.
      */
-    public static Map<Path, List<Path>> combineInputFiles(List<Path> inputPaths, Options options) throws IOException
+    public static Map<Path, List<Path>> expandFilterSortInputFilesGroups(List<Path> inputPaths, Options options) throws IOException
     {
         if (Options.CombineInputFiles.NONE.equals(options.getCombineInputFiles()) )
         {
@@ -244,9 +241,10 @@ public class FilesUtils
             return mapOfIdentityToSingletonList(inputPaths);
         }
 
-        // First, expand the directories.
+        // Expand the directories.
         Map<Path, List<Path>> fileGroupsToCombine = expandDirectories(inputPaths, options);
 
+        // Filter
         fileGroupsToCombine = filterFileGroups(options, fileGroupsToCombine);
         logFileGroups(fileGroupsToCombine, Level.INFO, "Filtered file groups:");
 
@@ -264,6 +262,20 @@ public class FilesUtils
         fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine);
         logFileGroups(fileGroupsToCombine, Level.FINE, "Sorted file groups:");
 
+        return fileGroupsToCombine;
+    }
+
+    /**
+     * Combine the input files (typically, concatenate).
+     * If the paths are directories, they may be combined per each directory, per input dir, per input subdir, or all into one.
+     * The combined input files will be witten under the respective "group root directory".
+     * For COMBINE_ALL_FILES, the combined file will be written under current user directory ("user.dir").
+     *
+     * @return Mapping from the concatenated file to the files that ended up in it.
+     */
+    public static Map<Path, List<Path>> combineInputFiles(Map<Path, List<Path>> fileGroupsToCombine, Options options) throws IOException
+    {
+        // Split into subgroups by column names in the CSV header.
         FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine);
         fileGroupsToCombine = splitResult.getFileGroupsToConcat();
         logFileGroups(fileGroupsToCombine, Level.FINE, "File groups split per header structure:");
@@ -290,10 +302,12 @@ public class FilesUtils
         throw new IllegalStateException("Did we miss some CombineInputFiles choice?");
     }
 
+
     private static Map<Path, List<Path>> mapOfIdentityToSingletonList(List<Path> inputPaths)
     {
         return inputPaths.stream().collect(Collectors.toMap(x -> x, Collections::singletonList));
     }
+
 
     private static void logFileGroups(Map<Path, List<Path>> fileGroupsToConcat, Level level, String label)
     {

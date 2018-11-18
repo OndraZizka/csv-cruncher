@@ -86,9 +86,10 @@ public class FilesUtilsTest
         options.setInitialRowNumber(1L);
         options.setSql("SELECT * FROM concat");
 
-        List<Path> paths = Collections.singletonList(testDataDir.resolve("sample-changedSchema"));
+        List<Path> inputPaths = Collections.singletonList(testDataDir.resolve("sample-changedSchema"));
 
-        Map<Path, List<Path>> fileGroups = FilesUtils.combineInputFiles(paths, options);
+        Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
+        Map<Path, List<Path>> fileGroups = FilesUtils.combineInputFiles(inputFileGroups, options);
 
         assertNotNull(fileGroups);
         assertEquals(2, fileGroups.size());

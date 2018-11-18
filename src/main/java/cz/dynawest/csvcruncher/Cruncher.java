@@ -95,8 +95,11 @@ public final class Cruncher
                 LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).get());
 
                 // Combine files. Should we concat the files or UNION the tables?
-                if (this.options.combineInputFiles != Options.CombineInputFiles.NONE) {
-                    Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputPaths, this.options);
+                if (this.options.combineInputFiles != Options.CombineInputFiles.NONE)
+                {
+                    Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
+
+                    Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
                     inputPaths = new ArrayList(resultingFilePathToConcatenatedFiles.keySet());
                     LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
                     reachedStage = ReachedCrunchStage.INPUT_FILES_PREPROCESSED;
