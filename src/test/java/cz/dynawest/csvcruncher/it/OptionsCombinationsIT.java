@@ -1,13 +1,20 @@
 package cz.dynawest.csvcruncher.it;
 
 import cz.dynawest.csvcruncher.App;
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OptionsCombinationsIT extends CsvCruncherITBase
+public class OptionsCombinationsIT
 {
+    @BeforeClass
+    public static void deletePreviousResults(){
+        CsvCruncherTestUtils.getTestOutputDir().toFile().delete();
+    }
+
     /**
      *  ${testRunCmd}
      *  --json=entries

@@ -28,6 +28,8 @@ public class App
     public static void mainNoExit(String[] args) throws Exception
     {
         Options options = parseArgs(args);
+        if (options == null)
+            return;
         log.info("Options: \n" + options);
         new Cruncher(options).crunch();
     }
@@ -205,19 +207,20 @@ public class App
             else if ("-v".equals(arg) || "--version".equals(arg)) {
                 String version = Utils.getVersion();
                 System.out.println(" CSV Cruncher version " + version);
-                System.exit(0);
+                return null;
             }
 
-            else if ("-h".equals(arg) || "--vhelp".equals(arg)) {
+            else if ("-h".equals(arg) || "--help".equals(arg)) {
                 String version = Utils.getVersion();
                 System.out.println(" CSV Cruncher version " + version);
                 printUsage(System.out);
-                System.exit(0);
+                return null;
             }
 
             else if (arg.startsWith("-")) {
-                System.out.println("ERROR: Unknown parameter: " + arg);
-                System.exit(1);
+                String msg = "Unknown parameter: " + arg;
+                System.out.println("ERROR: " + msg);
+                throw new IllegalArgumentException(msg);
             }
 
             else {

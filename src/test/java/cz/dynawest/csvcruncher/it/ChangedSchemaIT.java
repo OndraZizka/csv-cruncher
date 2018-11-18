@@ -1,18 +1,19 @@
 package cz.dynawest.csvcruncher.it;
 
 import cz.dynawest.csvcruncher.Cruncher;
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
 import cz.dynawest.csvcruncher.Options;
 import java.nio.file.Path;
 import java.util.Arrays;
 import org.junit.Test;
 
-public class ChangedSchemaIT extends CsvCruncherITBase
+public class ChangedSchemaIT
 {
     @Test
     public void changedSchema() throws Exception
     {
-        Path testDataDir = getTestDataDir().resolve("sample-changedSchema");
-        Path testOutputDir = getTestOutputDir().resolve("sample-changedSchema");
+        Path testDataDir = CsvCruncherTestUtils.getTestDataDir().resolve("sample-changedSchema");
+        Path testOutputDir = CsvCruncherTestUtils.getTestOutputDir().resolve("sample-changedSchema");
 
         Options options = new Options();
         options.setInputPaths(Arrays.asList(testDataDir.toString()));

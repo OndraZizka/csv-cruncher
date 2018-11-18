@@ -195,7 +195,7 @@ public final class Cruncher
     private void validateInputFiles(List<Path> inputPaths)
     {
         List<Path> notFiles = inputPaths.stream().filter(path -> !path.toFile().isFile()).collect(Collectors.toList());
-        if (notFiles.isEmpty()) {
+        if (!notFiles.isEmpty()) {
             String msg = "Some input paths do not point to files: " + notFiles.stream().map(Path::toString).collect(Collectors.joining(", "));
             throw new IllegalStateException(msg);
         }

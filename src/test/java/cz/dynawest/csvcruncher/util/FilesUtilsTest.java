@@ -75,10 +75,8 @@ public class FilesUtilsTest
     }
 
     @Test
-    public void combineInputFiles() throws IOException
+    public void combineInputFiles_changedSchema() throws IOException
     {
-        List<Path> paths = new ArrayList<>();
-
         Options options = new Options();
         options.setInputPaths(Arrays.asList(testDataDir.resolve("sample-changedSchema").toString()));
         options.setCombineDirs(Options.CombineDirectories.COMBINE_ALL_FILES);
@@ -88,7 +86,18 @@ public class FilesUtilsTest
         options.setInitialRowNumber(1L);
         options.setSql("SELECT * FROM concat");
 
+        List<Path> paths = Collections.singletonList(testDataDir.resolve("sample-changedSchema"));
+
         Map<Path, List<Path>> fileGroups = FilesUtils.combineInputFiles(paths, options);
+
+        assertNotNull(fileGroups);
+        assertEquals(2, fileGroups.size());
+
+        fileGroups.forEach((concatenatedFile, sourceFiles) -> {
+            assertTrue(concatenatedFile.toFile().isFile());
+            assertTrue(concatenatedFile.toFile().length() > 0);
+            sourceFiles.forEach(sourceFile -> sourceFile.toFile().isFile());
+        });
     }
 
     @Test

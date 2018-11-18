@@ -15,7 +15,7 @@
         <jvm.args.debug></jvm.args.debug> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
         <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
-        <skipE2E>false</skipE2E>
+        <skipE2E>true</skipE2E>
     </properties>
 
     <build>
