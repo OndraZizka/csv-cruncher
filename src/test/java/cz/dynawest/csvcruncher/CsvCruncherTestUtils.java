@@ -1,9 +1,9 @@
-package cz.dynawest.csvcruncher.it;
+package cz.dynawest.csvcruncher;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class CsvCruncherITBase
+public class CsvCruncherTestUtils
 {
     /**
      * @return Path to the default test data dir.

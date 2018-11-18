@@ -107,8 +107,17 @@ public class FilesUtilsTest
 
 
     @Test
-    public void parseColsFromFirstCsvLine()
+    public void parseColsFromFirstCsvLine() throws IOException
     {
+        Path csvFileWithHeader = testDataDir.resolve("sample-collab/session_telephony_pins/20180918-132721852.csv");
+        List<String> colNames = FilesUtils.parseColsFromFirstCsvLine(csvFileWithHeader.toFile());
+
+        // Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time
+        assertEquals("Proper column count", 10, colNames.size());
+        assertEquals("Col name Op", "Op", colNames.get(0));
+        assertEquals("Col name id", "id", colNames.get(1));
+        assertEquals("Col name uuid", "uuid", colNames.get(2));
+        assertEquals("Col name modified_time", "modified_time", colNames.get(9));
     }
 
 }
