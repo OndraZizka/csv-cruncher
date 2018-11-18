@@ -2,7 +2,7 @@ package cz.dynawest.csvcruncher.util;
 
 import ch.qos.logback.classic.Logger;
 import cz.dynawest.csvcruncher.Cruncher;
-import cz.dynawest.csvcruncher.Cruncher.CruncherInputSubpart;
+import cz.dynawest.csvcruncher.CruncherInputSubpart;
 import cz.dynawest.csvcruncher.CsvCruncherException;
 import cz.dynawest.csvcruncher.Options;
 import java.io.BufferedOutputStream;
@@ -462,7 +462,7 @@ public class FilesUtils
         // TODO: Refactor this into proper models. InputGroup, PerHeaderInputSubgroup, etc.
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            // Check if all files have the same columns header.
+            // Check if all files have the same columnNames header.
             Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new HashMap<>();
             for (Path fileToConcat : fileGroup.getValue()) {
                 List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
@@ -557,7 +557,7 @@ public class FilesUtils
     /**
      * Checks if a name, e.g. "someOutputFile", is already used; if so, tries "someOutputFile_1", and so on.
      */
-    private static String getNonUsedName(String nameBase, Set<Path> usedConcatFilePaths)
+    public static String getNonUsedName(String nameBase, Set<Path> usedConcatFilePaths)
     {
         String concatFileName = StringUtils.appendIfMissing(nameBase, Cruncher.FILENAME_SUFFIX_CSV);
 
@@ -577,7 +577,7 @@ public class FilesUtils
     /**
      * Parse the first lien of given file, ignoring the initial #'s, NOT respecting quotes and escaping.
      *
-     * @return A list of columns in the order from the file.
+     * @return A list of columnNames in the order from the file.
      */
     public static List<String> parseColsFromFirstCsvLine(File file) throws IOException
     {
@@ -587,7 +587,7 @@ public class FilesUtils
         LineIterator lineIterator = FileUtils.lineIterator(file);
         if (!lineIterator.hasNext())
         {
-            throw new IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.getPath());
+            throw new IllegalStateException("No first line with columnNames definition (format: [# ] <colName> [, ...]) in: " + file.getPath());
         }
         else
         {
@@ -620,6 +620,20 @@ public class FilesUtils
             }
 
             return cols;
+        }
+    }
+
+    /**
+     * Checks whether the paths point to existing files.
+     */
+    public static void validateInputFiles(List<CruncherInputSubpart> inputSubparts)
+    {
+        List<Path> inputPaths = new ArrayList(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
+
+        List<Path> notFiles = inputPaths.stream().filter(path -> !path.toFile().isFile()).collect(Collectors.toList());
+        if (!notFiles.isEmpty()) {
+            String msg = "Some input paths do not point to files: " + notFiles.stream().map(Path::toString).collect(Collectors.joining(", "));
+            throw new IllegalStateException(msg);
         }
     }
 
