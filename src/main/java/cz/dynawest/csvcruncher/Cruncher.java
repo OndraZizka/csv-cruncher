@@ -76,122 +76,110 @@ public final class Cruncher
     {
         this.options.validate();
 
-        try
-        {
-            boolean addCounterColumn = options.initialRowNumber != null;
-            boolean convertResultToJson = options.jsonExportFormat != Options.JsonExportFormat.NONE;
-            boolean printAsArray = options.jsonExportFormat == Options.JsonExportFormat.ARRAY;
+        boolean addCounterColumn = options.initialRowNumber != null;
+        boolean convertResultToJson = options.jsonExportFormat != Options.JsonExportFormat.NONE;
+        boolean printAsArray = options.jsonExportFormat == Options.JsonExportFormat.ARRAY;
 
-            Map<String, File> tablesToFiles = new HashMap<>();
-            ReachedCrunchStage reachedStage = ReachedCrunchStage.NONE;
+        Map<String, File> tablesToFiles = new HashMap<>();
 
-            File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
-            csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
+        File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
+        csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
 
-            try {
-                // Sort the input paths.
-                List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
-                inputPaths = FilesUtils.sortInputPaths(inputPaths, this.options.sortInputFiles);
-                LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).get());
+        try {
+            // Sort the input paths.
+            List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
+            inputPaths = FilesUtils.sortInputPaths(inputPaths, this.options.sortInputFiles);
+            LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).get());
 
-                // Combine files. Should we concat the files or UNION the tables?
-                if (this.options.combineInputFiles != Options.CombineInputFiles.NONE)
-                {
-                    Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
+            // Combine files. Should we concat the files or UNION the tables?
+            if (this.options.combineInputFiles != Options.CombineInputFiles.NONE)
+            {
+                Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
 
-                    Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
-                    inputPaths = new ArrayList(resultingFilePathToConcatenatedFiles.keySet());
-                    LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
-                    reachedStage = ReachedCrunchStage.INPUT_FILES_PREPROCESSED;
-                }
+                Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
+                inputPaths = new ArrayList(resultingFilePathToConcatenatedFiles.keySet());
+                LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
+            }
 
-                if (inputPaths.isEmpty())
-                    return;
-                validateInputFiles(inputPaths);
+            if (inputPaths.isEmpty())
+                return;
+            validateInputFiles(inputPaths);
 
-                // Should the result have a unique incremental ID as an added 1st column?
-                CounterColumn counterColumn = new CounterColumn();
-                if (addCounterColumn)
-                    counterColumn.setDdlAndVal();
+            // Should the result have a unique incremental ID as an added 1st column?
+            CounterColumn counterColumn = new CounterColumn();
+            if (addCounterColumn)
+                counterColumn.setDdlAndVal();
 
-                // For each input CSV file...
-                for (Path path : inputPaths) {
-                    File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
-                    LOG.info(" * CSV input: " + csvInFile);
+            // For each input CSV file...
+            for (Path path : inputPaths) {
+                File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
+                LOG.info(" * CSV input: " + csvInFile);
 
-                    String tableName = HsqlDbHelper.normalizeFileNameForTableName(csvInFile);
-                    File previousIfAny = tablesToFiles.put(tableName, csvInFile);
-                    if (previousIfAny != null)
-                        throw new IllegalArgumentException("File names normalized to table names collide: " + previousIfAny + ", " + csvInFile);
+                String tableName = HsqlDbHelper.normalizeFileNameForTableName(csvInFile);
+                File previousIfAny = tablesToFiles.put(tableName, csvInFile);
+                if (previousIfAny != null)
+                    throw new IllegalArgumentException("File names normalized to table names collide: " + previousIfAny + ", " + csvInFile);
 
-                    List<String> colNames = FilesUtils.parseColsFromFirstCsvLine(csvInFile);
-                    // Create a table and bind the CSV to it.
-                    dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, this.options.overwrite);
-                }
-                reachedStage = ReachedCrunchStage.INPUT_TABLES_CREATED;
+                List<String> colNames = FilesUtils.parseColsFromFirstCsvLine(csvInFile);
+                // Create a table and bind the CSV to it.
+                dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, this.options.overwrite);
+            }
 
-                // SQL can be executed:
-                // * per input, and generate one result per execution.
-                // * for all tables, and generate a single result; if some table has changed, it would fail.
+            // SQL can be executed:
+            // * per input, and generate one result per execution.
+            // * for all tables, and generate a single result; if some table has changed, it would fail.
 
-                // TODO: For each input...
-                {
-                    // Prepare the SQL. If it should be executed per-table, replace a placeholder '$combined'.
+            // TODO: For each input...
+            {
+                // Prepare the SQL. If it should be executed per-table, replace a placeholder '$combined'.
 
 
-                    // Get the columns info: Perform the SQL, LIMIT 1.
-                    List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(this.options.sql);
+                // Get the columns info: Perform the SQL, LIMIT 1.
+                List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(this.options.sql);
 
-                    // Write the result into a CSV
-                    LOG.info(" * CSV output: " + csvOutFile);
-                    dbHelper.createTableAndBindCsv(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumn.ddl, false, this.options.overwrite);
-                    reachedStage = ReachedCrunchStage.OUTPUT_TABLE_CREATED;
-
-
-                    // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
-                    //String selectSql = this.options.sql.replace("@counter", value);
-                    // On the other hand, that's too much space for the user to screw up. Let's force it:
-                    String selectSql = this.options.sql.replace("SELECT ", "SELECT " + counterColumn.value + " ");
-
-                    String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
-                    LOG.info(" * User's SQL: " + userSql);
-                    //LOG.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
-                    int rowsAffected = dbHelper.executeDbCommand(userSql, "Error executing user SQL: ");
-                    reachedStage = ReachedCrunchStage.OUTPUT_TABLE_FILLED;
+                // Write the result into a CSV
+                LOG.info(" * CSV output: " + csvOutFile);
+                dbHelper.createTableAndBindCsv(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumn.ddl, false, this.options.overwrite);
 
 
-                    // Now let's convert it to JSON if necessary.
-                    if (convertResultToJson) {
-                        Path destJsonFile = Paths.get(csvOutFile.toPath().toString() + ".json");
-                        LOG.info(" * JSON output: " + destJsonFile);
+                // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
+                //String selectSql = this.options.sql.replace("@counter", value);
+                // On the other hand, that's too much space for the user to screw up. Let's force it:
+                String selectSql = this.options.sql.replace("SELECT ", "SELECT " + counterColumn.value + " ");
 
-                        try (Statement statement2 = this.jdbcConn.createStatement()) {
-                            FilesUtils.convertResultToJson(
-                                    statement2.executeQuery("SELECT * FROM " + TABLE_NAME__OUTPUT),
-                                    destJsonFile,
-                                    printAsArray
-                            );
-                            if (!this.options.keepWorkFiles)
-                                csvOutFile.deleteOnExit();
-                        }
-                        reachedStage = ReachedCrunchStage.OUTPUT_JSON_CONVERTED;
+                String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
+                LOG.info(" * User's SQL: " + userSql);
+                //LOG.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
+                int rowsAffected = dbHelper.executeDbCommand(userSql, "Error executing user SQL: ");
+
+
+                // Now let's convert it to JSON if necessary.
+                if (convertResultToJson) {
+                    Path destJsonFile = Paths.get(csvOutFile.toPath().toString() + ".json");
+                    LOG.info(" * JSON output: " + destJsonFile);
+
+                    try (Statement statement2 = this.jdbcConn.createStatement()) {
+                        FilesUtils.convertResultToJson(
+                                statement2.executeQuery("SELECT * FROM " + TABLE_NAME__OUTPUT),
+                                destJsonFile,
+                                printAsArray
+                        );
+                        if (!this.options.keepWorkFiles)
+                            csvOutFile.deleteOnExit();
                     }
                 }
             }
-            catch (Exception ex) {
-                throw new CsvCruncherException("(DB tables and files cleanup was performed.)", ex);
-            }
-            finally
-            {
-                LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
-                cleanUpInputOutputTables(tablesToFiles);
-                dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
-                this.jdbcConn.close();
-                LOG.info(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
-            }
         }
         catch (Exception ex) {
-            throw ex; // Debug purposes
+            throw new CsvCruncherException("(DB tables and files cleanup was performed.)", ex);
+        }
+        finally
+        {
+            LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
+            cleanUpInputOutputTables(tablesToFiles);
+            dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
+            this.jdbcConn.close();
+            LOG.info(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
         }
     }
 
