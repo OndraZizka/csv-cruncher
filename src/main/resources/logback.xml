@@ -11,9 +11,9 @@
         </encoder>
     </appender>
 
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="STDERR" />
     </root>
 
-    <logger name="com.blackboard" level="INFO"/>
+    <logger name="cz.dynawest.csvcruncher" level="DEBUG"/>
 </configuration>
