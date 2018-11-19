@@ -2,8 +2,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>cz.dynawest.csvcruncher</groupId>
-    <artifactId>CsvCruncher</artifactId>
+    <groupId>ch.zizka.csvcruncher</groupId>
+    <artifactId>csv-cruncher</artifactId>
     <version>1.11.0</version>
 
     <name>CsvCruncher</name>
@@ -332,6 +332,19 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- Alternatively if you are using the Maven deploy plugin, which is the default behavior, you need to add a full distributionManagement section.
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+    -->
+
 
     <dependencies>
 
@@ -421,5 +434,69 @@
                 <jvm.args.debug>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5050</jvm.args.debug>
             </properties>
         </profile>
+
+        <!-- Releasing to Maven Central -->
+        <profile>
+            <id>ossrh</id>
+            <activation>
+                <property><name>release</name></property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>2.5.3</version>
+                        <configuration>
+                            <autoVersionSubmodules>true</autoVersionSubmodules>
+                            <useReleaseProfile>false</useReleaseProfile>
+                            <releaseProfiles>release</releaseProfiles>
+                            <goals>deploy</goals>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+
+                    <!-- It relies on the gpg command being installed and the GPG credentials being available e.g. from settings.xml.
+                         In addition you can configure the gpg command in case it is different from gpg.
+                         This is a common scenario on some operating systems. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign</goal></goals>
+                                <configuration>
+                                    <keyname>73BA361CA92D829800730DE207838E30786B5257</keyname>
+                                    <passphrase>${gpg.passphrase}</passphrase>
+                                    <executable>${gpg.executable}</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
