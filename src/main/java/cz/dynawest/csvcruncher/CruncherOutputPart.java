@@ -13,7 +13,7 @@ public class CruncherOutputPart
 {
     @NonNull private Path outputFile;
 
-    @NonNull private String tableName;
+    @NonNull private String inputTableName;
 
 
     // These are filled during processing.

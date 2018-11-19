@@ -20,7 +20,7 @@ public final class Options
     protected boolean skipNonReadable = false;
     protected String sql;
     protected String outputPathCsv;
-    protected boolean outputPerInputSubpart = false;
+    protected boolean queryPerInputSubpart = false;
     protected boolean overwrite = false;
     protected String dbPath = null;
     public boolean keepWorkFiles = false;
@@ -74,6 +74,7 @@ public final class Options
                "\n    includePathsRegex: " + this.includePathsRegex +
                "\n    excludePathsRegex: " + this.excludePathsRegex +
                "\n    outputPathCsv: " + this.outputPathCsv +
+               "\n    queryPerInputSubpart: " + this.queryPerInputSubpart +
                "\n    overwrite: " + this.overwrite +
                "\n    sql: " + this.sql +
                "\n    ignoreLineRegex: " + this.ignoreLineRegex +

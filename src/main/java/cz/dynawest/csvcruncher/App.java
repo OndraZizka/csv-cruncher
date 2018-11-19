@@ -183,6 +183,11 @@ public class App
                 }
             }
 
+            // This could have some better name...
+            else if ("--queryPerInputSubpart".equals(arg)) {
+                opt.queryPerInputSubpart = true;
+            }
+
             else if ("-in".equals(arg)) {
                 next = App.OptionsNext.IN;
             }

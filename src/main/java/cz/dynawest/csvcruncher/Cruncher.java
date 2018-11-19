@@ -34,8 +34,8 @@ public final class Cruncher
     public static final String FILENAME_SUFFIX_CSV = ".csv";
     public static final Pattern REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE);
 
-    private static final String SQL_PLACEHOLDER = "$table";
-    private static final String DEFAULT_SQL = "SELECT "+ SQL_PLACEHOLDER + " FROM " + SQL_PLACEHOLDER;
+    public static final String SQL_TABLE_PLACEHOLDER = "$table";
+    private static final String DEFAULT_SQL = "SELECT "+ SQL_TABLE_PLACEHOLDER + " FROM " + SQL_TABLE_PLACEHOLDER;
 
     private Connection jdbcConn;
     private HsqlDbHelper dbHelper;
@@ -147,15 +147,11 @@ public final class Cruncher
 
             // SQL can be executed:
             // * for all tables, and generate a single result; if some table has changed, it would fail.
-            if (!options.outputPerInputSubpart)
+            if (!options.queryPerInputSubpart)
             {
                 File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
-                File dirToCreate = csvOutFile.getAbsoluteFile().getParentFile();
-                dirToCreate.mkdirs();
 
-                CruncherOutputPart output = new CruncherOutputPart(csvOutFile.toPath(), TABLE_NAME__OUTPUT);
-
-                output.setSql(genericSql);
+                CruncherOutputPart output = new CruncherOutputPart(csvOutFile.toPath(), null);
                 outputs.add(output);
             }
             // * per input, and generate one result per execution.
@@ -165,21 +161,29 @@ public final class Cruncher
                 for (CruncherInputSubpart inputSubpart : inputSubparts)
                 {
                     Path outputFile = Paths.get(options.getOutputPathCsv()).resolve(inputSubpart.getCombinedFile().getFileName());
-                    CruncherOutputPart output = new CruncherOutputPart(outputFile, inputSubpart.getTableName());
+                    outputFile = FilesUtils.getNonUsedName(outputFile, usedOutputFiles);
 
-                    output.setSql(genericSql);
+                    CruncherOutputPart output = new CruncherOutputPart(outputFile, inputSubpart.getTableName());
                     outputs.add(output);
                 }
-                throw new UnsupportedOperationException();
             }
 
 
             // TODO: For each output...
             for (CruncherOutputPart output : outputs)
             {
-                String sql = output.getSql().replace(SQL_PLACEHOLDER, output.getTableName());
                 File csvOutFile = output.getOutputFile().toFile();
-                String outputTableName = output.getTableName();
+                String sql = genericSql;
+                String outputTableName = TABLE_NAME__OUTPUT;
+                if (output.getInputTableName() != null) {
+                    sql = sql.replace(SQL_TABLE_PLACEHOLDER, output.getInputTableName());
+                    outputTableName = output.getInputTableName() + "_out";
+                }
+
+
+                // Create the parent dir.
+                File dirToCreate = csvOutFile.getAbsoluteFile().getParentFile();
+                dirToCreate.mkdirs();
 
                 // Get the columns info: Perform the SQL, LIMIT 1.
                 List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(sql);
@@ -194,6 +198,7 @@ public final class Cruncher
                 //String selectSql = this.options.sql.replace("@counter", value);
                 // On the other hand, that's too much space for the user to screw up. Let's force it:
                 String selectSql = sql.replace("SELECT ", "SELECT " + counterColumn.value + " ");
+                output.setSql(selectSql);
 
                 String userSql = "INSERT INTO " + outputTableName + " (" + selectSql + ")";
                 LOG.info(" * User's SQL: " + userSql);
