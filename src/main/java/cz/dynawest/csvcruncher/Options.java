@@ -20,6 +20,7 @@ public final class Options
     protected boolean skipNonReadable = false;
     protected String sql;
     protected String outputPathCsv;
+    protected boolean outputPerInputSubpart = false;
     protected boolean overwrite = false;
     protected String dbPath = null;
     public boolean keepWorkFiles = false;

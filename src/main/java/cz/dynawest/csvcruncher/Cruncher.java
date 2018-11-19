@@ -13,11 +13,12 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -86,9 +87,6 @@ public final class Cruncher
 
         Map<String, File> tablesToFiles = new HashMap<>();
 
-        File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
-        csvOutFile.getAbsoluteFile().getParentFile().mkdirs();
-
         // Should the result have a unique incremental ID as an added 1st column?
         CounterColumn counterColumn = new CounterColumn();
         if (addCounterColumn)
@@ -101,24 +99,32 @@ public final class Cruncher
             inputPaths = FilesUtils.sortInputPaths(inputPaths, this.options.sortInputFiles);
             LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).get());
 
+            List<CruncherInputSubpart> inputSubparts;
+
             // Combine files. Should we concat the files or UNION the tables?
             if (this.options.combineInputFiles != Options.CombineInputFiles.NONE)
             {
                 Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
 
                 ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
-                List<CruncherInputSubpart> inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, this.options);
-                inputPaths = new ArrayList(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
-                LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
+                inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, this.options);
+                ///inputPaths = new ArrayList<>(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
+                ///LOG.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
+                LOG.info(" --- Combined input files: --- " + inputSubparts.stream().map(p -> "\n * " + p.getCombinedFile()).reduce(String::concat).orElse("NONE"));
+            }
+            else {
+                inputSubparts = inputPaths.stream().map(CruncherInputSubpart::trivial).collect(Collectors.toList());
+                //inputPaths = new ArrayList<>(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
             }
 
-            if (inputPaths.isEmpty())
+            if (inputSubparts.isEmpty())
                 return;
-            validateInputFiles(inputPaths);
+            FilesUtils.validateInputFiles(inputSubparts);
 
             // For each input CSV file...
-            for (Path path : inputPaths) {
-                File csvInFile = Utils.resolvePathToUserDirIfRelative(path);
+            for (CruncherInputSubpart inputSubpart : inputSubparts)
+            {
+                File csvInFile = Utils.resolvePathToUserDirIfRelative(inputSubpart.getCombinedFile());
                 LOG.info(" * CSV input: " + csvInFile);
 
                 String tableName = HsqlDbHelper.normalizeFileNameForTableName(csvInFile);
@@ -129,35 +135,67 @@ public final class Cruncher
                 List<String> colNames = FilesUtils.parseColsFromFirstCsvLine(csvInFile);
                 // Create a table and bind the CSV to it.
                 dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, this.options.overwrite);
+
+                inputSubpart.setTableName(tableName);
             }
 
+
+
+            String genericSql = StringUtils.defaultString(this.options.sql, DEFAULT_SQL);
+            List<CruncherOutputPart> outputs = new ArrayList<>();
+
+
             // SQL can be executed:
-            // * per input, and generate one result per execution.
             // * for all tables, and generate a single result; if some table has changed, it would fail.
-
-            // TODO: For each input...
+            if (!options.outputPerInputSubpart)
             {
-                // Prepare the SQL. If it should be executed per-table, replace a placeholder '$combined'.
+                File csvOutFile = Utils.resolvePathToUserDirIfRelative(Paths.get(this.options.outputPathCsv));
+                File dirToCreate = csvOutFile.getAbsoluteFile().getParentFile();
+                dirToCreate.mkdirs();
 
-                String sql = StringUtils.defaultString(this.options.sql, DEFAULT_SQL);
+                CruncherOutputPart output = new CruncherOutputPart(csvOutFile.toPath(), TABLE_NAME__OUTPUT);
 
-                // TODO: sql = sql.replace(SQL_PLACEHOLDER, )
+                output.setSql(genericSql);
+                outputs.add(output);
+            }
+            // * per input, and generate one result per execution.
+            else {
+                Set<Path> usedOutputFiles = new HashSet<Path>();
 
+                for (CruncherInputSubpart inputSubpart : inputSubparts)
+                {
+                    Path outputFile = Paths.get(options.getOutputPathCsv()).resolve(inputSubpart.getCombinedFile().getFileName());
+                    CruncherOutputPart output = new CruncherOutputPart(outputFile, inputSubpart.getTableName());
+
+                    output.setSql(genericSql);
+                    outputs.add(output);
+                }
+                throw new UnsupportedOperationException();
+            }
+
+
+            // TODO: For each output...
+            for (CruncherOutputPart output : outputs)
+            {
+                String sql = output.getSql().replace(SQL_PLACEHOLDER, output.getTableName());
+                File csvOutFile = output.getOutputFile().toFile();
+                String outputTableName = output.getTableName();
 
                 // Get the columns info: Perform the SQL, LIMIT 1.
-                List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(this.options.sql);
+                List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(sql);
+                output.setColumnNames(colNames);
+
 
                 // Write the result into a CSV
                 LOG.info(" * CSV output: " + csvOutFile);
-                dbHelper.createTableAndBindCsv(TABLE_NAME__OUTPUT, csvOutFile, colNames, true, counterColumn.ddl, false, this.options.overwrite);
-
+                dbHelper.createTableAndBindCsv(outputTableName, csvOutFile, colNames, true, counterColumn.ddl, false, this.options.overwrite);
 
                 // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
                 //String selectSql = this.options.sql.replace("@counter", value);
                 // On the other hand, that's too much space for the user to screw up. Let's force it:
                 String selectSql = sql.replace("SELECT ", "SELECT " + counterColumn.value + " ");
 
-                String userSql = "INSERT INTO " + TABLE_NAME__OUTPUT + " (" + selectSql + ")";
+                String userSql = "INSERT INTO " + outputTableName + " (" + selectSql + ")";
                 LOG.info(" * User's SQL: " + userSql);
                 //LOG.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
                 int rowsAffected = dbHelper.executeDbCommand(userSql, "Error executing user SQL: ");
@@ -170,7 +208,7 @@ public final class Cruncher
 
                     try (Statement statement2 = this.jdbcConn.createStatement()) {
                         FilesUtils.convertResultToJson(
-                                statement2.executeQuery("SELECT * FROM " + TABLE_NAME__OUTPUT),
+                                statement2.executeQuery("SELECT * FROM " + outputTableName),
                                 destJsonFile,
                                 printAsArray
                         );
@@ -190,15 +228,6 @@ public final class Cruncher
             dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
             this.jdbcConn.close();
             LOG.info(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
-        }
-    }
-
-    private void validateInputFiles(List<Path> inputPaths)
-    {
-        List<Path> notFiles = inputPaths.stream().filter(path -> !path.toFile().isFile()).collect(Collectors.toList());
-        if (!notFiles.isEmpty()) {
-            String msg = "Some input paths do not point to files: " + notFiles.stream().map(Path::toString).collect(Collectors.joining(", "));
-            throw new IllegalStateException(msg);
         }
     }
 
@@ -237,19 +266,6 @@ public final class Cruncher
             initialNumber = (System.currentTimeMillis() - TIMESTAMP_SUBSTRACT);
         }
         return initialNumber;
-    }
-
-
-    /**
-     * One part of input data, maps to one or more SQL tables. Can be created out of multiple input files.
-     */
-    @Data
-    public static class CruncherInputSubpart
-    {
-        private Path originalInputPath;
-        private Path combinedFile;
-        private List<Path> combinedFromFiles;
-        private String tableName;
     }
 
 

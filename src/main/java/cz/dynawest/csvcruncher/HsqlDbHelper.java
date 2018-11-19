@@ -97,7 +97,7 @@ public class HsqlDbHelper
             this.executeDbCommand(sql, "Failed to set CSV header: ");
         }
 
-        // Try to convert columns to numbers, where applicable.
+        // Try to convert columns types to numbers, where applicable.
         if (isInputTable) {
             this.optimizeTableCoumnsType(tableName, colNames);
         }
@@ -120,7 +120,7 @@ public class HsqlDbHelper
             String addToMsg = "";
             //if (ex.getMessage().contains("for cast"))
             {
-                // List columns with types.
+                // List column names with types.
                 addToMsg = "\n  Tables and column types:\n"
                         + this.formatListOfAvailableTables(true);
             }

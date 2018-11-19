@@ -56,7 +56,7 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public class FilesUtils
 {
-    public static final String CONCAT_WORK_SUBDIR_NAME = "concat";
+    private static final String CONCAT_WORK_SUBDIR_NAME = "concat";
 
     /**
      * Concatenates given files into a file in the resultPath, named "CsvCruncherConcat.csv".
@@ -123,7 +123,7 @@ public class FilesUtils
     {
         try (
                 OutputStream outS = new BufferedOutputStream(new FileOutputStream(destFile.toFile()));
-                Writer outW = new OutputStreamWriter(outS, StandardCharsets.UTF_8);
+                Writer outW = new OutputStreamWriter(outS, StandardCharsets.UTF_8)
         ) {
             ResultSetMetaData metaData = resultSet.getMetaData();
 
@@ -234,7 +234,7 @@ public class FilesUtils
      *
      * @return Input files grouped by the given input paths. CSV headers are not yet checked.
      */
-    public static Map<Path, List<Path>> expandFilterSortInputFilesGroups(List<Path> inputPaths, Options options) throws IOException
+    public static Map<Path, List<Path>> expandFilterSortInputFilesGroups(List<Path> inputPaths, Options options)
     {
         if (Options.CombineInputFiles.NONE.equals(options.getCombineInputFiles()) )
         {
@@ -294,11 +294,7 @@ public class FilesUtils
 
             case CONCAT:
                 log.debug("Concatenating input files.");
-
-                ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
-                List<CruncherInputSubpart> resultingInputSubsets = concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
-
-                return resultingInputSubsets;
+                return concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
         }
 
         throw new IllegalStateException("Did we miss some CombineInputFiles choice?");
@@ -462,7 +458,7 @@ public class FilesUtils
         // TODO: Refactor this into proper models. InputGroup, PerHeaderInputSubgroup, etc.
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            // Check if all files have the same columnNames header.
+            // Check if all files have the same columns header.
             Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new HashMap<>();
             for (Path fileToConcat : fileGroup.getValue()) {
                 List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
@@ -493,12 +489,11 @@ public class FilesUtils
     /**
      * @param options Used to filter the files, like "skip 1st line" or regex line matches.
      * @param fileGroupsToConcat Mapping from file group "key" (original group path + counter suffix) to the list of files to be concatenated.
-     * @param tmpConcatDir
+     * @param tmpConcatDir  A directory where the concatenation results shoul go.
      * @return Mapping from the resulting concatenated file to the files that were concatenated.
      */
     private static List<CruncherInputSubpart> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path tmpConcatDir) throws IOException
     {
-        ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = new LinkedHashMap<>();
         List<CruncherInputSubpart> inputSubparts = new ArrayList<>();
         Set<Path> usedConcatFilePaths = new HashSet<>();
 
@@ -507,7 +502,7 @@ public class FilesUtils
             //log.debug("    Into dest dir: " + tmpConcatDir);
             Files.createDirectories(tmpConcatDir);
 
-            String concatFileName = deriveNameForCombinedFile(usedConcatFilePaths, fileGroup);
+            String concatFileName = deriveNameForCombinedFile(fileGroup, usedConcatFilePaths);
             Path concatenatedFilePath = tmpConcatDir.resolve(concatFileName);
             usedConcatFilePaths.add(concatenatedFilePath);
             log.debug("    Into dest file: " + concatenatedFilePath + "\n  will combine these files: "
@@ -520,7 +515,6 @@ public class FilesUtils
 
             // Combine the file sets.
             concatFiles(fileGroup.getValue(), concatenatedFilePath, options.getIgnoreFirstLines(), options.getIgnoreLineRegex());
-            ///resultingFilePathToConcatenatedFiles.put(concatenatedFilePath, fileGroup.getValue());
 
             CruncherInputSubpart inputPart = new CruncherInputSubpart();
             inputPart.setOriginalInputPath(fileGroup.getKey());
@@ -529,7 +523,6 @@ public class FilesUtils
 
             inputSubparts.add(inputPart);
         }
-        ///return resultingFilePathToConcatenatedFiles;
         return inputSubparts;
     }
 
@@ -541,53 +534,66 @@ public class FilesUtils
      *
      * @param fileGroup  A group of files to combine in the value, and the originating input path in the value.
      */
-    private static String deriveNameForCombinedFile(Set<Path> usedConcatFilePaths, Map.Entry<Path, List<Path>> fileGroup)
+    static String deriveNameForCombinedFile(Map.Entry<Path, List<Path>> fileGroup, Set<Path> usedConcatFilePaths)
     {
-        String concatFileName;
-        if (fileGroup.getKey() == null) {
+        Path originPath = fileGroup.getKey();
+        if (originPath == null) {
             // Assorted files will be combined into resultDir/concat.csv.
-            concatFileName = "concat" + Cruncher.FILENAME_SUFFIX_CSV;
+            return Paths.get("concat" + Cruncher.FILENAME_SUFFIX_CSV).toString();
         }
         else {
-            concatFileName = getNonUsedName(fileGroup.getKey().getFileName().toString(), usedConcatFilePaths);
+            String pathStr = StringUtils.appendIfMissing(originPath.toString(), Cruncher.FILENAME_SUFFIX_CSV);
+            originPath = Paths.get(pathStr);
+
+            Path concatFilePath = getNonUsedName(originPath, usedConcatFilePaths);
+            usedConcatFilePaths.add(concatFilePath);
+            return concatFilePath.getFileName().toString();
         }
-        return concatFileName;
     }
 
     /**
-     * Checks if a name, e.g. "someOutputFile", is already used; if so, tries "someOutputFile_1", and so on.
+     * Returns a path derived from path, that is not already used (present in the usedPaths set).
+     * The paths derived have the file base name + "_{counter}".
+     * Eg. given "some/output/file.csv", if already used, tries "some/output/file_1.csv", and so on.
+     * It does NOT add the used path to the usedPaths set.
      */
-    public static String getNonUsedName(String nameBase, Set<Path> usedConcatFilePaths)
+    public static Path getNonUsedName(Path path, final Set<Path> usedPaths)
     {
-        String concatFileName = StringUtils.appendIfMissing(nameBase, Cruncher.FILENAME_SUFFIX_CSV);
+        if (!usedPaths.contains(path))
+            return path;
 
-        if (!usedConcatFilePaths.contains(concatFileName))
-            return concatFileName;
 
-        int counter = 1;
+        String suffix = StringUtils.substringAfterLast(""+path.getFileName(), ".");
+        if (!StringUtils.isEmpty(suffix))
+            suffix = "." + suffix;
+
+        String pathWithoutSuffix = StringUtils.removeEnd(path.toString(), suffix);
+
+        int counter = 0;
         do {
-            concatFileName = nameBase + "_" + counter++ + Cruncher.FILENAME_SUFFIX_CSV;
+            path = Paths.get(pathWithoutSuffix + "_" + ++counter + suffix);
         }
-        while (usedConcatFilePaths.contains(concatFileName));
+        while (usedPaths.contains(path));
+        usedPaths.add(path);
 
-        return concatFileName;
+        return path;
     }
 
 
     /**
      * Parse the first lien of given file, ignoring the initial #'s, NOT respecting quotes and escaping.
      *
-     * @return A list of columnNames in the order from the file.
+     * @return A list of column names in the order from the file.
      */
     public static List<String> parseColsFromFirstCsvLine(File file) throws IOException
     {
         Matcher mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("");
-        ArrayList<String> cols = new ArrayList();
+        ArrayList<String> cols = new ArrayList<>();
 
         LineIterator lineIterator = FileUtils.lineIterator(file);
         if (!lineIterator.hasNext())
         {
-            throw new IllegalStateException("No first line with columnNames definition (format: [# ] <colName> [, ...]) in: " + file.getPath());
+            throw new IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.getPath());
         }
         else
         {
@@ -604,17 +610,19 @@ public class FilesUtils
             for (String colName : Arrays.asList(colNames))
             {
                 colName = colName.trim();
-                if (colName.isEmpty())
+                if (colName.isEmpty()) {
                     throw new IllegalStateException(String.format(
                             "Empty column name (separators: ,; ) in: %s\n  The line was: %s",
                             file.getPath(), line
                     ));
+                }
 
-                if (!mat.reset(colName).matches())
+                if (!mat.reset(colName).matches()) {
                     throw new IllegalStateException(String.format(
                             "Colname '%s' must be valid SQL identifier, i.e. must match /%s/i in: %s",
                             colName, Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern(), file.getPath()
                     ));
+                }
 
                 cols.add(colName);
             }
@@ -628,7 +636,7 @@ public class FilesUtils
      */
     public static void validateInputFiles(List<CruncherInputSubpart> inputSubparts)
     {
-        List<Path> inputPaths = new ArrayList(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
+        List<Path> inputPaths = new ArrayList<>(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
 
         List<Path> notFiles = inputPaths.stream().filter(path -> !path.toFile().isFile()).collect(Collectors.toList());
         if (!notFiles.isEmpty()) {

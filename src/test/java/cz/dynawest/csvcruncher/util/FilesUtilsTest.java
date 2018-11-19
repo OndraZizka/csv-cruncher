@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher.util;
 
-import cz.dynawest.csvcruncher.Cruncher;
+import cz.dynawest.csvcruncher.CruncherInputSubpart;
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
 import cz.dynawest.csvcruncher.Options;
 import java.io.IOException;
@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -76,6 +78,78 @@ public class FilesUtilsTest
     }
 
     @Test
+    public void deriveNameForCombinedFile()
+    {
+        HashMap<Path, List<Path>> fileGroup = new HashMap<>();
+        fileGroup.put(Paths.get("foo"), Collections.emptyList());
+
+        HashSet<Path> usedConcatFilePaths = new HashSet<>();
+        usedConcatFilePaths.add(Paths.get("foo.csv"));
+
+        String derivedName = FilesUtils.deriveNameForCombinedFile(fileGroup.entrySet().iterator().next(), usedConcatFilePaths);
+
+        assertEquals("foo_1.csv", derivedName);
+    }
+
+    @Test
+    public void deriveNameForCombinedFile_dir()
+    {
+        HashMap<Path, List<Path>> fileGroup = new HashMap<>();
+        fileGroup.put(Paths.get("foo/bar.csv"), Collections.emptyList());
+
+        HashSet<Path> usedConcatFilePaths = new HashSet<>();
+        usedConcatFilePaths.add(Paths.get("foo/bar.csv"));
+
+        String derivedName = FilesUtils.deriveNameForCombinedFile(fileGroup.entrySet().iterator().next(), usedConcatFilePaths);
+
+        assertEquals("bar_1.csv", derivedName);
+    }
+
+    @Test
+    public void getNonUsedName()
+    {
+        Path nonUsed;
+        {
+            Path path = Paths.get("some/path.csv");
+            Path path_1 = Paths.get("some/path_1.csv");
+            Path path_2 = Paths.get("some/path_2.csv");
+            Path path2 = Paths.get("some/path2.csv");
+            Path path3 = Paths.get("some/path3.csv");
+
+            nonUsed = FilesUtils.getNonUsedName(path, Collections.emptySet());
+            assertEquals(path, nonUsed);
+
+            nonUsed = FilesUtils.getNonUsedName(path, new HashSet<>(Collections.singleton(clonePath(path))));
+            assertEquals(path_1, nonUsed);
+
+            nonUsed = FilesUtils.getNonUsedName(path, new HashSet<>(Arrays.asList(path, path_1)));
+            assertEquals(path_2, nonUsed);
+        }
+
+        {
+            Path path = Paths.get("some/path");
+            Path path_1 = Paths.get("some/path_1");
+            Path path_2 = Paths.get("some/path_2");
+            Path path2 = Paths.get("some/path2");
+            Path path3 = Paths.get("some/path3");
+
+            nonUsed = FilesUtils.getNonUsedName(path, Collections.emptySet());
+            assertEquals(path, nonUsed);
+
+            nonUsed = FilesUtils.getNonUsedName(path, new HashSet<>(Collections.singleton(clonePath(path))));
+            assertEquals(path_1, nonUsed);
+
+            nonUsed = FilesUtils.getNonUsedName(path, new HashSet<>(Arrays.asList(clonePath(path), path_1)));
+            assertEquals(path_2, nonUsed);
+        }
+    }
+
+    private Path clonePath(Path path)
+    {
+        return path.resolve("./").normalize();
+    }
+
+    @Test
     public void combineInputFiles_changedSchema() throws IOException
     {
         Options options = new Options();
@@ -90,7 +164,7 @@ public class FilesUtilsTest
         List<Path> inputPaths = Collections.singletonList(testDataDir.resolve("sample-changedSchema"));
 
         Map<Path, List<Path>> inputFileGroups = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options);
-        List<Cruncher.CruncherInputSubpart> inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options);
+        List<CruncherInputSubpart> inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options);
 
         assertNotNull(inputSubparts);
         assertEquals(2, inputSubparts.size());
