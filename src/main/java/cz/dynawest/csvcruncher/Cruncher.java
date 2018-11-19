@@ -35,7 +35,7 @@ public final class Cruncher
     public static final Pattern REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE);
 
     public static final String SQL_TABLE_PLACEHOLDER = "$table";
-    private static final String DEFAULT_SQL = "SELECT "+ SQL_TABLE_PLACEHOLDER + " FROM " + SQL_TABLE_PLACEHOLDER;
+    static final String DEFAULT_SQL = "SELECT "+ SQL_TABLE_PLACEHOLDER + " FROM " + SQL_TABLE_PLACEHOLDER;
 
     private Connection jdbcConn;
     private HsqlDbHelper dbHelper;

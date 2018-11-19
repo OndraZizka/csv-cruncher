@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @Setter
 @Getter
+@Slf4j
 public final class Options
 {
     protected List<String> inputPaths = new ArrayList<>();
@@ -47,12 +49,10 @@ public final class Options
             throw new IllegalArgumentException(" -in is not set.");
 
         // SQL may be omitted if there is a request to combine files or convert to JSON. Otherwise it would be a no-op.
-        if (this.sql == null && (
-                !Options.CombineInputFiles.NONE.equals(this.combineInputFiles)
-                        ||
-                        !Options.JsonExportFormat.NONE.equals(this.jsonExportFormat)
-        ))
-            throw new IllegalArgumentException(" -sql is not set.");
+        if (this.sql == null) {
+            log.debug(" -sql is not set, using default: " + Cruncher.DEFAULT_SQL);
+            this.sql = Cruncher.DEFAULT_SQL;
+        }
 
         if (this.outputPathCsv == null)
             throw new IllegalArgumentException(" -out is not set.");

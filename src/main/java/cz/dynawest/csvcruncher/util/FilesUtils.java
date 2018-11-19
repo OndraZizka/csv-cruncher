@@ -256,8 +256,16 @@ public class FilesUtils
                 log.info("   *** No files found.");
                 return Collections.emptyMap();
             }
-            if (paths.size() == 1)
+
+            if (paths.size() == 1) {
                 return mapOfIdentityToSingletonList(paths);
+            }
+
+            // If there is only one input path, use it as the originating path. Maybe it should be done in combine()?
+            if (inputPaths.size() == 1) {
+                fileGroupsToCombine.remove(null);
+                fileGroupsToCombine.put(inputPaths.get(0), paths);
+            }
         }
 
         fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine);
