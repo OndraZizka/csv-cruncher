@@ -11,9 +11,11 @@ import lombok.NonNull;
 @Data
 public class CruncherOutputPart
 {
+    public static final String OUTPUT_TABLE_SUFFIX = "_out";
+
     @NonNull private Path outputFile;
 
-    @NonNull private String inputTableName;
+    private final String inputTableName;
 
 
     // These are filled during processing.
@@ -21,4 +23,12 @@ public class CruncherOutputPart
     private String sql;
 
     private List<String> columnNames;
+
+    public String deriveOutputTableName()
+    {
+        if (getInputTableName() == null)
+            return Cruncher.TABLE_NAME__OUTPUT;
+        else
+            return getInputTableName() + OUTPUT_TABLE_SUFFIX;
+    }
 }

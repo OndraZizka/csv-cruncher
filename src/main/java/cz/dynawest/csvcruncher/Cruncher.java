@@ -86,6 +86,7 @@ public final class Cruncher
         boolean printAsArray = options.jsonExportFormat == Options.JsonExportFormat.ARRAY;
 
         Map<String, File> tablesToFiles = new HashMap<>();
+        List<CruncherOutputPart> outputs = Collections.emptyList();
 
         // Should the result have a unique incremental ID as an added 1st column?
         CounterColumn counterColumn = new CounterColumn();
@@ -142,7 +143,7 @@ public final class Cruncher
 
 
             String genericSql = StringUtils.defaultString(this.options.sql, DEFAULT_SQL);
-            List<CruncherOutputPart> outputs = new ArrayList<>();
+            outputs = new ArrayList<>();
 
 
             // SQL can be executed:
@@ -156,7 +157,7 @@ public final class Cruncher
             }
             // * per input, and generate one result per execution.
             else {
-                Set<Path> usedOutputFiles = new HashSet<Path>();
+                Set<Path> usedOutputFiles = new HashSet<>();
 
                 for (CruncherInputSubpart inputSubpart : inputSubparts)
                 {
@@ -174,10 +175,11 @@ public final class Cruncher
             {
                 File csvOutFile = output.getOutputFile().toFile();
                 String sql = genericSql;
-                String outputTableName = TABLE_NAME__OUTPUT;
+                //String outputTableName = TABLE_NAME__OUTPUT;
+                String outputTableName = output.deriveOutputTableName();
                 if (output.getInputTableName() != null) {
                     sql = sql.replace(SQL_TABLE_PLACEHOLDER, output.getInputTableName());
-                    outputTableName = output.getInputTableName() + "_out";
+                    //outputTableName = output.getInputTableName() + "_out";
                 }
 
 
@@ -229,28 +231,22 @@ public final class Cruncher
         finally
         {
             LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
-            cleanUpInputOutputTables(tablesToFiles);
+            cleanUpInputOutputTables(tablesToFiles, outputs);
             dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
             this.jdbcConn.close();
             LOG.info(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
         }
     }
 
-    private void cleanUpInputOutputTables(Map<String, File> inputTablesToFiles)
+    private void cleanUpInputOutputTables(Map<String, File> inputTablesToFiles, List<CruncherOutputPart> outputs)
     {
-        //if (reachedStage.passed(ReachedCrunchStage.INPUT_TABLES_CREATED))
-        // I'm removing these stage checks, since the table might have been left
-        // from previous run. Later let's implement a cleanup at start. TODO
-        {
-            dbHelper.detachTables(inputTablesToFiles.keySet(), "Could not delete the input table: ");
-        }
+        // TODO: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
+        dbHelper.detachTables(inputTablesToFiles.keySet(), "Could not delete the input table: ");
 
-        //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_CREATED))
-        {
-            dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
-        }
+        //dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
 
-        //if (reachedStage.passed(ReachedCrunchStage.OUTPUT_TABLE_FILLED))
+        Set<String> outputTablesNames = outputs.stream().map(x -> x.deriveOutputTableName()).collect(Collectors.toSet());
+        dbHelper.detachTables(outputTablesNames, "Could not delete the output table: ");
     }
 
     /**
@@ -282,7 +278,7 @@ public final class Cruncher
         String ddl = "";
         String value = "";
 
-        public CounterColumn setDdlAndVal() throws SQLException
+        public CounterColumn setDdlAndVal()
         {
             long initialNumber = getInitialNumber();
 
