@@ -253,16 +253,16 @@ public class App
                 return null;
             }
 
+            // Overwrite the output file(s), if they exist.
+            else if (arg.startsWith("--overwrite")) {
+                opt.overwrite = true;
+            }
+
             // Unknown
             else if (arg.startsWith("-")) {
                 String msg = "Unknown parameter: " + arg;
                 System.out.println("ERROR: " + msg);
                 throw new IllegalArgumentException(msg);
-            }
-
-            // Overwrite the output file(s), if they exist.
-            else if (arg.startsWith("--overwrite")) {
-                opt.overwrite = true;
             }
 
 
