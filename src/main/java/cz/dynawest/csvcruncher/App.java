@@ -4,12 +4,11 @@ import static cz.dynawest.csvcruncher.Options.CombineDirectories.*;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.CONCAT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.EXCEPT;
 import static cz.dynawest.csvcruncher.Options.CombineInputFiles.INTERSECT;
+import static cz.dynawest.csvcruncher.Options.SortInputPaths.*;
 import cz.dynawest.csvcruncher.util.Utils;
 import java.io.PrintStream;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /*
@@ -93,11 +92,6 @@ public class App
                 }
             }
 
-            // Overwrite the output file(s), if they exist.
-            else if (arg.startsWith("--overwrite")) {
-                opt.overwrite = true;
-            }
-
             // Ignore first N lines
             else if (arg.startsWith("--ignoreFirstLines")) {
                 opt.ignoreFirstLines = 1;
@@ -140,6 +134,42 @@ public class App
                 }
             }
 
+            // Sort input paths
+            else if (arg.startsWith("--" + PARAM_SORT_INPUT_PATHS)) {
+                if (arg.endsWith("--" + PARAM_SORT_INPUT_PATHS) ||
+                        arg.endsWith("=" + PARAMS_ORDER.getOptionValue() ))
+                    opt.sortInputPaths = PARAMS_ORDER;
+                else if (arg.endsWith("=" + ALPHA.getOptionValue()))
+                    opt.sortInputPaths = ALPHA;
+                else if (arg.endsWith("=" + TIME.getOptionValue()))
+                    opt.sortInputPaths = TIME;
+                else
+                    throw new IllegalArgumentException(String.format(
+                            "Unknown value for %s: %s Try one of %s",
+                            PARAM_SORT_INPUT_PATHS, arg,
+                            Options.SortInputPaths.getOptionValues()
+                    ));
+            }
+
+
+            // Sort input file groups (see CombineDirectories)
+            else if (arg.startsWith("--" + PARAM_SORT_FILE_GROUPS)) {
+                if (arg.endsWith("--" + PARAM_SORT_FILE_GROUPS) ||
+                        arg.endsWith("=" + ALPHA.getOptionValue() ))
+                    opt.sortInputFileGroups = ALPHA;
+                else if (arg.endsWith("=" + TIME.getOptionValue()))
+                    opt.sortInputFileGroups = TIME;
+                else if (arg.endsWith("=" + PARAMS_ORDER.getOptionValue()))
+                    opt.sortInputFileGroups = PARAMS_ORDER;
+                else
+                    throw new IllegalArgumentException(String.format(
+                            "Unknown value for %s: %s Try one of %s",
+                            PARAM_SORT_FILE_GROUPS, arg,
+                            Options.SortInputPaths.getOptionValues()
+                    ));
+            }
+
+
             // Combine input files
             else if (arg.startsWith("--" + Options.CombineInputFiles.PARAM_NAME)) {
                 if (arg.endsWith("--" + Options.CombineInputFiles.PARAM_NAME) ||
@@ -153,7 +183,7 @@ public class App
                     throw new IllegalArgumentException(String.format(
                             "Unknown value for %s: %s Try one of %s",
                             Options.CombineInputFiles.PARAM_NAME, arg,
-                            EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).collect(Collectors.toList())
+                            Options.CombineInputFiles.getOptionValues()
                     ));
                 // TODO: Do something like this instead:
                 //opt.combineInputFiles = Utils.processOptionIfMatches(arg, Options.CombineInputFiles.class, Options.CombineInputFiles.CONCAT);
@@ -178,12 +208,13 @@ public class App
                     throw new IllegalArgumentException(String.format(
                         "Unknown value for %s: %s Try one of %s",
                         Options.CombineDirectories.PARAM_NAME, arg,
-                        EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).collect(Collectors.toList())
+                        Options.CombineDirectories.getOptionValues()
                     ));
                 }
             }
 
-            // This could have some better name...
+            // Run the SQL query for each table, replacing a placeholder in the SQL with the name of the respective table.
+            // TODO: This needs docs, and could have some better name...
             else if ("--queryPerInputSubpart".equals(arg)) {
                 opt.queryPerInputSubpart = true;
             }
@@ -222,12 +253,20 @@ public class App
                 return null;
             }
 
+            // Unknown
             else if (arg.startsWith("-")) {
                 String msg = "Unknown parameter: " + arg;
                 System.out.println("ERROR: " + msg);
                 throw new IllegalArgumentException(msg);
             }
 
+            // Overwrite the output file(s), if they exist.
+            else if (arg.startsWith("--overwrite")) {
+                opt.overwrite = true;
+            }
+
+
+            // One of -in, -out, -sql
             else {
                 if (next != null) {
                     switch (next) {

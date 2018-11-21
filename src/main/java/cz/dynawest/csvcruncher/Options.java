@@ -7,9 +7,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.EnumUtils;
 
 @Setter
 @Getter
@@ -31,7 +33,8 @@ public final class Options
     protected Pattern ignoreLineRegex;
 
     protected Long initialRowNumber = null;
-    protected SortInputFiles sortInputFiles = SortInputFiles.PARAMS_ORDER;
+    protected SortInputPaths sortInputPaths = SortInputPaths.PARAMS_ORDER;
+    protected SortInputPaths sortInputFileGroups = SortInputPaths.ALPHA;
     protected CombineInputFiles combineInputFiles = CombineInputFiles.NONE;
     protected CombineDirectories combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR;
     protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
@@ -79,7 +82,8 @@ public final class Options
                "\n    sql: " + this.sql +
                "\n    ignoreLineRegex: " + this.ignoreLineRegex +
                "\n    ignoreFirstLines: " + this.ignoreFirstLines +
-               "\n    sortInputFiles: " + this.sortInputFiles +
+               "\n    sortInputPaths: " + this.sortInputPaths +
+               "\n    sortInputFileGroups: " + this.sortInputFileGroups +
                "\n    combineInputFiles: " + this.combineInputFiles +
                "\n    combineDirs: " + this.combineDirs +
                "\n    initialRowNumber: " + this.initialRowNumber +
@@ -98,21 +102,29 @@ public final class Options
     }
 
 
-    public enum SortInputFiles implements OptionEnum {
-        PARAMS_ORDER("paramOrder", "Keep the order from parameters."),
+    public enum SortInputPaths implements OptionEnum
+    {
+        PARAMS_ORDER("paramOrder", "Keep the order from parameters or file system."),
         ALPHA("alpha", "Sort alphabetically."),
         TIME("time", "Sort by modification time, ascending.");
+
+        public static final String PARAM_SORT_INPUT_PATHS = "sortInputPaths";
+        public static final String PARAM_SORT_FILE_GROUPS = "sortInputFileGroups";
 
         private final String optionValue;
         private final String description;
 
-        SortInputFiles(String value, String description) {
+        SortInputPaths(String value, String description) {
             this.optionValue = value;
             this.description = description;
         }
 
         @Override
         public String getOptionValue() { return optionValue; }
+
+        public static List<String> getOptionValues() {
+            return EnumUtils.getEnumList(SortInputPaths.class).stream().map(SortInputPaths::getOptionValue).collect(Collectors.toList());
+        }
     }
 
     public enum CombineDirectories implements OptionEnum
@@ -132,6 +144,11 @@ public final class Options
         }
 
         public String getOptionValue() { return optionValue; }
+
+        public static List<String> getOptionValues()
+        {
+            return EnumUtils.getEnumList(Options.CombineDirectories.class).stream().map(Options.CombineDirectories::getOptionValue).collect(Collectors.toList());
+        }
     }
 
     public enum CombineInputFiles implements OptionEnum
@@ -152,6 +169,11 @@ public final class Options
         }
 
         public String getOptionValue() { return optionValue; }
+
+        public static List<String> getOptionValues()
+        {
+            return EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).collect(Collectors.toList());
+        }
     }
 
     public enum JsonExportFormat implements OptionEnum

@@ -1,10 +1,10 @@
 package cz.dynawest.csvcruncher.util;
 
-import ch.qos.logback.classic.Logger;
 import cz.dynawest.csvcruncher.Cruncher;
 import cz.dynawest.csvcruncher.CruncherInputSubpart;
 import cz.dynawest.csvcruncher.CsvCruncherException;
 import cz.dynawest.csvcruncher.Options;
+import static cz.dynawest.csvcruncher.Options.SortInputPaths.PARAMS_ORDER;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.event.Level;
 
 
 /**
@@ -106,11 +106,17 @@ public class FilesUtils
         return  resultFile.toPath();
     }
 
-    public static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputFiles sortMethod)
+    public static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputPaths sortMethod)
     {
         switch (sortMethod) {
-            case PARAMS_ORDER: return Collections.unmodifiableList(inputPaths);
-            case ALPHA: inputPaths = new ArrayList<>(inputPaths); Collections.sort(inputPaths); return inputPaths;
+            case PARAMS_ORDER:
+                return Collections.unmodifiableList(inputPaths);
+
+            case ALPHA:
+                inputPaths = new ArrayList<>(inputPaths);
+                Collections.sort(inputPaths);
+                return inputPaths;
+
             case TIME: throw new UnsupportedOperationException("Sorting by time not implemented yet.");
             default: throw new UnsupportedOperationException("Unkown sorting method.");
         }
@@ -247,7 +253,7 @@ public class FilesUtils
 
         // Filter
         fileGroupsToCombine = filterFileGroups(options, fileGroupsToCombine);
-        logFileGroups(fileGroupsToCombine, Level.INFO, "Filtered file groups:");
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Filtered file groups:");
 
         // If there is just one catch-all group...
         if (fileGroupsToCombine.size() == 1 && fileGroupsToCombine.keySet().iterator().next() == null) {
@@ -269,7 +275,7 @@ public class FilesUtils
         }
 
         fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine);
-        logFileGroups(fileGroupsToCombine, Level.FINE, "Sorted file groups:");
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Sorted file groups:");
 
         return fileGroupsToCombine;
     }
@@ -287,7 +293,7 @@ public class FilesUtils
         // Split into subgroups by column names in the CSV header.
         FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine);
         fileGroupsToCombine = splitResult.getFileGroupsToCombine();
-        logFileGroups(fileGroupsToCombine, Level.FINE, "File groups split per header structure:");
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:");
 
         // At this point, the group keys are the original group + _<counter>.
         // TODO: Again, refactor this to something more sane.
@@ -315,13 +321,19 @@ public class FilesUtils
     }
 
 
-    private static void logFileGroups(Map<Path, List<Path>> fileGroupsToConcat, Level level, String label)
+    private static void logFileGroups(Map<Path, List<Path>> fileGroupsToConcat, org.slf4j.event.Level level, String label)
     {
         // TBD: Apply level.
-        ((Logger) log).debug("--- " + label + " ---" );
+        /*SubstituteLoggingEvent event = new SubstituteLoggingEvent();
+        event.setLevel(level);
+        event.setMessage();
+        ((Logger) log).log(event);*/
+
+        log.debug("--- " + label + " ---" );
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            log.debug("\n * Path: " + fileGroup.getKey() + ": "
-                + fileGroup.getValue().stream().map(path -> "\n\t- " + path).collect(Collectors.joining()));
+            String msg = "\n * Path: " + fileGroup.getKey() + ": "
+                    + fileGroup.getValue().stream().map(path -> "\n\t- " + path).collect(Collectors.joining());
+            log.debug(msg);
         }
     }
 
@@ -429,20 +441,23 @@ public class FilesUtils
     }
 
     /**
-     * Sorts the files within the groups by the configured sorting - see {@link Options.SortInputFiles}. Skips the empty groups.
+     * Sorts the files within the groups by the configured sorting - see {@link Options.SortInputPaths}. Skips the empty groups.
      * @return A map with one entry per group, containing the files in sorted order.
      */
     private static Map<Path, List<Path>> sortFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
     {
+        if (PARAMS_ORDER.equals(options.getSortInputFileGroups()))
+            throw new IllegalStateException("Input file groups have to be sorted somehow, " + PARAMS_ORDER.getOptionValue() + " not applicable.");
+
         Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             Path origin = fileGroup.getKey();
-            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.getSortInputFiles());
+            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.getSortInputFileGroups());
             fileGroupsToConcat2.put(origin, sortedPaths);
 
             String dirLabel = origin == null ? "all files" : "" + origin;
-            log.info("   *** Will combine files from " + dirLabel + ": "
+            log.debug("   *** Will combine files from " + dirLabel + ": "
                     + sortedPaths.stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
         }
         return fileGroupsToConcat2;
