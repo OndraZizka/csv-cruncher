@@ -98,7 +98,7 @@ public final class Cruncher
             // Sort the input paths.
             List<Path> inputPaths = this.options.inputPaths.stream().map(Paths::get).collect(Collectors.toList());
             inputPaths = FilesUtils.sortInputPaths(inputPaths, this.options.sortInputPaths);
-            LOG.info(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).get());
+            LOG.debug(" --- Sorted input paths: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).get());
 
             List<CruncherInputSubpart> inputSubparts;
 

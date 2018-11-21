@@ -2,9 +2,15 @@ package cz.dynawest.csvcruncher.it;
 
 import cz.dynawest.csvcruncher.App;
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -44,6 +50,8 @@ public class OptionsCombinationsIT
                 "  FROM eapBuilds ORDER BY deployDur";
 
         runCruncherWithArguments(command);
+
+        // TODO: Add the verifications.
     }
 
     @Test
@@ -59,6 +67,53 @@ public class OptionsCombinationsIT
                 "   FROM eapBuilds ORDER BY deployDur";
 
         runCruncherWithArguments(command);
+
+        // TODO: Add the verifications.
+    }
+
+    @Test
+    public void combineInputFiles_sort() throws Exception
+    {
+        String command = "--json=entries" +
+                " |  --rowNumbers" +
+                " |  --combineInputs=concat" +
+                " |  --combineDirs=all" +
+                " |  --sortInputFileGroups" +
+                " |  -in | src/test/data/sample-multiFile-all" +
+                " |  -out | target/testResults-sort/result.csv | --overwrite" +
+                " |  -sql | SELECT sample_multifile_all.* FROM sample_multifile_all";
+
+        runCruncherWithArguments(command);
+
+        File csvFile = Paths.get("target/testResults-sort/result.csv").toFile();
+        checkThatIdsAreIncrementing(csvFile, 3);
+    }
+
+    /**
+     * Reads the given CSV file, skips the first line, and then checks if the 2nd column is an incrementing number
+     * (just like in the input files).
+     */
+    private void checkThatIdsAreIncrementing(File csvFile, int columnOffset1Based)
+    {
+        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));)
+        {
+            reader.readLine();
+
+            Integer previousId = null;
+            String line;
+            while (null != (line = reader.readLine())) {
+                //System.out.println(":: " + line);
+                String[] values = StringUtils.splitPreserveAllTokens(line, ",");
+                String idStr = values[columnOffset1Based - 1];
+                int id = Integer.parseInt(idStr);
+                if (previousId != null)
+                    Assert.assertEquals(previousId + 1, id);
+                previousId = id;
+            }
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Unexpected error parsing the CSV: " + ex.getMessage(), ex);
+        }
     }
 
     @Test
@@ -69,12 +124,14 @@ public class OptionsCombinationsIT
                 " |  --combineInputs=concat" +
                 " |  --combineDirs=all" +
                 " |  --exclude=.*/LOAD.*\\.csv" +
-                " |  -in | src/test/data/sampleMultiFilesPerDir/apollo_session/" +
+                " |  -in | src/test/data/sampleMultiFilesPerDir/apollo_session_enrollment/" +
                 " |  -out | target/results/result.csv" +
                 " |  -sql | SELECT session_uid, name, session_type, created_time, modified_date" +
                 " |  FROM concat ORDER BY session_type, created_time DESC";
 
         runCruncherWithArguments(command);
+
+        // TODO: Add the verifications.
     }
 
     @Test
@@ -102,6 +159,8 @@ public class OptionsCombinationsIT
                 " |  -out | target/results/session_telephony_pins.csv";
 
         runCruncherWithArguments(command);
+
+        // TODO: Add the verifications.
     }
 
     @Test
@@ -114,6 +173,8 @@ public class OptionsCombinationsIT
                 " |  -out | target/results/apollo_recording_group.csv";
 
         runCruncherWithArguments(command);
+
+        // TODO: Add the verifications.
     }
 
     @Test
@@ -126,6 +187,8 @@ public class OptionsCombinationsIT
                 " |  -sql | SELECT * FROM session_telephony_pins";
 
         runCruncherWithArguments(command);
+
+        // TODO: Add the verifications.
     }
 
     @Test
