@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -123,7 +124,7 @@ public final class Options
         public String getOptionValue() { return optionValue; }
 
         public static List<String> getOptionValues() {
-            return EnumUtils.getEnumList(SortInputPaths.class).stream().map(SortInputPaths::getOptionValue).collect(Collectors.toList());
+            return EnumUtils.getEnumList(SortInputPaths.class).stream().map(SortInputPaths::getOptionValue).filter(Objects::nonNull).collect(Collectors.toList());
         }
     }
 
@@ -147,7 +148,7 @@ public final class Options
 
         public static List<String> getOptionValues()
         {
-            return EnumUtils.getEnumList(Options.CombineDirectories.class).stream().map(Options.CombineDirectories::getOptionValue).collect(Collectors.toList());
+            return EnumUtils.getEnumList(Options.CombineDirectories.class).stream().map(Options.CombineDirectories::getOptionValue).filter(Objects::nonNull).collect(Collectors.toList());
         }
     }
 
@@ -172,7 +173,7 @@ public final class Options
 
         public static List<String> getOptionValues()
         {
-            return EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).collect(Collectors.toList());
+            return EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).filter(Objects::nonNull).collect(Collectors.toList());
         }
     }
 
