@@ -1,0 +1,2 @@
+Op,recording_group_id,status,storage_base_url,owner_id,room_id,session_id,requested_ts,created_ts,deleted_ts,updated_ts,is_deleted,acc_consumer_id
+I,1378,1,logingroup/1854/session/7415/room/7841/recording,,7841,7415,,2018-10-08 12:14:52.495000,,2018-10-08 12:14:52.495000,false,

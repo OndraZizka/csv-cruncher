@@ -1,0 +1,3 @@
+Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time
+I,9999,950c2668-794b-4cf9-894a-af6aea5bf5d5,1000,1234567891,0,0,,2018-08-02 07:34:55.303000,2018-08-02 07:34:55.303000
+D,9999,,,,,,,,
