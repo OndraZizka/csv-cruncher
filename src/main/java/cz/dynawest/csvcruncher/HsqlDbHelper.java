@@ -3,6 +3,8 @@ package cz.dynawest.csvcruncher;
 import cz.dynawest.csvcruncher.util.DbUtils;
 import cz.dynawest.csvcruncher.util.Utils;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -50,12 +52,37 @@ public class HsqlDbHelper
         boolean readOnly = false;
         boolean csvUsesSingleQuote = true;
 
+        if (isInputTable && !csvFileToBind.exists()) {
+            throw new IllegalArgumentException("The input file does not exist: " + csvFileToBind);
+        }
+
+        // Get a full path, because HSQLDB resolves paths against the data dir specified in JDBC URL.
+        try {
+            csvFileToBind = csvFileToBind.getCanonicalFile();
+        }
+        catch (IOException ex) {
+            throw new CsvCruncherException("Failed resolving the CSV file path: " + csvFileToBind, ex);
+        }
+
         // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
-        if ((!isInputTable) && csvFileToBind.exists())
-            if (true || overwrite) // TODO: Obey --overwrite.
-                csvFileToBind.delete();
-            else
-                throw new IllegalArgumentException("The output file already exists. Use --overwrite or delete: " + csvFileToBind);
+        if (!isInputTable) {
+            if (csvFileToBind.exists()) {
+                if (true || overwrite) // TODO: Obey --overwrite.
+                    csvFileToBind.delete();
+                else
+                    throw new IllegalArgumentException("The output file already exists. Use --overwrite or delete: " + csvFileToBind);
+            }
+            else {
+                try {
+                    Files.createDirectories(csvFileToBind.getParentFile().toPath());
+                }
+                catch (IOException ex) {
+                    throw new CsvCruncherException("Failed creating directory to store the output to: " + csvFileToBind.getParentFile(), ex);
+                }
+            }
+        }
+
+
 
         // We are also building a header for the CSV file.
         StringBuilder sbCsvHeader = new StringBuilder("# ");
@@ -75,7 +102,7 @@ public class HsqlDbHelper
         sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
         sb.delete(sb.length() - 2, sb.length());
         sb.append(" )");
-        LOG.info("Table DDL SQL: " + sb.toString());
+        LOG.debug("Table DDL SQL: " + sb.toString());
         this.executeDbCommand(sb.toString(), "Failed to CREATE TEXT TABLE: ");
 
 
@@ -87,13 +114,13 @@ public class HsqlDbHelper
         String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
         String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
         String sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC);
-        LOG.info("CSV import SQL: " + sql);
+        LOG.debug("CSV import SQL: " + sql);
         this.executeDbCommand(sql, "Failed to import CSV: ");
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
             sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString());
-            LOG.info("CSV source header SQL: " + sql);
+            LOG.debug("CSV source header SQL: " + sql);
             this.executeDbCommand(sql, "Failed to set CSV header: ");
         }
 
