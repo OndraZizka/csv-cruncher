@@ -267,7 +267,7 @@ public class HsqlDbHelper
      */
     void detachTable(String tableName, boolean drop) throws SQLException
     {
-        LOG.info(String.format("Detaching%s table: %s", drop ? " and dropping" : "", tableName));
+        LOG.debug(String.format("Detaching%s table: %s", drop ? " and dropping" : "", tableName));
 
         String sql = "SET TABLE " + Utils.escapeSql(tableName) + " SOURCE OFF";
         executeDbCommand(sql, "Failed to detach/attach the table: ");
@@ -280,7 +280,7 @@ public class HsqlDbHelper
 
     void attachTable(String tableName) throws SQLException
     {
-        LOG.info("Ataching table: " + tableName);
+        LOG.debug("Ataching table: " + tableName);
 
         String sql = "SET TABLE " + Utils.escapeSql(tableName) + " SOURCE ON";
         executeDbCommand(sql, "Failed to attach the table: ");

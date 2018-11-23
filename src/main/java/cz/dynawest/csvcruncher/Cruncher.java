@@ -205,7 +205,7 @@ public final class Cruncher
                 output.setSql(selectSql);
 
                 String userSql = "INSERT INTO " + outputTableName + " (" + selectSql + ")";
-                LOG.info(" * User's SQL: " + userSql);
+                LOG.debug(" * User's SQL: " + userSql);
                 //LOG.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
                 int rowsAffected = dbHelper.executeDbCommand(userSql, "Error executing user SQL: ");
 
@@ -233,11 +233,11 @@ public final class Cruncher
         }
         finally
         {
-            LOG.info(" *** SHUTDOWN CLEANUP SEQUENCE ***");
+            LOG.debug(" *** SHUTDOWN CLEANUP SEQUENCE ***");
             cleanUpInputOutputTables(tablesToFiles, outputs);
             dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ");
             this.jdbcConn.close();
-            LOG.info(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
+            LOG.debug(" *** END SHUTDOWN CLEANUP SEQUENCE ***");
         }
     }
 
