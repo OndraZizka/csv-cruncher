@@ -1,14 +1,10 @@
 package cz.dynawest.csvcruncher.it;
 
-import cz.dynawest.csvcruncher.App;
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -49,7 +45,7 @@ public class OptionsCombinationsIT
                 "  CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "  FROM eapBuilds ORDER BY deployDur";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         // TODO: Add the verifications.
     }
@@ -66,7 +62,7 @@ public class OptionsCombinationsIT
                 "   CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "   FROM eapBuilds ORDER BY deployDur";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         // TODO: Add the verifications.
     }
@@ -83,7 +79,7 @@ public class OptionsCombinationsIT
                 " |  -out | target/testResults-sort/result.csv | --overwrite" +
                 " |  -sql | SELECT sample_multifile_all.* FROM sample_multifile_all";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         File csvFile = Paths.get("target/testResults-sort/result.csv").toFile();
         checkThatIdsAreIncrementing(csvFile, 3);
@@ -129,7 +125,7 @@ public class OptionsCombinationsIT
                 " |  -sql | SELECT session_uid, name, session_type, created_time, modified_date" +
                 " |  FROM concat ORDER BY session_type, created_time DESC";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         // TODO: Add the verifications.
     }
@@ -144,7 +140,7 @@ public class OptionsCombinationsIT
                 " |  -out | target/results/session_telephony_pins.csv";
 
         try {
-            runCruncherWithArguments(command);
+            CsvCruncherTestUtils.runCruncherWithArguments(command);
         }
         catch(Exception ex) { /**/ }
     }
@@ -158,7 +154,7 @@ public class OptionsCombinationsIT
                 " |  -in  | src/test/data/sampleMultiFilesPerDir/session_telephony_pins/" +
                 " |  -out | target/results/session_telephony_pins.csv";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         // TODO: Add the verifications.
     }
@@ -172,7 +168,7 @@ public class OptionsCombinationsIT
                 " |  -in  | src/test/data/sample-collab/apollo_recording_group/" +
                 " |  -out | target/results/apollo_recording_group.csv";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         // TODO: Add the verifications.
     }
@@ -186,7 +182,7 @@ public class OptionsCombinationsIT
                 " |  -out | target/results/session_telephony_pins.csv" +
                 " |  -sql | SELECT * FROM session_telephony_pins";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         // TODO: Add the verifications.
     }
@@ -196,7 +192,7 @@ public class OptionsCombinationsIT
     {
         String command = "-v";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
     }
 
     @Test
@@ -204,18 +200,7 @@ public class OptionsCombinationsIT
     {
         String command = "-h";
 
-        runCruncherWithArguments(command);
+        CsvCruncherTestUtils.runCruncherWithArguments(command);
     }
 
-
-    /**
-     * Runs CSV Cruncher with the guven command, which is | separated arguments.
-     */
-    private void runCruncherWithArguments(String command) throws Exception
-    {
-        List<String> collect = Arrays.stream(command.split("\\|")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.toList());
-        String[] args = collect.toArray(new String[0]);
-
-        App.mainNoExit(args);
-    }
 }
