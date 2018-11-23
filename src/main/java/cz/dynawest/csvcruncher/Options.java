@@ -53,7 +53,7 @@ public final class Options
 
     public boolean isFilled()
     {
-        return this.inputPaths != null && this.outputPathCsv != null && this.sql != null;
+        return this.inputPaths != null && this.outputPathCsv != null; // && this.sql != null;
     }
 
 
