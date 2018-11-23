@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.StringUtils;
 
 @Setter
 @Getter
@@ -25,6 +26,15 @@ public final class Options
     protected boolean skipNonReadable = false;
     protected String sql;
     protected String outputPathCsv;
+
+    /**
+     * The input files in some file group may have different structure.
+     * Normally, that causes a processing error and fails.
+     * With this option, it is possible to handle such cases, but the SQL needs to be generic.
+     * For each different structure, a table is created and processed separatedly.
+     * In this mode, other tables may not be available under the expected names.
+     * The SQL may reliably referer only to the processed table as "$table".
+     */
     protected boolean queryPerInputSubpart = false;
     protected boolean overwrite = false;
     protected String dbPath = null;
@@ -66,6 +76,11 @@ public final class Options
             File ex = new File(path);
             if (!ex.exists())
                 throw new FileNotFoundException("CSV file not found: " + ex.getPath());
+        }
+
+        if (this.queryPerInputSubpart && !StringUtils.isBlank(this.sql) && !this.sql.contains(Cruncher.SQL_TABLE_PLACEHOLDER)) {
+            String msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", Cruncher.SQL_TABLE_PLACEHOLDER);
+            throw new IllegalArgumentException(msg);
         }
     }
 
