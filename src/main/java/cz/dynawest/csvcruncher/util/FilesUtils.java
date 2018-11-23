@@ -252,7 +252,7 @@ public class FilesUtils
         Map<Path, List<Path>> fileGroupsToCombine = expandDirectories(inputPaths, options);
 
         // Filter
-        fileGroupsToCombine = filterFileGroups(options, fileGroupsToCombine);
+        fileGroupsToCombine = filterFileGroups(fileGroupsToCombine, options);
         logFileGroups(fileGroupsToCombine, Level.DEBUG, "Filtered file groups:");
 
         // If there is just one catch-all group...
@@ -409,7 +409,7 @@ public class FilesUtils
      * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see {@link Options#includePathsRegex}.
      * Also, skips the empty groups.
      */
-    static Map<Path, List<Path>> filterFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
+    static Map<Path, List<Path>> filterFileGroups(Map<Path, List<Path>> fileGroupsToConcat, Options options)
     {
         Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
 

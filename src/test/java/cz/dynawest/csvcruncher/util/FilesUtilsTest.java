@@ -192,7 +192,7 @@ public class FilesUtilsTest
         assertNotNull("Just one catchall group expected", fileGroupsToConcat.get(null));
         assertEquals("5 files found", 5, fileGroupsToConcat.get(null).size());
 
-        fileGroupsToConcat = FilesUtils.filterFileGroups(options, fileGroupsToConcat);
+        fileGroupsToConcat = FilesUtils.filterFileGroups(fileGroupsToConcat, options);
 
         assertEquals("Just one catchall group expected", 1, fileGroupsToConcat.size());
         assertNotNull("Just one catchall group expected", fileGroupsToConcat.get(null));
