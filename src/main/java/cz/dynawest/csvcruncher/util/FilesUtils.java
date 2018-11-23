@@ -275,7 +275,7 @@ public class FilesUtils
         }
 
         fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine);
-        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Sorted file groups:");
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Sorted and filtered file groups:");
 
         return fileGroupsToCombine;
     }
