@@ -154,6 +154,7 @@ public class FilesUtilsTest
     {
         Options options = new Options();
         options.setInputPaths(Arrays.asList(testDataDir.resolve("sample-changedSchema").toString()));
+        options.setExcludePathsRegex(Pattern.compile(".*/LOAD.*\\.csv"));
         options.setCombineDirs(Options.CombineDirectories.COMBINE_ALL_FILES);
         options.setCombineInputFiles(Options.CombineInputFiles.CONCAT);
         options.setOutputPathCsv(testOutputDir.resolve("combineInputFilesTest.csv").toString());
@@ -181,9 +182,17 @@ public class FilesUtilsTest
         Options options = new Options();
         List<Path> inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema"));
         options.setInputPaths(Collections.singletonList(inputPaths.get(0).toString()));
+        options.setIncludePathsRegex(Pattern.compile(".*\\.csv"));
+        options.setExcludePathsRegex(Pattern.compile(".*/LOAD.*\\.csv"));
         options.setCombineDirs(Options.CombineDirectories.COMBINE_ALL_FILES);
 
         Map<Path, List<Path>> fileGroupsToConcat = FilesUtils.expandDirectories(inputPaths, options);
+
+        assertEquals("Just one catchall group expected", 1, fileGroupsToConcat.size());
+        assertNotNull("Just one catchall group expected", fileGroupsToConcat.get(null));
+        assertEquals("5 files found", 5, fileGroupsToConcat.get(null).size());
+
+        fileGroupsToConcat = FilesUtils.filterFileGroups(options, fileGroupsToConcat);
 
         assertEquals("Just one catchall group expected", 1, fileGroupsToConcat.size());
         assertNotNull("Just one catchall group expected", fileGroupsToConcat.get(null));

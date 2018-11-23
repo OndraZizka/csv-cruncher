@@ -409,7 +409,7 @@ public class FilesUtils
      * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see {@link Options#includePathsRegex}.
      * Also, skips the empty groups.
      */
-    private static Map<Path, List<Path>> filterFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
+    static Map<Path, List<Path>> filterFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
     {
         Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
 
