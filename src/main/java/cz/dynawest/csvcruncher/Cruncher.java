@@ -35,7 +35,7 @@ public final class Cruncher
     public static final Pattern REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE);
 
     public static final String SQL_TABLE_PLACEHOLDER = "$table";
-    static final String DEFAULT_SQL = "SELECT "+ SQL_TABLE_PLACEHOLDER + " FROM " + SQL_TABLE_PLACEHOLDER;
+    static final String DEFAULT_SQL = "SELECT "+ SQL_TABLE_PLACEHOLDER + ".* FROM " + SQL_TABLE_PLACEHOLDER;
 
     private Connection jdbcConn;
     private HsqlDbHelper dbHelper;
@@ -173,6 +173,8 @@ public final class Cruncher
             // TODO: For each output...
             for (CruncherOutputPart output : outputs)
             {
+                log.debug("Output part: {}", output);
+
                 File csvOutFile = output.getOutputFile().toFile();
                 String sql = genericSql;
                 //String outputTableName = TABLE_NAME__OUTPUT;
@@ -226,7 +228,8 @@ public final class Cruncher
             }
         }
         catch (Exception ex) {
-            throw new CsvCruncherException("(DB tables and files cleanup was performed.)", ex);
+            //throw new CsvCruncherException("(DB tables and files cleanup was performed.)", ex);
+            throw ex; // The wrapper above was more confusing than helping.
         }
         finally
         {
