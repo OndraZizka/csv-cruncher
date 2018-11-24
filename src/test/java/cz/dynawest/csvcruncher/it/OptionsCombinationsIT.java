@@ -1,12 +1,9 @@
 package cz.dynawest.csvcruncher.it;
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.nio.file.Paths;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Assert;
+import java.util.Collections;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -82,34 +79,7 @@ public class OptionsCombinationsIT
         CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         File csvFile = Paths.get("target/testResults-sort/result.csv").toFile();
-        checkThatIdsAreIncrementing(csvFile, 3);
-    }
-
-    /**
-     * Reads the given CSV file, skips the first line, and then checks if the 2nd column is an incrementing number
-     * (just like in the input files).
-     */
-    private void checkThatIdsAreIncrementing(File csvFile, int columnOffset1Based)
-    {
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));)
-        {
-            reader.readLine();
-
-            Integer previousId = null;
-            String line;
-            while (null != (line = reader.readLine())) {
-                //System.out.println(":: " + line);
-                String[] values = StringUtils.splitPreserveAllTokens(line, ",");
-                String idStr = values[columnOffset1Based - 1];
-                int id = Integer.parseInt(idStr);
-                if (previousId != null)
-                    Assert.assertEquals(previousId + 1, id);
-                previousId = id;
-            }
-        }
-        catch (Exception ex) {
-            throw new RuntimeException("Unexpected error parsing the CSV: " + ex.getMessage(), ex);
-        }
+        CsvCruncherTestUtils.checkThatIdsAreIncrementing(Collections.singletonList(csvFile), 3);
     }
 
     @Test

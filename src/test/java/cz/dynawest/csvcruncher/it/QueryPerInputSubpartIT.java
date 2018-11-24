@@ -70,5 +70,6 @@ public class QueryPerInputSubpartIT
         Assert.assertTrue(outputDir.toFile().exists());
         Assert.assertTrue(outputDir.resolve("oauth_consumer_1.json").toFile().exists());
         Assert.assertTrue(outputDir.resolve("oauth_consumer_2.json").toFile().exists());
+
     }
 }
