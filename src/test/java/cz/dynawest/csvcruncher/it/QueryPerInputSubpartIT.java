@@ -1,8 +1,11 @@
 package cz.dynawest.csvcruncher.it;
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -71,5 +74,12 @@ public class QueryPerInputSubpartIT
         Assert.assertTrue(outputDir.resolve("oauth_consumer_1.json").toFile().exists());
         Assert.assertTrue(outputDir.resolve("oauth_consumer_2.json").toFile().exists());
 
+        File csv1 = Paths.get(outputDir.toString() + "_concat").resolve("oauth_consumer_1.csv").toFile();
+        File csv2 = Paths.get(outputDir.toString() + "_concat").resolve("oauth_consumer_2.csv").toFile();
+        Assert.assertTrue(csv1.exists());
+        Assert.assertTrue(csv2.exists());
+        List<File> files = Arrays.asList(csv1, csv2);
+
+        CsvCruncherTestUtils.checkThatIdsAreIncrementing(files, 2, false);
     }
 }

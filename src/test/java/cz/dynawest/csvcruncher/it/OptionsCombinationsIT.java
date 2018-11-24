@@ -79,7 +79,7 @@ public class OptionsCombinationsIT
         CsvCruncherTestUtils.runCruncherWithArguments(command);
 
         File csvFile = Paths.get("target/testResults-sort/result.csv").toFile();
-        CsvCruncherTestUtils.checkThatIdsAreIncrementing(Collections.singletonList(csvFile), 3);
+        CsvCruncherTestUtils.checkThatIdsAreIncrementing(Collections.singletonList(csvFile), 3, true);
     }
 
     @Test
