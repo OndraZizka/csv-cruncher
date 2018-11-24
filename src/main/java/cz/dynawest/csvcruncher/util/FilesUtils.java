@@ -482,7 +482,7 @@ public class FilesUtils
 
         for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
             // Check if all files have the same columns header.
-            Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new HashMap<>();
+            Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new LinkedHashMap<>();
             for (Path fileToConcat : fileGroup.getValue()) {
                 List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
                 subGroups_headerStructureToFiles.computeIfAbsent(headers, x -> new ArrayList<>()).add(fileToConcat);
