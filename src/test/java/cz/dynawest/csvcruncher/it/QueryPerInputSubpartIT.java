@@ -57,18 +57,18 @@ public class QueryPerInputSubpartIT
 
         try {
             CsvCruncherTestUtils.runCruncherWithArguments(command);
+            Assert.fail("Should have thrown IllegalArgumentException, --queryPerInputSubpart needs generic SQL.");
         }
         catch (IllegalArgumentException ex) {
             Assert.assertTrue(ex.getMessage().contains("queryPerInputSubpart"));
             Assert.assertTrue(ex.getMessage().contains("$table"));
         }
-        Assert.fail("Should have thrown IllegalArgumentException, --queryPerInputSubpart needs generic SQL.");
     }
 
     private void checkOutputFiles(Path outputDir)
     {
         Assert.assertTrue(outputDir.toFile().exists());
-        Assert.assertTrue(outputDir.resolve("oauth_consumer_1.csv.json").toFile().exists());
-        Assert.assertTrue(outputDir.resolve("oauth_consumer_2.csv.json").toFile().exists());
+        Assert.assertTrue(outputDir.resolve("oauth_consumer_1.json").toFile().exists());
+        Assert.assertTrue(outputDir.resolve("oauth_consumer_2.json").toFile().exists());
     }
 }

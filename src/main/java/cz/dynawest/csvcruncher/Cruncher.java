@@ -212,7 +212,10 @@ public final class Cruncher
 
                 // Now let's convert it to JSON if necessary.
                 if (convertResultToJson) {
-                    Path destJsonFile = Paths.get(csvOutFile.toPath().toString() + ".json");
+                    String pathStr = csvOutFile.toPath().toString();
+                    pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv" );
+                    pathStr = StringUtils.appendIfMissing(pathStr, ".json" );
+                    Path destJsonFile = Paths.get(pathStr);
                     LOG.info(" * JSON output: " + destJsonFile);
 
                     try (Statement statement2 = this.jdbcConn.createStatement()) {
