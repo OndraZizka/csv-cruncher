@@ -206,13 +206,15 @@ public class FilesUtils
      */
     private static void addTheRightTypeToJavaxJsonBuilder(ResultSet resultSet, int colIndex, JsonObjectBuilder builder) throws SQLException
     {
-        if (resultSet.getObject(colIndex) == null)
-            return;
-
         ResultSetMetaData metaData = resultSet.getMetaData();
         String columnLabel = metaData.getColumnLabel(colIndex);
         if (columnLabel.matches("[A-Z]+"))
             columnLabel = columnLabel.toLowerCase();
+
+        if (resultSet.getObject(colIndex) == null) {
+            builder.addNull(columnLabel);
+            return;
+        }
 
         // JDBC ResultSet will return default values, never null.
         // The JDBC NULL has to be checked after getting the value.
@@ -236,6 +238,7 @@ public class FilesUtils
             case Types.TIME:    builder.add(columnLabel, ""+resultSet.getTime(colIndex)); break;
             case Types.TIMESTAMP:    builder.add(columnLabel, (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T')); break; // JS Date() takes "1995-12-17T03:24:00"
         }
+        // This should be handled by getObject(), but just in case...
         if (resultSet.wasNull()) {
             builder.addNull(columnLabel);
         }
