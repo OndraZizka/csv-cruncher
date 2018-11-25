@@ -144,6 +144,7 @@ public class FilesUtils
             while (resultSet.next()) {
                 // javax.json way
                 JsonObjectBuilder builder = Json.createObjectBuilder();
+
                 // Columns
                 for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++) {
                     addTheRightTypeToJavaxJsonBuilder(resultSet, colIndex, builder);
@@ -213,6 +214,8 @@ public class FilesUtils
         if (columnLabel.matches("[A-Z]+"))
             columnLabel = columnLabel.toLowerCase();
 
+        // JDBC ResultSet will return default values, never null.
+        // The JDBC NULL has to be checked after getting the value.
         switch (metaData.getColumnType(colIndex)) {
             case Types.VARCHAR:
             case Types.CHAR:
@@ -232,6 +235,9 @@ public class FilesUtils
             case Types.DATE:    builder.add(columnLabel, ""+resultSet.getDate(colIndex)); break;
             case Types.TIME:    builder.add(columnLabel, ""+resultSet.getTime(colIndex)); break;
             case Types.TIMESTAMP:    builder.add(columnLabel, (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T')); break; // JS Date() takes "1995-12-17T03:24:00"
+        }
+        if (resultSet.wasNull()) {
+            builder.addNull(columnLabel);
         }
     }
 
