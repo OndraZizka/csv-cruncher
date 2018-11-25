@@ -133,7 +133,7 @@ public final class Cruncher
                 if (previousIfAny != null)
                     throw new IllegalArgumentException("File names normalized to table names collide: " + previousIfAny + ", " + csvInFile);
 
-                List<String> colNames = FilesUtils.parseColsFromFirstCsvLine(csvInFile);
+                List<String> colNames = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile);
                 // Create a table and bind the CSV to it.
                 dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, this.options.overwrite);
 

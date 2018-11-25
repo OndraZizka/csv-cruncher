@@ -490,7 +490,7 @@ public class FilesUtils
             // Check if all files have the same columns header.
             Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new LinkedHashMap<>();
             for (Path fileToConcat : fileGroup.getValue()) {
-                List<String> headers = parseColsFromFirstCsvLine(fileToConcat.toFile());
+                List<String> headers = parseColumnsFromFirstCsvLine(fileToConcat.toFile());
                 subGroups_headerStructureToFiles.computeIfAbsent(headers, x -> new ArrayList<>()).add(fileToConcat);
             }
 
@@ -610,11 +610,11 @@ public class FilesUtils
 
 
     /**
-     * Parse the first lien of given file, ignoring the initial #'s, NOT respecting quotes and escaping.
+     * Parse the first line of given file, ignoring the initial #'s, NOT respecting quotes and escaping.
      *
      * @return A list of column names in the order from the file.
      */
-    public static List<String> parseColsFromFirstCsvLine(File file) throws IOException
+    public static List<String> parseColumnsFromFirstCsvLine(File file) throws IOException
     {
         Matcher mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("");
         ArrayList<String> cols = new ArrayList<>();

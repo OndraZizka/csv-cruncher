@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher;
 
+import static cz.dynawest.csvcruncher.Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -81,6 +82,16 @@ public final class Options
         if (this.queryPerInputSubpart && !StringUtils.isBlank(this.sql) && !this.sql.contains(Cruncher.SQL_TABLE_PLACEHOLDER)) {
             String msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", Cruncher.SQL_TABLE_PLACEHOLDER);
             throw new IllegalArgumentException(msg);
+        }
+
+        if (COMBINE_PER_INPUT_SUBDIR.equals(this.combineDirs)) {
+            for (String inputPath : this.inputPaths) {
+                if (Paths.get(inputPath).toFile().isFile()) {
+                    String msg = String.format("If using %s, all inputs must be directories> %s", COMBINE_PER_INPUT_SUBDIR.getOptionValue(), inputPath);
+                    throw new IllegalArgumentException(msg);
+                }
+            }
+
         }
     }
 
