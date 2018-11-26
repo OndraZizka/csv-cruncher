@@ -208,7 +208,7 @@ public class FilesUtils
     {
         ResultSetMetaData metaData = resultSet.getMetaData();
         String columnLabel = metaData.getColumnLabel(colIndex);
-        if (columnLabel.matches("[A-Z]+"))
+        if (columnLabel.matches("[A-Z][A-Z_]*"))
             columnLabel = columnLabel.toLowerCase();
 
         if (resultSet.getObject(colIndex) == null) {
