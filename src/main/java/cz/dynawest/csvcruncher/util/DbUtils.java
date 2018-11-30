@@ -1,10 +1,10 @@
 package cz.dynawest.csvcruncher.util;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
@@ -47,10 +47,13 @@ public final class DbUtils
     /**
      * Dump the content of a table. Debug code.
      */
-    private void testDumpSelect(String tableName, Connection jdbcConn) throws SQLException
+    public static void testDumpSelect(String sql, Connection jdbcConn) throws SQLException
     {
-        PreparedStatement ps = jdbcConn.prepareStatement("SELECT * FROM " + tableName);
-        ResultSet rs = ps.executeQuery();
+
+        sql = sql.startsWith("SELECT ") ? sql : "SELECT * FROM " + sql;
+
+        Statement ps = jdbcConn.createStatement();
+        ResultSet rs = ps.executeQuery(sql);
         ResultSetMetaData metaData = rs.getMetaData();
 
         while (rs.next())

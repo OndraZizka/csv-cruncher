@@ -44,7 +44,8 @@ public class BooleanColumnDetectionIT
     /*
      * ID, boolUpper, bookLower, boolNull, boolYesNo, boolYnLower, boolYnUpper,bool01
      * 1,TRUE,true,true,yes,y,Y,1
-     * 2,FALSE,false,,no,n,N,0
+     * 2,FALSE,false,false,no,n,N,0
+     * 3,FALSE,false,,no,n,N,0
      */
     private void verifyBooleanResults(File csvFile) throws IOException
     {

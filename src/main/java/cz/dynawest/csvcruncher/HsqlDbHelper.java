@@ -11,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -296,7 +296,7 @@ public class HsqlDbHelper
      */
     void optimizeTableCoumnsType(String tableName, List<String> colNames) throws SQLException
     {
-        Map<String, String> columnsFitIntoType = new HashMap<>();
+        Map<String, String> columnsFitIntoType = new LinkedHashMap<>();
 
         // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
         // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
@@ -330,11 +330,23 @@ public class HsqlDbHelper
             String colName = colNameAndType.getKey();
             String sqlType = colNameAndType.getValue();
             String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
+            String sqlCheck = String.format("SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('%s') AND LOWER(column_name) = LOWER('%s')", tableName, colName);
 
             LOG.trace("Changing the column {} to {}", colName, sqlType);
             try (Statement st = jdbcConn.createStatement()) {
                 st.execute(sqlAlter);
-                LOG.debug(String.format("Column %s.%s converted to %s", tableName, colName, sqlType));
+                LOG.info(String.format("Column %s.%s converted to %s. %s", tableName, colName, sqlType, sqlAlter));
+                LOG.trace("Checking col type: " + sqlCheck);
+                ResultSet columnTypeRes = st.executeQuery(sqlCheck);
+                if (!columnTypeRes.next()) {
+                    LOG.error("Column not found?? {}.{}", tableName, colName);
+                    DbUtils.testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('"+tableName.toUpperCase()+"')", jdbcConn);
+                    continue;
+                }
+                String newType = columnTypeRes.getString("data_type");
+                if (!newType.equals(sqlType) ) {
+                    LOG.error(String.format("Column %s.%s did not really change the type to %s, stayed %s.", tableName, colName, sqlType, newType));
+                }
             }
             catch (SQLException ex) {
                 LOG.error(String.format("Error changing type of column %s.%s to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
