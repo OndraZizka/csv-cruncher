@@ -313,11 +313,11 @@ public class HsqlDbHelper
                 LOG.trace("Column change attempt SQL: " + sqlCol);
                 try (Statement st = jdbcConn.createStatement()) {
                     st.execute(sqlCol);
-                    LOG.trace(String.format("Column %s.%s fits to to %s", tableName, colName, typeUsed = sqlType));
+                    LOG.trace(String.format("Column %s.%s fits to %s", tableName, colName, typeUsed = sqlType));
                     columnsFitIntoType.put(colName, sqlType);
                 }
                 catch (SQLException ex) {
-                    // LOG.info(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                    // LOG.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
                 }
             }
         }
@@ -331,13 +331,13 @@ public class HsqlDbHelper
             String sqlType = colNameAndType.getValue();
             String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
 
-            LOG.trace("Column change attempt SQL: " + sqlAlter);
+            LOG.trace("Changing the column {} to {}", colName, sqlType);
             try (Statement st = jdbcConn.createStatement()) {
                 st.execute(sqlAlter);
-                LOG.debug(String.format("Column %s.%s converted to to %s", tableName, colName, sqlType));
+                LOG.debug(String.format("Column %s.%s converted to %s", tableName, colName, sqlType));
             }
             catch (SQLException ex) {
-                LOG.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                LOG.error(String.format("Error changing type of column %s.%s to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
             }
         }
 
