@@ -1,7 +1,7 @@
 package cz.dynawest.csvcruncher;
 
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.NonNull;
 
@@ -22,7 +22,7 @@ public class CruncherOutputPart
 
     private String sql;
 
-    private List<String> columnNames;
+    private Map<String, String> columnNamesAndTypes;
 
     public String deriveOutputTableName()
     {

@@ -190,13 +190,13 @@ public final class Cruncher
                 dirToCreate.mkdirs();
 
                 // Get the columns info: Perform the SQL, LIMIT 1.
-                List<String> colNames = dbHelper.extractColumnsInfoFrom1LineSelect(sql);
-                output.setColumnNames(colNames);
+                Map<String, String> columnsDef = dbHelper.extractColumnsInfoFrom1LineSelect(sql);
+                output.setColumnNamesAndTypes(columnsDef);
 
 
                 // Write the result into a CSV
                 LOG.info(" * CSV output: " + csvOutFile);
-                dbHelper.createTableAndBindCsv(outputTableName, csvOutFile, colNames, true, counterColumn.ddl, false, this.options.overwrite);
+                dbHelper.createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, this.options.overwrite);
 
                 // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
                 //String selectSql = this.options.sql.replace("@counter", value);

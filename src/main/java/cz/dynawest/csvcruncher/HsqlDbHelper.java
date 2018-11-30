@@ -39,6 +39,28 @@ public class HsqlDbHelper
         createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true, overwrite);
     }
 
+    private void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> columnsNames, boolean ignoreFirst, String counterColumnDdl, boolean isInputTable, boolean overwrite) throws SQLException
+    {
+        Map<String, String> columnsDef = listToMapKeysWithNullValues(columnsNames);
+        createTableAndBindCsv(tableName, csvFileToBind, columnsDef, ignoreFirst, counterColumnDdl, isInputTable, overwrite);
+
+        // Try to convert columns types to numbers, where applicable.
+        if (isInputTable) {
+            this.optimizeTableCoumnsType(tableName, columnsNames);
+        }
+    }
+
+    /**
+     * Returns a map with keys from the given list, and null values. Doesn't deal with duplicate keys.
+     */
+    private static Map<String, String> listToMapKeysWithNullValues(List<String> keys)
+    {
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        for (String columnsName : keys) {
+            result.put(columnsName, null);
+        }
+        return result;
+    }
 
     /**
      * Creates the input or output table, with the right column names, and binds the file.<br/>
@@ -47,7 +69,7 @@ public class HsqlDbHelper
      * Input tables columns are optimized after binding the file by attempting to reduce the column type.
      * (The output table has to be optimized later.)<br/>
      */
-    void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, String counterColumnDdl, boolean isInputTable, boolean overwrite) throws SQLException
+    void createTableAndBindCsv(String tableName, File csvFileToBind, Map<String, String> columnsNamesAndTypes, boolean ignoreFirst, String counterColumnDdl, boolean isInputTable, boolean overwrite) throws SQLException
     {
         boolean readOnly = false;
         boolean csvUsesSingleQuote = true;
@@ -86,24 +108,29 @@ public class HsqlDbHelper
 
         // We are also building a header for the CSV file.
         StringBuilder sbCsvHeader = new StringBuilder("# ");
-        StringBuilder sb = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");
+        StringBuilder sbSql = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");
 
         // The counter column, if any.
-        sb.append(counterColumnDdl);
+        sbSql.append(counterColumnDdl);
 
         // Columns
-        for (String colName : colNames)
+        for (Map.Entry<String, String> columnDef : columnsNamesAndTypes.entrySet())
         {
-            sbCsvHeader.append(colName).append(", ");
+            String columnName = Utils.escapeSql(columnDef.getKey());
+            String columnType = columnDef.getValue();
+            if (columnType == null || "VARCHAR".equals(columnType.toUpperCase()))
+                columnType = "VARCHAR(" + MAX_STRING_COLUMN_LENGTH + ")";
+            else
+                columnType = Utils.escapeSql(columnType);
 
-            colName = Utils.escapeSql(colName);
-            sb.append(colName).append(" VARCHAR(" + MAX_STRING_COLUMN_LENGTH + "), ");
+            sbCsvHeader.append(columnName).append(", ");
+            sbSql.append(columnName).append(" ").append(columnType).append(", ");
         }
         sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
-        sb.delete(sb.length() - 2, sb.length());
-        sb.append(" )");
-        LOG.debug("Table DDL SQL: " + sb.toString());
-        this.executeDbCommand(sb.toString(), "Failed to CREATE TEXT TABLE: ");
+        sbSql.delete(sbSql.length() - 2, sbSql.length());
+        sbSql.append(" )");
+        LOG.debug("Table DDL SQL: " + sbSql.toString());
+        this.executeDbCommand(sbSql.toString(), "Failed to CREATE TEXT TABLE: ");
 
 
         // Bind the table to the CSV file.
@@ -124,10 +151,6 @@ public class HsqlDbHelper
             this.executeDbCommand(sql, "Failed to set CSV header: ");
         }
 
-        // Try to convert columns types to numbers, where applicable.
-        if (isInputTable) {
-            this.optimizeTableCoumnsType(tableName, colNames);
-        }
     }
 
 
@@ -239,7 +262,7 @@ public class HsqlDbHelper
     /**
      * Get the columns info: Perform the SQL, LIMIT 1.
      */
-    public List<String> extractColumnsInfoFrom1LineSelect(String sql) throws SQLException
+    public Map<String, String> extractColumnsInfoFrom1LineSelect(String sql) throws SQLException
     {
         PreparedStatement statement;
         try {
@@ -257,7 +280,7 @@ public class HsqlDbHelper
         ResultSet rs = statement.executeQuery();
 
         // Column names
-        return DbUtils.getResultSetColumnNames(rs);
+        return DbUtils.getResultSetColumnNamesAndTypes(rs);
     }
 
 
@@ -304,7 +327,7 @@ public class HsqlDbHelper
         for (String colName : colNames)
         {
             String typeUsed;
-            for (String sqlType : new String[]{"TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
+            for (String sqlType : new String[]{"VARCHAR(255)", "CHAR", "TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
             {
                 // Try CAST( AS ...)
                 String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);

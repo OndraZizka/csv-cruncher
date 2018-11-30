@@ -6,7 +6,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 public final class DbUtils
@@ -18,6 +20,17 @@ public final class DbUtils
             colNames_[colIndex] = rs.getMetaData().getColumnName(colIndex + 1).toLowerCase();
         }
         return Arrays.asList(colNames_);
+    }
+
+    public static Map<String, String> getResultSetColumnNamesAndTypes(ResultSet rs) throws SQLException
+    {
+        int columnCount = rs.getMetaData().getColumnCount();
+        Map<String,String> columns = new LinkedHashMap<>(columnCount);
+
+        for (int colIndex = 0; colIndex < columnCount; colIndex++) {
+            columns.put(rs.getMetaData().getColumnName(colIndex + 1), rs.getMetaData().getColumnTypeName(colIndex + 1));
+        }
+        return columns;
     }
 
     /**
