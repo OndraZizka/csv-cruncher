@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.zizka.csvcruncher</groupId>
     <artifactId>csv-cruncher</artifactId>
-    <version>1.12.0</version>
+    <version>1.13.0</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
