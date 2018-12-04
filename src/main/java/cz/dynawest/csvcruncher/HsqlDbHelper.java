@@ -312,7 +312,7 @@ public class HsqlDbHelper
     /**
      * This must be called when all data are already in the table!
      * Try to convert columns to best fitting types.
-     * This speeds up further SQL operations.
+     * This speeds up further SQL operations. It also allows proper types for JSON (or other type-aware formats).
      *
      *   "HyperSQL allows changing the type if all the existing values can be cast
      *    into the new type without string truncation or loss of significant digits."
@@ -327,7 +327,9 @@ public class HsqlDbHelper
         for (String colName : colNames)
         {
             String typeUsed;
-            for (String sqlType : new String[]{"VARCHAR(255)", "CHAR", "TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
+
+            // Note: Tried also "CHAR", but seems that HSQL does some auto casting and the values wouldn't fit. Need to investigate.
+            for (String sqlType : new String[]{"VARCHAR(255)", "TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
             {
                 // Try CAST( AS ...)
                 String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
