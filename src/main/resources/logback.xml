@@ -7,7 +7,7 @@
         <target>System.err</target>
         <!-- Encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default. -->
         <encoder>
-            <pattern>%d{HH:mm:ss} %.-2level %logger{0}: %msg%n</pattern><!-- %-5level -->
+            <pattern>%d{HH:mm:ss} %.-5level %logger{0}: %msg%n</pattern>
         </encoder>
     </appender>
 

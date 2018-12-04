@@ -329,7 +329,8 @@ public class HsqlDbHelper
             String typeUsed;
 
             // Note: Tried also "CHAR", but seems that HSQL does some auto casting and the values wouldn't fit. Need to investigate.
-            for (String sqlType : new String[]{"VARCHAR(255)", "TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
+            // Note: Tried also "VARCHAR(255)", but size limits is not handled below.
+            for (String sqlType : new String[]{"TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
             {
                 // Try CAST( AS ...)
                 String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
@@ -360,7 +361,7 @@ public class HsqlDbHelper
             LOG.trace("Changing the column {} to {}", colName, sqlType);
             try (Statement st = jdbcConn.createStatement()) {
                 st.execute(sqlAlter);
-                LOG.info(String.format("Column %s.%s converted to %s. %s", tableName, colName, sqlType, sqlAlter));
+                LOG.debug(String.format("Column %s.%-20s converted to %-14s %s", tableName, colName, sqlType, sqlAlter));
                 LOG.trace("Checking col type: " + sqlCheck);
                 ResultSet columnTypeRes = st.executeQuery(sqlCheck);
                 if (!columnTypeRes.next()) {
