@@ -1,1 +1,6 @@
-/home/ondra/work/pgWal/dmsCsvToJsonConverter/cache/dmsOutput/janus/oauth_consumer/20181029-131156098.csv
+Op,id,login_group_id,consumer_key,secret,enabled,created_time,modified_date,description,uid,oauth_consumer_type,name,deleted
+I,80001,80002,test_oauth_consumer_1,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0cGFzc3dvcmQ==,true,2016-10-03 19:06:26.253162,2016-10-03 19:06:26.253162,description,test_oauth_consumer_1,2,enabled,false
+I,80002,80001,test_oauth_consumer_2,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0cGFzc3dvcmQ==,true,2016-10-03 19:06:26.253162,2016-10-03 19:06:26.253162,description,test_oauth_consumer_2,2,enabled,false
+I,80003,80002,test_oauth_consumer_3,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0cGFzc3dvcmQ==,true,2016-10-03 19:06:26.254000,2016-10-05 17:21:31.482000,description,test_oauth_consumer_3,2,disabled,false
+I,80004,80001,test_lti_consumer_1,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0cGFzc3dvcmQ==,true,2016-10-03 19:06:26.255492,2016-10-03 19:06:26.255492,description,test_lti_consumer,1,lti,false
+I,80005,80001,lti_gatling,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX2dhdGxpbmc=,true,2018-10-03 19:06:26.255492,2018-10-03 19:06:26.255492,description,gatling_lti_consumer,1,lti,false

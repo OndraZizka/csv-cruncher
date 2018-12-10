@@ -1,1 +1,3 @@
-/home/ondra/work/pgWal/dmsCsvToJsonConverter/cache/dmsOutput/janus/oauth_consumer/20181030-124512673.csv
+Op,id,login_group_id,consumer_key,secret,enabled,created_time,modified_date,description,uid,oauth_consumer_type,name,deleted
+I,200003,,AT_LG_30-10-18-08-44-10_946,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-30 12:44:10.841000,2018-10-30 12:44:10.841000,Consumer description,47304bd871d5492e8686890a499fb6f6,1,,false
+U,200003,200003,AT_LG_30-10-18-08-44-10_946,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-30 12:44:10.841000,2018-10-30 12:44:10.908000,Consumer description,47304bd871d5492e8686890a499fb6f6,1,,false

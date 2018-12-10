@@ -1,1 +1,5 @@
-/home/ondra/work/pgWal/dmsCsvToJsonConverter/cache/dmsOutput/janus/oauth_consumer/20181024-120305371.csv
+Op,id,login_group_id,consumer_key,secret,enabled,created_time,modified_date,description,uid,oauth_consumer_type,name,deleted,integration_site_id,integration_attendance_enabled
+I,2293,,AT_LG_24-10-18-08-01-43_965,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-24 12:01:43.737000,2018-10-24 12:01:43.737000,Consumer description,1e2d130dc83e445987900908d7145039,1,,false,,false
+U,2293,1911,AT_LG_24-10-18-08-01-43_965,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-24 12:01:43.737000,2018-10-24 12:01:43.803000,Consumer description,1e2d130dc83e445987900908d7145039,1,,false,,false
+I,2294,,AT_LG_24-10-18-08-02-43_889,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-24 12:02:43.294000,2018-10-24 12:02:43.294000,Consumer description,8c73bf66c0394b6eaaea144f40c5a757,1,,false,,false
+U,2294,1912,AT_LG_24-10-18-08-02-43_889,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-24 12:02:43.294000,2018-10-24 12:02:43.376000,Consumer description,8c73bf66c0394b6eaaea144f40c5a757,1,,false,,false

@@ -1,1 +1,5 @@
-/home/ondra/work/pgWal/dmsCsvToJsonConverter/cache/dmsOutput/janus/oauth_consumer/20181010-130528666.csv
+Op,id,login_group_id,consumer_key,secret,enabled,created_time,modified_date,description,uid,oauth_consumer_type,name,deleted,integration_site_id,integration_attendance_enabled
+U,2256,1864,deleted_9b93214e66534593a58f55f142b7da54,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:04:13.403000,2018-10-10 13:04:26.793000,Consumer description,c6f422a27ad54dfe994b968e2c1e685d,2,,true,,false
+I,2257,,lti_key 10-10-18-09-04-33_504,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:04:47.285000,2018-10-10 13:04:47.285000,Consumer description,c24b7325f6274c5fad848aa5a9f28a05,2,,false,,false
+U,2257,1864,lti_key 10-10-18-09-04-33_504,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:04:47.285000,2018-10-10 13:04:47.350000,Consumer description,c24b7325f6274c5fad848aa5a9f28a05,2,,false,,false
+U,2257,1864,new_rest_key 10-10-18-09-04-33_504,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bmV3X3Jlc3Rfc2VjcmV0,false,2018-10-10 13:04:47.285000,2018-10-10 13:05:18.663000,Newer consumer description,c24b7325f6274c5fad848aa5a9f28a05,2,,false,,false

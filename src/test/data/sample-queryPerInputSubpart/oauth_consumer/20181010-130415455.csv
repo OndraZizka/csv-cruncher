@@ -1,1 +1,8 @@
-/home/ondra/work/pgWal/dmsCsvToJsonConverter/cache/dmsOutput/janus/oauth_consumer/20181010-130415455.csv
+Op,id,login_group_id,consumer_key,secret,enabled,created_time,modified_date,description,uid,oauth_consumer_type,name,deleted,integration_site_id,integration_attendance_enabled
+U,2254,1864,new_lti_key 10-10-18-09-02-33_112,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bmV3X2x0aV9zZWNyZXQ=,false,2018-10-10 13:02:42.355000,2018-10-10 13:03:14.786000,Newer consumer description,e1fa1bcd3f434a8695c41298ee484056,1,,false,,false
+U,2254,1864,deleted_120fe456ba254b58804c6615d16df4f1,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bmV3X2x0aV9zZWNyZXQ=,false,2018-10-10 13:02:42.355000,2018-10-10 13:03:27.051000,Newer consumer description,e1fa1bcd3f434a8695c41298ee484056,1,,true,,false
+I,2255,,lti_key 10-10-18-09-03-30_804,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:03:40.056000,2018-10-10 13:03:40.056000,Consumer description,a70e858b2d644ba1b2457d06d45dd8da,1,,false,,false
+U,2255,1864,lti_key 10-10-18-09-03-30_804,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:03:40.056000,2018-10-10 13:03:40.118000,Consumer description,a70e858b2d644ba1b2457d06d45dd8da,1,,false,,false
+U,2255,1864,deleted_844057a39bd94add9b32a1e58231cb60,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:03:40.056000,2018-10-10 13:03:46.342000,Consumer description,a70e858b2d644ba1b2457d06d45dd8da,1,,true,,false
+I,2256,,lti_key 10-10-18-09-03-53_200,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:04:13.403000,2018-10-10 13:04:13.403000,Consumer description,c6f422a27ad54dfe994b968e2c1e685d,2,,false,,false
+U,2256,1864,lti_key 10-10-18-09-03-53_200,QFRoMXNJc3RoZVNAbFRGMHJQQHNzdzByREluQkBzMzY0bHRpX3NlY3JldA==,true,2018-10-10 13:04:13.403000,2018-10-10 13:04:13.453000,Consumer description,c6f422a27ad54dfe994b968e2c1e685d,2,,false,,false
