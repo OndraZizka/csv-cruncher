@@ -193,8 +193,11 @@ class OptionsCombinationsIT {
         CsvCruncherTestUtils.runCruncherWithArguments(command)
     }
 
-    @BeforeClass
-    fun deletePreviousResults() {
-        CsvCruncherTestUtils.testOutputDir.toFile().delete()
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        fun deletePreviousResults() {
+            CsvCruncherTestUtils.testOutputDir.toFile().delete()
+        }
     }
 }

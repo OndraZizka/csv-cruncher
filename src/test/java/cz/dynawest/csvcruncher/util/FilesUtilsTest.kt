@@ -7,7 +7,7 @@ import cz.dynawest.csvcruncher.util.FilesUtils.expandDirectories
 import cz.dynawest.csvcruncher.util.FilesUtils.expandFilterSortInputFilesGroups
 import cz.dynawest.csvcruncher.util.FilesUtils.filterFileGroups
 import cz.dynawest.csvcruncher.util.FilesUtils.filterPaths
-import cz.dynawest.csvcruncher.util.FilesUtils.getNonUsedName
+import cz.dynawest.csvcruncher.util.FilesUtils.test_getNonUsedName
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.Assert
 import org.junit.Test
@@ -84,37 +84,36 @@ class FilesUtilsTest {
         Assert.assertEquals("bar_1.csv", derivedName)
     }
 
-    @get:Test
-    val nonUsedName: Unit
-        get() {
-            var nonUsed: Path
-            run {
-                val path = Paths.get("some/path.csv")
-                val path_1 = Paths.get("some/path_1.csv")
-                val path_2 = Paths.get("some/path_2.csv")
-                val path2 = Paths.get("some/path2.csv")
-                val path3 = Paths.get("some/path3.csv")
-                nonUsed = getNonUsedName(path, mutableSetOf<Path>())
-                Assert.assertEquals(path, nonUsed)
-                nonUsed = getNonUsedName(path, HashSet(setOf(clonePath(path))))
-                Assert.assertEquals(path_1, nonUsed)
-                nonUsed = getNonUsedName(path, HashSet(Arrays.asList(path, path_1)))
-                Assert.assertEquals(path_2, nonUsed)
-            }
-            run {
-                val path = Paths.get("some/path")
-                val path_1 = Paths.get("some/path_1")
-                val path_2 = Paths.get("some/path_2")
-                val path2 = Paths.get("some/path2")
-                val path3 = Paths.get("some/path3")
-                nonUsed = getNonUsedName(path, mutableSetOf<Path>())
-                Assert.assertEquals(path, nonUsed)
-                nonUsed = getNonUsedName(path, HashSet(setOf(clonePath(path))))
-                Assert.assertEquals(path_1, nonUsed)
-                nonUsed = getNonUsedName(path, HashSet(Arrays.asList(clonePath(path), path_1)))
-                Assert.assertEquals(path_2, nonUsed)
-            }
+    @Test
+    fun test_getNonUsedName(): Unit {
+        var nonUsed: Path
+        run {
+            val path = Paths.get("some/path.csv")
+            val path_1 = Paths.get("some/path_1.csv")
+            val path_2 = Paths.get("some/path_2.csv")
+            val path2 = Paths.get("some/path2.csv")
+            val path3 = Paths.get("some/path3.csv")
+            nonUsed = test_getNonUsedName(path, mutableSetOf<Path>())
+            Assert.assertEquals(path, nonUsed)
+            nonUsed = test_getNonUsedName(path, HashSet(setOf(clonePath(path))))
+            Assert.assertEquals(path_1, nonUsed)
+            nonUsed = test_getNonUsedName(path, HashSet(Arrays.asList(path, path_1)))
+            Assert.assertEquals(path_2, nonUsed)
         }
+        run {
+            val path = Paths.get("some/path")
+            val path_1 = Paths.get("some/path_1")
+            val path_2 = Paths.get("some/path_2")
+            val path2 = Paths.get("some/path2")
+            val path3 = Paths.get("some/path3")
+            nonUsed = test_getNonUsedName(path, mutableSetOf<Path>())
+            Assert.assertEquals(path, nonUsed)
+            nonUsed = test_getNonUsedName(path, HashSet(setOf(clonePath(path))))
+            Assert.assertEquals(path_1, nonUsed)
+            nonUsed = test_getNonUsedName(path, HashSet(Arrays.asList(clonePath(path), path_1)))
+            Assert.assertEquals(path_2, nonUsed)
+        }
+    }
 
     private fun clonePath(path: Path): Path {
         return path.resolve("./").normalize()
@@ -124,15 +123,15 @@ class FilesUtilsTest {
     @Throws(IOException::class)
     fun combineInputFiles_changedSchema() {
         val options = Options()
-        options.inputPaths = Arrays.asList(testDataDir!!.resolve("sample-changedSchema").toString())
+        options.inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema").toString())
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
         options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES
         options.combineInputFiles = Options.CombineInputFiles.CONCAT
-        options.outputPathCsv = testOutputDir!!.resolve("combineInputFilesTest.csv").toString()
+        options.outputPathCsv = testOutputDir.resolve("combineInputFilesTest.csv").toString()
         options.overwrite = true
         options.initialRowNumber = 1L
         options.sql = "SELECT * FROM concat"
-        val inputPaths = listOf(testDataDir!!.resolve("sample-changedSchema"))
+        val inputPaths = listOf(testDataDir.resolve("sample-changedSchema"))
         val inputFileGroups = expandFilterSortInputFilesGroups(inputPaths, options)
         val inputSubparts = combineInputFiles(inputFileGroups, options)
         Assert.assertNotNull(inputSubparts)
@@ -147,7 +146,7 @@ class FilesUtilsTest {
     @Test
     fun expandDirectories() {
         val options = Options()
-        val inputPaths = Arrays.asList(testDataDir!!.resolve("sample-changedSchema"))
+        val inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema"))
         options.inputPaths = mutableListOf(inputPaths[0].toString())
         options.includePathsRegex = Pattern.compile(".*\\.csv")
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
@@ -165,7 +164,7 @@ class FilesUtilsTest {
     @Test
     @Throws(IOException::class)
     fun parseColsFromFirstCsvLine() {
-        val csvFileWithHeader = testDataDir!!.resolve("sample-collab/session_telephony_pins/20180918-132721852.csv")
+        val csvFileWithHeader = testDataDir.resolve("sample-collab/session_telephony_pins/20180918-132721852.csv")
         val colNames = parseColumnsFromFirstCsvLine(csvFileWithHeader.toFile())
 
         // Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time

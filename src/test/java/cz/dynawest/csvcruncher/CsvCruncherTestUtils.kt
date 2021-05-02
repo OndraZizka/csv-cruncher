@@ -74,7 +74,7 @@ object CsvCruncherTestUtils {
      * @param lineOffset1Based    1 for 1st line, etc.
      * @param columnOffset0Based  0 for 1st column, etc.
      */
-    fun getCsvCellValue(csvFile: File?, lineOffset1Based: Int, columnOffset0Based: Int): String {
+    fun getCsvCellValue(csvFile: File?, lineOffset1Based: Int, columnOffset0Based: Int): String? {
         require(lineOffset1Based >= 1) { "lineOffset1Based must be >= 1." }
         return try {
             val reader: Reader = FileReader(csvFile)

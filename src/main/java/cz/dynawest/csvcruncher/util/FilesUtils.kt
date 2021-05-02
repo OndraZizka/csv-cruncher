@@ -485,7 +485,7 @@ object FilesUtils {
         } else {
             val pathStr = StringUtils.appendIfMissing(originPath.toString(), Cruncher.FILENAME_SUFFIX_CSV)
             originPath = Paths.get(pathStr)
-            val concatFilePath = getNonUsedName(originPath, usedConcatFilePaths)
+            val concatFilePath = test_getNonUsedName(originPath, usedConcatFilePaths)
             usedConcatFilePaths.add(concatFilePath)
             concatFilePath!!.fileName.toString()
         }
@@ -498,7 +498,7 @@ object FilesUtils {
      * It does NOT add the used path to the usedPaths set.
      */
     @JvmStatic
-    fun getNonUsedName(path: Path, usedPaths: MutableSet<Path>): Path {
+    fun test_getNonUsedName(path: Path, usedPaths: MutableSet<Path>): Path {
         var path = path
         if (!usedPaths.contains(path)) return path
         var suffix = StringUtils.substringAfterLast("" + path.fileName, ".")

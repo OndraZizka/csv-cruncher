@@ -8,13 +8,11 @@ import cz.dynawest.csvcruncher.util.logger
 import lombok.extern.slf4j.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.Logger
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.sql.*
-import java.util.function.Function
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
@@ -111,7 +109,7 @@ class Cruncher(private val options: Options) {
                 val usedOutputFiles: MutableSet<Path> = HashSet()
                 for (inputSubpart in inputSubparts) {
                     var outputFile = Paths.get(options.outputPathCsv).resolve(inputSubpart.combinedFile.fileName)
-                    outputFile = FilesUtils.getNonUsedName(outputFile, usedOutputFiles)
+                    outputFile = FilesUtils.test_getNonUsedName(outputFile, usedOutputFiles)
                     val output = CruncherOutputPart(outputFile, inputSubpart.tableName)
                     outputs.add(output)
                 }
