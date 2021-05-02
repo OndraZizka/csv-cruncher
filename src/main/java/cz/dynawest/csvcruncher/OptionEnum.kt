@@ -1,18 +1,6 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher
 
-public interface OptionEnum {
-    String getOptionValue();
+interface OptionEnum {
     // TODO: List<String> getOptionsAvailable();
+    val optionValue: String?
 }
-
-/*public abstract class OptionEnum extends Enum
-{
-    public OptionEnum(String name, int ordinal)
-    {
-        super(name, ordinal);
-    }
-
-    abstract String getOptionValue();
-}
-*/
-

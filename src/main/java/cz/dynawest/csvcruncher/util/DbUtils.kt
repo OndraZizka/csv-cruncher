@@ -1,83 +1,71 @@
-package cz.dynawest.csvcruncher.util;
+package cz.dynawest.csvcruncher.util
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringUtils
+import java.sql.Connection
+import java.sql.ResultSet
+import java.sql.SQLException
+import java.util.*
 
-public final class DbUtils
-{
-    public static List<String> getResultSetColumnNames(ResultSet rs) throws SQLException
-    {
-        String [] colNames_ = new String[rs.getMetaData().getColumnCount()];
-        for (int colIndex = 0; colIndex < colNames_.length; colIndex++) {
-            colNames_[colIndex] = rs.getMetaData().getColumnName(colIndex + 1).toLowerCase();
+object DbUtils {
+    @Throws(SQLException::class)
+    fun getResultSetColumnNames(rs: ResultSet): List<String> {
+        val colNames_ = arrayOfNulls<String>(rs.metaData.columnCount)
+        for (colIndex in colNames_.indices) {
+            colNames_[colIndex] = rs.metaData.getColumnName(colIndex + 1).toLowerCase()
         }
-        return Arrays.asList(colNames_);
+        return Arrays.asList(*colNames_).map { it!! }
     }
 
-    public static Map<String, String> getResultSetColumnNamesAndTypes(ResultSet rs) throws SQLException
-    {
-        int columnCount = rs.getMetaData().getColumnCount();
-        Map<String,String> columns = new LinkedHashMap<>(columnCount);
-
-        for (int colIndex = 0; colIndex < columnCount; colIndex++) {
-            columns.put(rs.getMetaData().getColumnName(colIndex + 1), rs.getMetaData().getColumnTypeName(colIndex + 1));
+    @JvmStatic
+    @Throws(SQLException::class)
+    fun getResultSetColumnNamesAndTypes(rs: ResultSet): Map<String, String> {
+        val columnCount = rs.metaData.columnCount
+        val columns: MutableMap<String, String> = LinkedHashMap(columnCount)
+        for (colIndex in 0 until columnCount) {
+            columns[rs.metaData.getColumnName(colIndex + 1)] = rs.metaData.getColumnTypeName(colIndex + 1)
         }
-        return columns;
+        return columns
     }
 
     /**
      * Tells apart whether the "object not found" was a column or a table.
      * Relies on HSQLDB's exception message, which looks like this:
-     *  USER LACKS PRIVILEGE OR OBJECT NOT FOUND: JOBNAME IN STATEMENT [SELECT JOBNAME, FROM
+     * USER LACKS PRIVILEGE OR OBJECT NOT FOUND: JOBNAME IN STATEMENT [SELECT JOBNAME, FROM
      *
-     *     user lacks privilege or object not found: JOBNAME in statement [SELECT jobName, ... FROM ...]
+     * user lacks privilege or object not found: JOBNAME in statement [SELECT jobName, ... FROM ...]
      *
      * @return true if column, false if table (or something else).
      */
-    public static boolean analyzeWhatWasNotFound(String message)
-    {
-        String notFoundName = StringUtils.substringAfter(message, "object not found: ");
-        notFoundName = StringUtils.substringBefore(notFoundName, " in statement [");
-
-        message = message.toUpperCase().replace('\n', ' ');
+    @JvmStatic
+    fun analyzeWhatWasNotFound(message: String): Boolean {
+        var message = message
+        var notFoundName = StringUtils.substringAfter(message, "object not found: ")
+        notFoundName = StringUtils.substringBefore(notFoundName, " in statement [")
+        message = message.toUpperCase().replace('\n', ' ')
 
         //String sqlRegex = "[^']*\\[SELECT .*" + notFoundName + ".*FROM.*";
-        String sqlRegex = ".*SELECT.*"+notFoundName+".*FROM.*";
+        val sqlRegex = ".*SELECT.*$notFoundName.*FROM.*"
         //LOG.finer(String.format("\n\tNot found object: %s\n\tMsg: %s\n\tRegex: %s", notFoundName, message.toUpperCase(), sqlRegex));
-
-        return message.toUpperCase().matches(sqlRegex);
+        return message.toUpperCase().matches(sqlRegex.toRegex())
     }
-
 
     /**
      * Dump the content of a table. Debug code.
      */
-    public static void testDumpSelect(String sql, Connection jdbcConn) throws SQLException
-    {
-
-        sql = sql.startsWith("SELECT ") ? sql : "SELECT * FROM " + sql;
-
-        Statement ps = jdbcConn.createStatement();
-        ResultSet rs = ps.executeQuery(sql);
-        ResultSetMetaData metaData = rs.getMetaData();
-
-        while (rs.next())
-        {
-            System.out.println(" ------- ");
-
-            for (int i = 1; i <= metaData.getColumnCount(); ++i)
-            {
-                System.out.println(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i));
+    @JvmStatic
+    @Throws(SQLException::class)
+    @Suppress("NAME_SHADOWING")
+    fun testDumpSelect(sql: String, jdbcConn: Connection) {
+        var sql = sql
+        sql = if (sql.startsWith("SELECT ")) sql else "SELECT * FROM $sql"
+        val ps = jdbcConn.createStatement()
+        val rs = ps.executeQuery(sql)
+        val metaData = rs.metaData
+        while (rs.next()) {
+            println(" ------- ")
+            for (i in 1..metaData.columnCount) {
+                println(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i))
             }
         }
     }
-
 }

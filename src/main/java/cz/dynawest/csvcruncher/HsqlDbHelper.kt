@@ -1,158 +1,118 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.util.DbUtils;
-import cz.dynawest.csvcruncher.util.Utils;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.Statement;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
+import cz.dynawest.csvcruncher.util.DbUtils.analyzeWhatWasNotFound
+import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
+import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
+import cz.dynawest.csvcruncher.util.Utils.escapeSql
+import lombok.extern.slf4j.Slf4j
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.sql.*
 
 @Slf4j
-public class HsqlDbHelper
-{
-    private static final Logger LOG = log;
-    public static final int MAX_STRING_COLUMN_LENGTH = 4092;
+@Suppress("NAME_SHADOWING")
+class HsqlDbHelper(private val jdbcConn: Connection?) {
 
-
-    private Connection jdbcConn;
-
-    public HsqlDbHelper(Connection jdbcConn)
-    {
-        this.jdbcConn = jdbcConn;
+    private val log = org.slf4j.LoggerFactory.getLogger(HsqlDbHelper::class.java)
+    
+    @Throws(SQLException::class)
+    fun createTableForInputFile(tableName: String, csvFileToBind: File, colNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
+        createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true, overwrite)
     }
 
-
-    void createTableForInputFile(String tableName, File csvFileToBind, List<String> colNames, boolean ignoreFirst, boolean overwrite) throws SQLException
-    {
-        createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true, overwrite);
-    }
-
-    private void createTableAndBindCsv(String tableName, File csvFileToBind, List<String> columnsNames, boolean ignoreFirst, String counterColumnDdl, boolean isInputTable, boolean overwrite) throws SQLException
-    {
-        Map<String, String> columnsDef = listToMapKeysWithNullValues(columnsNames);
-        createTableAndBindCsv(tableName, csvFileToBind, columnsDef, ignoreFirst, counterColumnDdl, isInputTable, overwrite);
+    @Throws(SQLException::class)
+    private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
+        val columnsDef = listToMapKeysWithNullValues(columnsNames)
+        createTableAndBindCsv(tableName, csvFileToBind, columnsDef, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
 
         // Try to convert columns types to numbers, where applicable.
         if (isInputTable) {
-            this.optimizeTableCoumnsType(tableName, columnsNames);
+            optimizeTableCoumnsType(tableName, columnsNames)
         }
     }
 
     /**
-     * Returns a map with keys from the given list, and null values. Doesn't deal with duplicate keys.
-     */
-    private static Map<String, String> listToMapKeysWithNullValues(List<String> keys)
-    {
-        LinkedHashMap<String, String> result = new LinkedHashMap<>();
-        for (String columnsName : keys) {
-            result.put(columnsName, null);
-        }
-        return result;
-    }
-
-    /**
-     * Creates the input or output table, with the right column names, and binds the file.<br/>
-     * For output tables, the file is optionally overwritten if exists.<br/>
-     * A header with columns names is added to the output table.<br/>
+     * Creates the input or output table, with the right column names, and binds the file.<br></br>
+     * For output tables, the file is optionally overwritten if exists.<br></br>
+     * A header with columns names is added to the output table.<br></br>
      * Input tables columns are optimized after binding the file by attempting to reduce the column type.
-     * (The output table has to be optimized later.)<br/>
+     * (The output table has to be optimized later.)<br></br>
      */
-    void createTableAndBindCsv(String tableName, File csvFileToBind, Map<String, String> columnsNamesAndTypes, boolean ignoreFirst, String counterColumnDdl, boolean isInputTable, boolean overwrite) throws SQLException
-    {
-        boolean readOnly = false;
-        boolean csvUsesSingleQuote = true;
-
-        if (isInputTable && !csvFileToBind.exists()) {
-            throw new IllegalArgumentException("The input file does not exist: " + csvFileToBind);
-        }
+    @Throws(SQLException::class)
+    fun createTableAndBindCsv(tableName: String?, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
+        var csvFileToBind = csvFileToBind
+        val readOnly = false
+        val csvUsesSingleQuote = true
+        require(!(isInputTable && !csvFileToBind.exists())) { "The input file does not exist: $csvFileToBind" }
 
         // Get a full path, because HSQLDB resolves paths against the data dir specified in JDBC URL.
-        try {
-            csvFileToBind = csvFileToBind.getCanonicalFile();
-        }
-        catch (IOException ex) {
-            throw new CsvCruncherException("Failed resolving the CSV file path: " + csvFileToBind, ex);
+        csvFileToBind = try {
+            csvFileToBind.canonicalFile
+        } catch (ex: IOException) {
+            throw CsvCruncherException("Failed resolving the CSV file path: $csvFileToBind", ex)
         }
 
         // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
         if (!isInputTable) {
             if (csvFileToBind.exists()) {
                 if (true || overwrite) // TODO: Obey --overwrite.
-                    csvFileToBind.delete();
-                else
-                    throw new IllegalArgumentException("The output file already exists. Use --overwrite or delete: " + csvFileToBind);
-            }
-            else {
+                    csvFileToBind.delete() else throw IllegalArgumentException("The output file already exists. Use --overwrite or delete: $csvFileToBind")
+            } else {
                 try {
-                    Files.createDirectories(csvFileToBind.getParentFile().toPath());
-                }
-                catch (IOException ex) {
-                    throw new CsvCruncherException("Failed creating directory to store the output to: " + csvFileToBind.getParentFile(), ex);
+                    Files.createDirectories(csvFileToBind.parentFile.toPath())
+                } catch (ex: IOException) {
+                    throw CsvCruncherException("Failed creating directory to store the output to: " + csvFileToBind.parentFile, ex)
                 }
             }
         }
-
 
 
         // We are also building a header for the CSV file.
-        StringBuilder sbCsvHeader = new StringBuilder("# ");
-        StringBuilder sbSql = (new StringBuilder("CREATE TEXT TABLE ")).append(tableName).append(" ( ");
+        val sbCsvHeader = StringBuilder("# ")
+        val sbSql = StringBuilder("CREATE TEXT TABLE ").append(tableName).append(" ( ")
 
         // The counter column, if any.
-        sbSql.append(counterColumnDdl);
+        sbSql.append(counterColumnDdl)
 
         // Columns
-        for (Map.Entry<String, String> columnDef : columnsNamesAndTypes.entrySet())
-        {
-            String columnName = Utils.escapeSql(columnDef.getKey());
-            String columnType = columnDef.getValue();
-            if (columnType == null || "VARCHAR".equals(columnType.toUpperCase()))
-                columnType = "VARCHAR(" + MAX_STRING_COLUMN_LENGTH + ")";
-            else
-                columnType = Utils.escapeSql(columnType);
-
-            sbCsvHeader.append(columnName).append(", ");
-            sbSql.append(columnName).append(" ").append(columnType).append(", ");
+        for (columnDef in columnsNamesAndTypes.entries) {
+            val columnName = escapeSql(columnDef.key)
+            var columnType = columnDef.value
+            columnType =
+                if (columnType == null || "VARCHAR" == columnType.toUpperCase())
+                    "VARCHAR(" + MAX_STRING_COLUMN_LENGTH + ")"
+                else escapeSql(columnType)
+            sbCsvHeader.append(columnName).append(", ")
+            sbSql.append(columnName).append(" ").append(columnType).append(", ")
         }
-        sbCsvHeader.delete(sbCsvHeader.length() - 2, sbCsvHeader.length());
-        sbSql.delete(sbSql.length() - 2, sbSql.length());
-        sbSql.append(" )");
-        LOG.debug("Table DDL SQL: " + sbSql.toString());
-        this.executeDbCommand(sbSql.toString(), "Failed to CREATE TEXT TABLE: ");
+        sbCsvHeader.delete(sbCsvHeader.length - 2, sbCsvHeader.length)
+        sbSql.delete(sbSql.length - 2, sbSql.length)
+        sbSql.append(" )")
+        log.debug("Table DDL SQL: $sbSql")
+        executeDbCommand(sbSql.toString(), "Failed to CREATE TEXT TABLE: ")
 
 
         // Bind the table to the CSV file.
-        String csvPath = csvFileToBind.getPath();
-        csvPath = Utils.escapeSql(csvPath);
-        String quoteCharacter = csvUsesSingleQuote ? "\\quote" : "\"";
-        String ignoreFirstFlag = ignoreFirst ? "ignore_first=true;" : "";
-        String csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter;
-        String DESC = readOnly ? "DESC" : "";  // Not a mistake, HSQLDB really has "DESC" here for read only.
-        String sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC);
-        LOG.debug("CSV import SQL: " + sql);
-        this.executeDbCommand(sql, "Failed to import CSV: ");
+        var csvPath = csvFileToBind.path
+        csvPath = escapeSql(csvPath)
+        val quoteCharacter = if (csvUsesSingleQuote) "\\quote" else "\""
+        val ignoreFirstFlag = if (ignoreFirst) "ignore_first=true;" else ""
+        val csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter
+        val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
+        var sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC)
+        log.debug("CSV import SQL: $sql")
+        executeDbCommand(sql, "Failed to import CSV: ")
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
-            sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString());
-            LOG.debug("CSV source header SQL: " + sql);
-            this.executeDbCommand(sql, "Failed to set CSV header: ");
+            sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString())
+            log.debug("CSV source header SQL: $sql")
+            executeDbCommand(sql, "Failed to set CSV header: ")
         }
-
     }
-
 
     /**
      * Execute a SQL which does not expect a ResultSet,
@@ -161,152 +121,134 @@ public class HsqlDbHelper
      *
      * @return the number of affected rows.
      */
-    public int executeDbCommand(String sql, String errorMsg)
-    {
-        try (Statement stmt = this.jdbcConn.createStatement()){
-            return stmt.executeUpdate(sql);
-        }
-        catch (Exception ex) {
-            String addToMsg = "";
-            //if (ex.getMessage().contains("for cast"))
-            {
+    fun executeDbCommand(sql: String, errorMsg: String): Int {
+        var errorMsg = errorMsg
+        try {
+            jdbcConn!!.createStatement().use { stmt -> return stmt.executeUpdate(sql) }
+        } catch (ex: Exception) {
+            var addToMsg = ""
+            if (true || (ex.message?.contains("for cast") ?: false)) {
                 // List column names with types.
-                addToMsg = "\n  Tables and column types:\n"
-                        + this.formatListOfAvailableTables(true);
+                addToMsg = """
+  Tables and column types:
+${this.formatListOfAvailableTables(true)}"""
             }
-
-            if (ex.getMessage().contains("cannot be converted to target type")) {
-                errorMsg = StringUtils.defaultString(errorMsg) + " Looks like the data in the input files do not match.";
+            if (ex.message!!.contains("cannot be converted to target type")) {
+                errorMsg = StringUtils.defaultString(errorMsg) + " Looks like the data in the input files do not match."
             }
-
-            if (StringUtils.isBlank(errorMsg))
-                errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL.";
-
-            throw new CsvCruncherException(errorMsg
-                    + "\n  SQL: " + sql
-                    + "\n  DB error: " + ex.getClass().getSimpleName() + " " + ex.getMessage()
-                    + addToMsg
-            );
+            if (StringUtils.isBlank(errorMsg)) errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL."
+            throw CsvCruncherException("""$errorMsg
+  SQL: $sql
+  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg""".trimMargin()
+            )
         }
     }
 
     /**
      * Prepares a list of tables in the given JDBC connections, in the PUBLIC schema.
      */
-    public String formatListOfAvailableTables(boolean withColumns)
-    {
-        String schema = "'PUBLIC'";
-
-        StringBuilder sb = new StringBuilder();
-        String sqlTablesMetadata =
-                "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct" +
-                        " FROM INFORMATION_SCHEMA.TABLES AS t " +
-                        " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
-                        " WHERE t.table_schema = " + schema;
-
-        try (Statement st = jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-            ResultSet rs = st.executeQuery(sqlTablesMetadata);
-
-            tables:
-            while(rs.next()) {
-                String tableName = rs.getString("T");
-                sb.append(" * ").append(tableName).append('\n');
-                while(StringUtils.equals(tableName, rs.getString("T"))) {
-                    if (withColumns)
-                        sb.append("    - ")
+    fun formatListOfAvailableTables(withColumns: Boolean): String {
+        val schema = "'PUBLIC'"
+        val sb = StringBuilder()
+        val sqlTablesMetadata = "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct" +
+                " FROM INFORMATION_SCHEMA.TABLES AS t " +
+                " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
+                " WHERE t.table_schema = " + schema
+        try {
+            jdbcConn!!.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
+                val rs = st.executeQuery(sqlTablesMetadata)
+                tables@ while (rs.next()) {
+                    val tableName = rs.getString("T")
+                    sb.append(" * ").append(tableName).append('\n')
+                    while (StringUtils.equals(tableName, rs.getString("T"))) {
+                        if (withColumns) sb.append("    - ")
                                 .append(StringUtils.rightPad(rs.getString("C"), 28))
                                 .append(" ")
                                 .append(rs.getString("CT"))
-                                .append('\n');
-                    if (!rs.next())
-                        break tables;
+                                .append('\n')
+                        if (!rs.next()) break@tables
+                    }
+                    rs.previous()
                 }
-                rs.previous();
+                return if (sb.length == 0) "    (No tables)" else sb.toString()
             }
-            if (sb.length() == 0)
-                return "    (No tables)";
-            return sb.toString();
-        }
-        catch (SQLException ex) {
-            String msg = "Failed listing tables: " + ex.getMessage();
-            LOG.error(msg);
-            return msg;
+        } catch (ex: SQLException) {
+            val msg = "Failed listing tables: " + ex.message
+            log.error(msg)
+            return msg
         }
     }
 
     /**
      * Analyzes the exception against the given DB connection and rethrows an exception with a message containing the available objects as a hint.
      */
-    public CsvCruncherException throwHintForObjectNotFound(SQLSyntaxErrorException ex)
-    {
-        boolean notFoundIsColumn = DbUtils.analyzeWhatWasNotFound(ex.getMessage());
-
-        String tableNames = formatListOfAvailableTables(notFoundIsColumn);
-
-        String hintMsg = notFoundIsColumn ?
-                "\n  Looks like you are referring to a column that is not present in the table(s).\n"
-                        + "  Check the header (first line) in the CSV.\n"
-                        + "  Here are the tables and columns are actually available:\n"
-                :
-                "\n  Looks like you are referring to a table that was not created.\n"
-                        + "  This could mean that you have a typo in the input file name,\n"
-                        + "  or maybe you use --combineInputs but try to use the original inputs.\n"
-                        + "  These tables are actually available:\n";
-
-        return new CsvCruncherException(
-                hintMsg
-                        + tableNames + "\nMessage from the database:\n  "
-                        + ex.getMessage(), ex);
+    fun throwHintForObjectNotFound(ex: SQLSyntaxErrorException): CsvCruncherException {
+        val notFoundIsColumn = analyzeWhatWasNotFound(ex.message!!)
+        val tableNames = formatListOfAvailableTables(notFoundIsColumn)
+        val hintMsg = if (notFoundIsColumn) """
+  Looks like you are referring to a column that is not present in the table(s).
+  Check the header (first line) in the CSV.
+  Here are the tables and columns are actually available:
+""" else """
+  Looks like you are referring to a table that was not created.
+  This could mean that you have a typo in the input file name,
+  or maybe you use --combineInputs but try to use the original inputs.
+  These tables are actually available:
+"""
+        return CsvCruncherException(
+                """$hintMsg$tableNames
+Message from the database:
+  ${ex.message}""", ex)
     }
 
     /**
      * Get the columns info: Perform the SQL, LIMIT 1.
      */
-    public Map<String, String> extractColumnsInfoFrom1LineSelect(String sql) throws SQLException
-    {
-        PreparedStatement statement;
-        try {
-            statement = jdbcConn.prepareStatement(sql + " LIMIT 1");
-        }
-        catch (SQLSyntaxErrorException ex) {
-            if (ex.getMessage().contains("object not found:")) {
-                throw throwHintForObjectNotFound(ex);
+    @Throws(SQLException::class)
+    fun extractColumnsInfoFrom1LineSelect(sql: String): Map<String, String> {
+        val statement: PreparedStatement
+        statement = try {
+            jdbcConn!!.prepareStatement("$sql LIMIT 1")
+        } catch (ex: SQLSyntaxErrorException) {
+            if (ex.message!!.contains("object not found:")) {
+                throw throwHintForObjectNotFound(ex)
             }
-            throw new CsvCruncherException("Seems your SQL contains errors:\n" + ex.getMessage(), ex);
+            throw CsvCruncherException("""
+    Seems your SQL contains errors:
+    ${ex.message}
+    """.trimIndent(), ex)
+        } catch (ex: SQLException) {
+            throw CsvCruncherException("""
+    Failed executing the SQL:
+    ${ex.message}
+    """.trimIndent(), ex)
         }
-        catch (SQLException ex) {
-            throw new CsvCruncherException("Failed executing the SQL:\n" + ex.getMessage(), ex);
-        }
-        ResultSet rs = statement.executeQuery();
+        val rs = statement.executeQuery()
 
         // Column names
-        return DbUtils.getResultSetColumnNamesAndTypes(rs);
+        return getResultSetColumnNamesAndTypes(rs)
     }
-
 
     /**
      * Detaches or re-attaches HSQLDB TEXT table.
      * @param drop     Drop the table after detaching.
      */
-    void detachTable(String tableName, boolean drop) throws SQLException
-    {
-        LOG.debug(String.format("Detaching%s table: %s", drop ? " and dropping" : "", tableName));
-
-        String sql = "SET TABLE " + Utils.escapeSql(tableName) + " SOURCE OFF";
-        executeDbCommand(sql, "Failed to detach/attach the table: ");
-
+    @Throws(SQLException::class)
+    fun detachTable(tableName: String?, drop: Boolean) {
+        log.debug(String.format("Detaching%s table: %s", if (drop) " and dropping" else "", tableName))
+        var sql = "SET TABLE " + escapeSql(tableName!!) + " SOURCE OFF"
+        executeDbCommand(sql, "Failed to detach/attach the table: ")
         if (drop) {
-            sql = "DROP TABLE " + Utils.escapeSql(tableName);
-            executeDbCommand(sql, "Failed to DROP TABLE: ");
+            sql = "DROP TABLE " + escapeSql(tableName)
+            executeDbCommand(sql, "Failed to DROP TABLE: ")
         }
     }
 
-    void attachTable(String tableName) throws SQLException
-    {
-        LOG.debug("Ataching table: " + tableName);
-
-        String sql = "SET TABLE " + Utils.escapeSql(tableName) + " SOURCE ON";
-        executeDbCommand(sql, "Failed to attach the table: ");
+    @Throws(SQLException::class)
+    fun attachTable(tableName: String) {
+        log.debug("Ataching table: $tableName")
+        val sql = "SET TABLE " + escapeSql(tableName) + " SOURCE ON"
+        executeDbCommand(sql, "Failed to attach the table: ")
     }
 
     /**
@@ -314,90 +256,99 @@ public class HsqlDbHelper
      * Try to convert columns to best fitting types.
      * This speeds up further SQL operations. It also allows proper types for JSON (or other type-aware formats).
      *
-     *   "HyperSQL allows changing the type if all the existing values can be cast
-     *    into the new type without string truncation or loss of significant digits."
+     * "HyperSQL allows changing the type if all the existing values can be cast
+     * into the new type without string truncation or loss of significant digits."
      */
-    void optimizeTableCoumnsType(String tableName, List<String> colNames) throws SQLException
-    {
-        Map<String, String> columnsFitIntoType = new LinkedHashMap<>();
+    @Throws(SQLException::class)
+    fun optimizeTableCoumnsType(tableName: String, colNames: List<String?>) {
+        val columnsFitIntoType: MutableMap<String?, String> = LinkedHashMap()
 
         // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
         // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
         // Maybe I need to duplicate the TEXT table into a native table first?
-        for (String colName : colNames)
-        {
-            String typeUsed;
+        for (colName in colNames) {
+            var typeUsed: String?
 
             // Note: Tried also "CHAR", but seems that HSQL does some auto casting and the values wouldn't fit. Need to investigate.
             // Note: Tried also "VARCHAR(255)", but size limits is not handled below.
-            for (String sqlType : new String[]{"TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN"})
-            {
+            for (sqlType in arrayOf("TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN")) {
                 // Try CAST( AS ...)
-                String sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName);
+                val sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName)
                 //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
-
-                LOG.trace("Column change attempt SQL: " + sqlCol);
-                try (Statement st = jdbcConn.createStatement()) {
-                    st.execute(sqlCol);
-                    LOG.trace(String.format("Column %s.%s fits to %s", tableName, colName, typeUsed = sqlType));
-                    columnsFitIntoType.put(colName, sqlType);
-                }
-                catch (SQLException ex) {
+                log.trace("Column change attempt SQL: $sqlCol")
+                try {
+                    jdbcConn!!.createStatement().use { st ->
+                        st.execute(sqlCol)
+                        log.trace(String.format("Column %s.%s fits to %s", tableName, colName, sqlType.also { typeUsed = it }))
+                        columnsFitIntoType.put(colName, sqlType)
+                    }
+                } catch (ex: SQLException) {
                     // LOG.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
                 }
             }
         }
-
-        detachTable(tableName, false);
+        detachTable(tableName, false)
 
         // ALTER COLUMNs
-        for (Map.Entry<String, String> colNameAndType : columnsFitIntoType.entrySet())
-        {
-            String colName = colNameAndType.getKey();
-            String sqlType = colNameAndType.getValue();
-            String sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType);
-            String sqlCheck = String.format("SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('%s') AND LOWER(column_name) = LOWER('%s')", tableName, colName);
-
-            LOG.trace("Changing the column {} to {}", colName, sqlType);
-            try (Statement st = jdbcConn.createStatement()) {
-                st.execute(sqlAlter);
-                LOG.debug(String.format("Column %s.%-20s converted to %-14s %s", tableName, colName, sqlType, sqlAlter));
-                LOG.trace("Checking col type: " + sqlCheck);
-                ResultSet columnTypeRes = st.executeQuery(sqlCheck);
-                if (!columnTypeRes.next()) {
-                    LOG.error("Column not found?? {}.{}", tableName, colName);
-                    DbUtils.testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('"+tableName.toUpperCase()+"')", jdbcConn);
-                    continue;
-                }
-                String newType = columnTypeRes.getString("data_type");
-                if (!newType.equals(sqlType) ) {
-                    LOG.error(String.format("Column %s.%s did not really change the type to %s, stayed %s.", tableName, colName, sqlType, newType));
-                }
-            }
-            catch (SQLException ex) {
-                LOG.error(String.format("Error changing type of column %s.%s to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
-            }
-        }
-
-        attachTable(tableName);
-    }
-
-    public void detachTables(Set<String> tableNames, String msgOnError)
-    {
-        for (String tableName : tableNames) {
+        for ((colName, sqlType) in columnsFitIntoType) {
+            val sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType)
+            val sqlCheck = String.format("SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('%s') AND LOWER(column_name) = LOWER('%s')", tableName, colName)
+            log.trace("Changing the column {} to {}", colName, sqlType)
             try {
-                detachTable(tableName, true);
-            } catch (Exception ex) {
-                LOG.error(msgOnError + ex.getMessage());
+                jdbcConn!!.createStatement().use { st ->
+                    st.execute(sqlAlter)
+                    log.debug(String.format("Column %s.%-20s converted to %-14s %s", tableName, colName, sqlType, sqlAlter))
+                    log.trace("Checking col type: $sqlCheck")
+                    val columnTypeRes = st.executeQuery(sqlCheck)
+                    if (!columnTypeRes.next()) {
+                        log.error("Column not found?? {}.{}", tableName, colName)
+                        testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('" + tableName.toUpperCase() + "')", jdbcConn)
+                        throw ColumnNotFoundException(tableName, colName)
+                    }
+                    val newType = columnTypeRes.getString("data_type")
+                    if (newType != sqlType) {
+                        log.error(String.format("Column %s.%s did not really change the type to %s, stayed %s.", tableName, colName, sqlType, newType))
+                    }
+                }
+            } catch (ex: SQLException) {
+                log.error(String.format("Error changing type of column %s.%s to %s.\n  %s", tableName, colName, sqlType, ex.message))
+            }
+            catch (ex: ColumnNotFoundException) {
+                continue
             }
         }
-
+        attachTable(tableName)
     }
 
+    class ColumnNotFoundException(tableName: String, colName: String?) : Exception("Column not found: $tableName.$colName")
 
-    static String normalizeFileNameForTableName(File fileName)
-    {
-        return fileName.getName().replaceFirst(".csv$", "").replaceAll("[^a-zA-Z0-9_]", "_");
+    fun detachTables(tableNames: Set<String?>, msgOnError: String) {
+        for (tableName in tableNames) {
+            try {
+                detachTable(tableName, true)
+            } catch (ex: Exception) {
+                log.error(msgOnError + ex.message)
+            }
+        }
     }
 
+    companion object {
+        private val log = org.slf4j.LoggerFactory.getLogger(FileUtils::class.java)
+        const val MAX_STRING_COLUMN_LENGTH = 4092
+
+        /**
+         * Returns a map with keys from the given list, and null values. Doesn't deal with duplicate keys.
+         */
+        private fun listToMapKeysWithNullValues(keys: List<String>): Map<String, String?> {
+            val result = LinkedHashMap<String, String?>()
+            for (columnsName in keys) {
+                result[columnsName] = null
+            }
+            return result
+        }
+
+        fun normalizeFileNameForTableName(fileName: File): String {
+            return fileName.name.replaceFirst(".csv$".toRegex(), "").replace("[^a-zA-Z0-9_]".toRegex(), "_")
+        }
+    }
 }

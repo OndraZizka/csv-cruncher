@@ -1,160 +1,129 @@
-package cz.dynawest.csvcruncher.util;
+package cz.dynawest.csvcruncher.util
 
-import cz.dynawest.csvcruncher.Cruncher;
-import cz.dynawest.csvcruncher.CruncherInputSubpart;
-import cz.dynawest.csvcruncher.CsvCruncherException;
-import cz.dynawest.csvcruncher.Options;
-import static cz.dynawest.csvcruncher.Options.SortInputPaths.PARAMS_ORDER;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonWriter;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.event.Level;
-
+import cz.dynawest.csvcruncher.Cruncher
+import cz.dynawest.csvcruncher.CruncherInputSubpart
+import cz.dynawest.csvcruncher.CsvCruncherException
+import cz.dynawest.csvcruncher.Options
+import cz.dynawest.csvcruncher.Options.*
+import lombok.AllArgsConstructor
+import lombok.Getter
+import lombok.extern.slf4j.Slf4j
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
+import org.slf4j.event.Level
+import java.io.*
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.sql.ResultSet
+import java.sql.ResultSetMetaData
+import java.sql.SQLException
+import java.sql.Types
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
+import java.util.regex.Pattern
+import java.util.stream.Collectors
+import javax.json.Json
+import javax.json.JsonObjectBuilder
 
 /**
  * TODO: Convert the concat related methods to a context-based class.
  */
 @Slf4j
-public class FilesUtils
-{
-    private static final String CONCAT_WORK_SUBDIR_NAME = "concat";
+@Suppress("NAME_SHADOWING")
+object FilesUtils {
+    private const val CONCAT_WORK_SUBDIR_NAME = "concat"
+    private val log = org.slf4j.LoggerFactory.getLogger(FileUtils::class.java)
 
     /**
      * Concatenates given files into a file in the resultPath, named "CsvCruncherConcat.csv".
      * If some of the input files does not end with a new line, it is appended after that file.
      * @return The path to the created file.
      */
-    static Path concatFiles(List<Path> filesToConcat, final Path resultPath, final int ignoreFirstLines, final Pattern ignoreLineRegex)
-    {
-        File resultFile = resultPath.toFile();
-        Matcher ignoreLineMatcher = ignoreLineRegex == null ? null : ignoreLineRegex.matcher("");
-        boolean headerIncluded = false;
+    fun concatFiles(filesToConcat: List<Path>, resultPath: Path, ignoreFirstLines: Int, ignoreLineRegex: Pattern?): Path {
+        val resultFile = resultPath.toFile()
+        val ignoreLineMatcher = ignoreLineRegex?.matcher("")
+        var headerIncluded = false
 
         //  try(FileOutputStream resultOS = new FileOutputStream(resultFile);) {
-        try(FileWriter resultWriter = new FileWriter(resultFile)) {
-            for (Path pathToConcat : filesToConcat) {
-                //try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
-                //    IOUtils.copy(fileToConcatReader, resultOS);
-                int linesCountDown = ignoreFirstLines;
-                try (BufferedReader fileToConcatReader = new BufferedReader(new InputStreamReader(new FileInputStream(pathToConcat.toFile())))) {
-                    String line;
-                    while (null != (line = fileToConcatReader.readLine()))
-                    {
-                        linesCountDown--;
-                        ///System.out.printf("LINE: h: %b lcd: %d LINE:  %s\n", headerIncluded, linesCountDown, line); //
-                        if (headerIncluded && linesCountDown >= 0)
-                            continue;
-                        if (headerIncluded && null != ignoreLineMatcher && ignoreLineMatcher.reset(line).matches())
-                            continue;
-                        headerIncluded |= true; // Take the very first line.
-                        ///System.out.println("MADE IT...");
-
-                        resultWriter.append(line).append("\n");
+        try {
+            FileWriter(resultFile).use { resultWriter ->
+                for (pathToConcat in filesToConcat) {
+                    //try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
+                    //    IOUtils.copy(fileToConcatReader, resultOS);
+                    var linesCountDown = ignoreFirstLines
+                    BufferedReader(InputStreamReader(FileInputStream(pathToConcat.toFile()))).use { fileToConcatReader ->
+                        var line: String?
+                        while (null != fileToConcatReader.readLine().also { line = it }) {
+                            linesCountDown--
+                            ///System.out.printf("LINE: h: %b lcd: %d LINE:  %s\n", headerIncluded, linesCountDown, line); //
+                            if (headerIncluded && linesCountDown >= 0) continue
+                            if (headerIncluded && null != ignoreLineMatcher && ignoreLineMatcher.reset(line).matches()) continue
+                            headerIncluded = headerIncluded or true // Take the very first line.
+                            ///System.out.println("MADE IT...");
+                            resultWriter.append(line).append("\n")
+                        }
                     }
-                }
 
-                // Read the last byte, check if it's a \n. If not, let's append one.
-                /*try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
+                    // Read the last byte, check if it's a \n. If not, let's append one.
+                    /*try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
                     fileToConcatIS.skip(pathToConcat.toFile().length()-1);
                     if ('\n' != fileToConcatIS.read())
                         resultWriter.write('\n');
                 }*/
+                }
             }
+        } catch (ex: Exception) {
+            throw CsvCruncherException("Failed concatenating files into " + resultPath + ": " + ex.message, ex)
         }
-        catch (Exception ex) {
-            throw new CsvCruncherException("Failed concatenating files into " + resultPath + ": " + ex.getMessage(), ex);
-        }
-        return  resultFile.toPath();
+        return resultFile.toPath()
     }
 
-    public static List<Path> sortInputPaths(List<Path> inputPaths, Options.SortInputPaths sortMethod)
-    {
-        switch (sortMethod) {
-            case PARAMS_ORDER:
-                return Collections.unmodifiableList(inputPaths);
-
-            case ALPHA:
-                inputPaths = new ArrayList<>(inputPaths);
-                Collections.sort(inputPaths);
-                return inputPaths;
-
-            case TIME: throw new UnsupportedOperationException("Sorting by time not implemented yet.");
-            default: throw new UnsupportedOperationException("Unkown sorting method.");
+    @JvmStatic
+    fun sortInputPaths(inputPaths: List<Path>?, sortMethod: SortInputPaths?): List<Path> {
+        var inputPaths = inputPaths
+        return when (sortMethod) {
+            SortInputPaths.PARAMS_ORDER -> Collections.unmodifiableList(inputPaths)
+            SortInputPaths.ALPHA -> {
+                inputPaths = ArrayList(inputPaths)
+                Collections.sort(inputPaths)
+                inputPaths
+            }
+            SortInputPaths.TIME -> throw UnsupportedOperationException("Sorting by time not implemented yet.")
+            else -> throw UnsupportedOperationException("Unkown sorting method.")
         }
     }
 
     /**
      * Writes the given resultset to a JSON file at given path, one entry per line, optionally as an JSON array.
      */
-    public static void convertResultToJson(ResultSet resultSet, Path destFile, boolean printAsArray)
-    {
-        try (
-                OutputStream outS = new BufferedOutputStream(new FileOutputStream(destFile.toFile()));
-                Writer outW = new OutputStreamWriter(outS, StandardCharsets.UTF_8)
-        ) {
-            ResultSetMetaData metaData = resultSet.getMetaData();
+    @JvmStatic
+    fun convertResultToJson(resultSet: ResultSet, destFile: Path, printAsArray: Boolean) {
+        try {
+            BufferedOutputStream(FileOutputStream(destFile.toFile())).use { outS ->
+                OutputStreamWriter(outS, StandardCharsets.UTF_8).use { outW ->
+                    val metaData = resultSet.metaData
 
-            // Cache which cols are numbers.
+                    // Cache which cols are numbers.
 
-            //boolean[] colsAreNumbers = cacheWhichColumnsNeedJsonQuotes(metaData);
+                    //boolean[] colsAreNumbers = cacheWhichColumnsNeedJsonQuotes(metaData);
+                    if (printAsArray) outW.append("[\n")
+                    while (resultSet.next()) {
+                        // javax.json way
+                        val builder = Json.createObjectBuilder()
 
-
-            if (printAsArray)
-                outW.append("[\n");
-
-            while (resultSet.next()) {
-                // javax.json way
-                JsonObjectBuilder builder = Json.createObjectBuilder();
-
-                // Columns
-                for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++) {
-                    addTheRightTypeToJavaxJsonBuilder(resultSet, colIndex, builder);
-                }
-                JsonObject jsonObject = builder.build();
-                JsonWriter writer = Json.createWriter(outW);
-                writer.writeObject(jsonObject);
+                        // Columns
+                        for (colIndex in 1..metaData.columnCount) {
+                            addTheRightTypeToJavaxJsonBuilder(resultSet, colIndex, builder)
+                        }
+                        val jsonObject = builder.build()
+                        val writer = Json.createWriter(outW)
+                        writer.writeObject(jsonObject)
 
 
-                /*// Hand-made
+                        /*// Hand-made
                 outW.append("{\"");
                 // Columns
                 for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++) {
@@ -174,73 +143,56 @@ public class FilesUtils
                         outW.append('"');
                 }
                 outW.append("\"}");
-                /**/
-
-                outW.append(printAsArray ? ",\n" : "\n");
+                / **/outW.append(if (printAsArray) ",\n" else "\n")
+                    }
+                    if (printAsArray) outW.append("]\n")
+                }
             }
-            if (printAsArray)
-                outW.append("]\n");
-        }
-        catch (Exception ex) {
-            throw new CsvCruncherException("Failed browsing the final query results: " + ex.getMessage(), ex);
+        } catch (ex: Exception) {
+            throw CsvCruncherException("Failed browsing the final query results: " + ex.message, ex)
         }
     }
 
-
-    private static boolean[] cacheWhichColumnsNeedJsonQuotes(ResultSetMetaData metaData) throws SQLException
-    {
-        boolean[] colsAreNumbers = new boolean[metaData.getColumnCount()+1];
-        int colType;
-        for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++ ) {
-            colType = metaData.getColumnType(colIndex);
-            colsAreNumbers[colIndex] =
-                colType == Types.TINYINT || colType == Types.SMALLINT || colType == Types.INTEGER || colType == Types.BIGINT
-                || colType == Types.DECIMAL || colType == Types.NUMERIC ||  colType == Types.BIT || colType == Types.ROWID || colType == Types.DOUBLE || colType == Types.FLOAT || colType == Types.BOOLEAN;
+    @Throws(SQLException::class)
+    private fun cacheWhichColumnsNeedJsonQuotes(metaData: ResultSetMetaData): BooleanArray {
+        val colsAreNumbers = BooleanArray(metaData.columnCount + 1)
+        var colType: Int
+        for (colIndex in 1..metaData.columnCount) {
+            colType = metaData.getColumnType(colIndex)
+            colsAreNumbers[colIndex] = colType == Types.TINYINT || colType == Types.SMALLINT || colType == Types.INTEGER || colType == Types.BIGINT || colType == Types.DECIMAL || colType == Types.NUMERIC || colType == Types.BIT || colType == Types.ROWID || colType == Types.DOUBLE || colType == Types.FLOAT || colType == Types.BOOLEAN
         }
-        return colsAreNumbers;
+        return colsAreNumbers
     }
 
     /**
      * Used in case we use javax.json.JsonBuilder.
      * This also needs JsonProviderImpl.
      */
-    private static void addTheRightTypeToJavaxJsonBuilder(ResultSet resultSet, int colIndex, JsonObjectBuilder builder) throws SQLException
-    {
-        ResultSetMetaData metaData = resultSet.getMetaData();
-        String columnLabel = metaData.getColumnLabel(colIndex);
-        if (columnLabel.matches("[A-Z][A-Z_]*"))
-            columnLabel = columnLabel.toLowerCase();
-
+    @Throws(SQLException::class)
+    private fun addTheRightTypeToJavaxJsonBuilder(resultSet: ResultSet, colIndex: Int, builder: JsonObjectBuilder) {
+        val metaData = resultSet.metaData
+        var columnLabel = metaData.getColumnLabel(colIndex)
+        if (columnLabel.matches("[A-Z][A-Z_]*".toRegex())) columnLabel = columnLabel.toLowerCase()
         if (resultSet.getObject(colIndex) == null) {
-            builder.addNull(columnLabel);
-            return;
+            builder.addNull(columnLabel)
+            return
         }
-
-        // JDBC ResultSet will return default values, never null.
-        // The JDBC NULL has to be checked after getting the value.
-        switch (metaData.getColumnType(colIndex)) {
-            case Types.VARCHAR:
-            case Types.CHAR:
-            case Types.CLOB:
-                builder.add(columnLabel, resultSet.getString(colIndex)); break;
-            case Types.TINYINT:
-            case Types.BIT:
-                builder.add(columnLabel, resultSet.getByte(colIndex)); break;
-            case Types.SMALLINT: builder.add(columnLabel, resultSet.getShort(colIndex)); break;
-            case Types.INTEGER:  builder.add(columnLabel, resultSet.getInt(colIndex)); break;
-            case Types.BIGINT:   builder.add(columnLabel, resultSet.getLong(colIndex)); break;
-            case Types.BOOLEAN:  builder.add(columnLabel, resultSet.getBoolean(colIndex)); break;
-            case Types.FLOAT:
-            case Types.DOUBLE:   builder.add(columnLabel, resultSet.getDouble(colIndex)); break; // Same for HSQLDB
-            case Types.DECIMAL:
-            case Types.NUMERIC:  builder.add(columnLabel, resultSet.getBigDecimal(colIndex)); break;
-            case Types.DATE:    builder.add(columnLabel, ""+resultSet.getDate(colIndex)); break;
-            case Types.TIME:    builder.add(columnLabel, ""+resultSet.getTime(colIndex)); break;
-            case Types.TIMESTAMP:    builder.add(columnLabel, (""+resultSet.getTimestamp(colIndex)).replace(' ', 'T')); break; // JS Date() takes "1995-12-17T03:24:00"
+        when (metaData.getColumnType(colIndex)) {
+            Types.VARCHAR, Types.CHAR, Types.CLOB -> builder.add(columnLabel, resultSet.getString(colIndex))
+            Types.TINYINT, Types.BIT -> builder.add(columnLabel, resultSet.getByte(colIndex).toInt())
+            Types.SMALLINT -> builder.add(columnLabel, resultSet.getShort(colIndex).toInt())
+            Types.INTEGER -> builder.add(columnLabel, resultSet.getInt(colIndex))
+            Types.BIGINT -> builder.add(columnLabel, resultSet.getLong(colIndex))
+            Types.BOOLEAN -> builder.add(columnLabel, resultSet.getBoolean(colIndex))
+            Types.FLOAT, Types.DOUBLE -> builder.add(columnLabel, resultSet.getDouble(colIndex))
+            Types.DECIMAL, Types.NUMERIC -> builder.add(columnLabel, resultSet.getBigDecimal(colIndex))
+            Types.DATE -> builder.add(columnLabel, "" + resultSet.getDate(colIndex))
+            Types.TIME -> builder.add(columnLabel, "" + resultSet.getTime(colIndex))
+            Types.TIMESTAMP -> builder.add(columnLabel, ("" + resultSet.getTimestamp(colIndex)).replace(' ', 'T'))
         }
         // This should be handled by getObject(), but just in case...
         if (resultSet.wasNull()) {
-            builder.addNull(columnLabel);
+            builder.addNull(columnLabel)
         }
     }
 
@@ -249,44 +201,40 @@ public class FilesUtils
      *
      * @return Input files grouped by the given input paths. CSV headers are not yet checked.
      */
-    public static Map<Path, List<Path>> expandFilterSortInputFilesGroups(List<Path> inputPaths, Options options)
-    {
-        if (Options.CombineInputFiles.NONE.equals(options.getCombineInputFiles()) )
-        {
+    @JvmStatic
+    fun expandFilterSortInputFilesGroups(inputPaths: List<Path>, options: Options): Map<Path?, List<Path>> {
+        if (CombineInputFiles.NONE == options.combineInputFiles) {
             // No splitting - return a list with the same item.
-            return mapOfIdentityToSingletonList(inputPaths);
+            return mapOfIdentityToSingletonList(inputPaths)
         }
 
         // Expand the directories.
-        Map<Path, List<Path>> fileGroupsToCombine = expandDirectories(inputPaths, options);
+        var fileGroupsToCombine: Map<Path?, List<Path>> = expandDirectories(inputPaths, options)
 
         // Filter
-        fileGroupsToCombine = filterFileGroups(fileGroupsToCombine, options);
-        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Filtered file groups:");
+        fileGroupsToCombine = filterFileGroups(fileGroupsToCombine, options)
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Filtered file groups:")
 
         // If there is just one catch-all group...
-        if (fileGroupsToCombine.size() == 1 && fileGroupsToCombine.keySet().iterator().next() == null) {
-            List<Path> paths = fileGroupsToCombine.get(null);
+        if (fileGroupsToCombine.size == 1 && fileGroupsToCombine.keys.iterator().next() == null) {
+            val paths = fileGroupsToCombine[null]!!
             if (paths.isEmpty()) {
-                log.info("   *** No files found.");
-                return Collections.emptyMap();
+                log.info("   *** No files found.")
+                return emptyMap()
             }
-
-            if (paths.size() == 1) {
-                return mapOfIdentityToSingletonList(paths);
+            if (paths.size == 1) {
+                return mapOfIdentityToSingletonList(paths)
             }
 
             // If there is only one input path, use it as the originating path. Maybe it should be done in combine()?
-            if (inputPaths.size() == 1) {
-                fileGroupsToCombine.remove(null);
-                fileGroupsToCombine.put(inputPaths.get(0), paths);
+            if (inputPaths.size == 1) {
+                fileGroupsToCombine.remove(null)
+                fileGroupsToCombine[inputPaths[0]] = paths
             }
         }
-
-        fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine);
-        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Sorted and filtered file groups:");
-
-        return fileGroupsToCombine;
+        fileGroupsToCombine = sortFileGroups(options, fileGroupsToCombine)
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "Sorted and filtered file groups:")
+        return fileGroupsToCombine
     }
 
     /**
@@ -297,181 +245,152 @@ public class FilesUtils
      *
      * @return Mapping from the concatenated file to the files that ended up in it.
      */
-    public static List<CruncherInputSubpart> combineInputFiles(Map<Path, List<Path>> fileGroupsToCombine, Options options) throws IOException
-    {
+    @JvmStatic
+    @Throws(IOException::class)
+    fun combineInputFiles(fileGroupsToCombine: Map<Path?, List<Path>>, options: Options): List<CruncherInputSubpart> {
         // Split into subgroups by column names in the CSV header.
-        FileGroupsSplitBySchemaResult splitResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine);
-        fileGroupsToCombine = splitResult.getFileGroupsToCombine();
-        logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:");
+        var fileGroupsToCombine = fileGroupsToCombine
+        val splitResult: FileGroupsSplitBySchemaResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine)
+        fileGroupsToCombine = splitResult.fileGroupsToCombine
+        logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:")
 
         // At this point, the group keys are the original group + _<counter>.
         // TODO: Again, refactor this to something more sane.
 
         // Get the final concatenated file path. Currently, "-out" + _concat.
-        Path destDir = Paths.get(options.getMainOutputDir().toString() + "_" + CONCAT_WORK_SUBDIR_NAME);
-
-        switch (options.getCombineInputFiles()) {
-            case INTERSECT:
-            case EXCEPT:
-                throw new UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.");
-
-            case CONCAT:
-                log.debug("Concatenating input files.");
-                return concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir);
+        val destDir = Paths.get(options.mainOutputDir.toString() + "_" + CONCAT_WORK_SUBDIR_NAME)
+        when (options.combineInputFiles) {
+            CombineInputFiles.INTERSECT, CombineInputFiles.EXCEPT -> throw UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.")
+            CombineInputFiles.CONCAT -> {
+                log.debug("Concatenating input files.")
+                return concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir)
+            }
         }
-
-        throw new IllegalStateException("Did we miss some CombineInputFiles choice?");
+        throw IllegalStateException("Did we miss some CombineInputFiles choice?")
     }
 
-
-    private static Map<Path, List<Path>> mapOfIdentityToSingletonList(List<Path> inputPaths)
-    {
-        return inputPaths.stream().collect(Collectors.toMap(x -> x, Collections::singletonList));
+    private fun mapOfIdentityToSingletonList(inputPaths: List<Path>): Map<Path?, List<Path>> {
+        return inputPaths.stream().collect(Collectors.toMap(Function { x: Path? -> x }, Function<Path, List<Path>> { o: Path? -> listOf(o!!) }))
     }
 
-
-    private static void logFileGroups(Map<Path, List<Path>> fileGroupsToConcat, org.slf4j.event.Level level, String label)
-    {
+    private fun logFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, level: Level, label: String) {
         // TBD: Apply level.
         /*SubstituteLoggingEvent event = new SubstituteLoggingEvent();
         event.setLevel(level);
         event.setMessage();
         ((Logger) log).log(event);*/
-
-        log.debug("--- " + label + " ---" );
-        for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            String msg = "\n * Path: " + fileGroup.getKey() + ": "
-                    + fileGroup.getValue().stream().map(path -> "\n\t- " + path).collect(Collectors.joining());
-            log.debug(msg);
+        log.debug("--- $label ---")
+        for ((key, value) in fileGroupsToConcat) {
+            val msg = """
+ * Path: $key: ${value.stream().map { path: Path -> "\n\t- $path" }.collect(Collectors.joining())}"""
+            log.debug(msg)
         }
     }
-
 
     /**
      * Walks through the directories given in inputPaths and expands them into the contained files,
-     * into groups as per rules given by options - see {@link Options.CombineDirectories}, {@link Options#skipNonReadable}.
+     * into groups as per rules given by options - see [Options.CombineDirectories], [Options.skipNonReadable].
      *
      * @return A map with one entry per group, containing the files.
      */
-    static Map<Path, List<Path>> expandDirectories(List<Path> inputPaths, Options options)
-    {
-        Map<Path, List<Path>> fileGroupsToConcat = new HashMap<>();
+    @JvmStatic
+    fun expandDirectories(inputPaths: List<Path>, options: Options): MutableMap<Path?, MutableList<Path>> {
+        val fileGroupsToConcat: MutableMap<Path?, MutableList<Path>> = HashMap()
         // null will be used as a special key for COMBINE_ALL_FILES.
-        fileGroupsToConcat.put(null, new ArrayList<>());
-
-        for (Path inputPath: inputPaths) try {
-            log.debug(" * About to concat " + inputPath);
-
-            // Put files simply to "global" group. Might be improved in the future.
-            if (!inputPath.toFile().exists())
-                throw new IllegalStateException("File does not exist: " + inputPath);
+        fileGroupsToConcat[null] = ArrayList()
+        for (inputPath in inputPaths) try {
+            log.debug(" * About to concat $inputPath")
 
             // Put files simply to "global" group. Might be improved in the future.
-            if (inputPath.toFile().isFile())
-                fileGroupsToConcat.get(null).add(inputPath);
+            check(inputPath.toFile().exists()) { "File does not exist: $inputPath" }
+
+            // Put files simply to "global" group. Might be improved in the future.
+            if (inputPath.toFile().isFile) fileGroupsToConcat[null]!!.add(inputPath)
             // Walk directories for CSV, and group them as per options.combineDirs.
-            if (inputPath.toFile().isDirectory())
-            {
-                Consumer<Path> fileToGroupSorter = null;
-                switch (options.getCombineDirs()) {
-                    case COMBINE_ALL_FILES: {
-                        List<Path> fileGroup = fileGroupsToConcat.get(null);
-                        fileToGroupSorter = fileGroup::add;
-                    } break;
-                    case COMBINE_PER_INPUT_DIR: {
-                        List<Path> fileGroup = fileGroupsToConcat.get(inputPath);
-                        fileToGroupSorter = fileGroup::add;
-                    } break;
-                    case COMBINE_PER_EACH_DIR: {
+            if (inputPath.toFile().isDirectory) {
+                var fileToGroupSorter: Consumer<Path>? = null
+                fileToGroupSorter = when (options.combineDirs) {
+                    CombineDirectories.COMBINE_ALL_FILES -> {
+                        val fileGroup = fileGroupsToConcat[null]!!
+                        Consumer { e: Path -> fileGroup.add(e) }
+                    }
+                    CombineDirectories.COMBINE_PER_INPUT_DIR -> {
+                        val fileGroup = fileGroupsToConcat[inputPath]!!
+                        Consumer { e: Path -> fileGroup.add(e) }
+                    }
+                    CombineDirectories.COMBINE_PER_EACH_DIR -> {
                         //List<Path> fileGroup = fileGroupsToCombine.get(inputPath);
-                        fileToGroupSorter = curFile -> {
-                            fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().getParent(),  (Path k) -> new ArrayList<>()).add(curFile);
-                        };
-                    } break;
-                    case COMBINE_PER_INPUT_SUBDIR: {
-                        throw new UnsupportedOperationException("Not yet implemented"); // TODO
+                        Consumer { curFile: Path -> fileGroupsToConcat.computeIfAbsent(curFile.toAbsolutePath().parent) { ArrayList() }.add(curFile) }
+                    }
+                    CombineDirectories.COMBINE_PER_INPUT_SUBDIR -> {
+                        throw UnsupportedOperationException("Not yet implemented") // TODO
                     }
                 }
-
-                log.trace("   *** About to walk" + inputPath);
+                log.trace("   *** About to walk$inputPath")
                 Files.walk(inputPath)
-                        .filter(curFile -> Files.isRegularFile(curFile) && curFile.getFileName().toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV))
-                        ///.peek(path -> System.out.println("fileToGroupSorter " + path))
-                        .filter(file -> {
-                            if (file.toFile().canRead()) return true;
-                            if (options.isSkipNonReadable()) {
-                                log.info("Skipping non-readable file: " + file);
-                                return false;
+                        .filter { curFile: Path -> Files.isRegularFile(curFile) && curFile.fileName.toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV) } ///.peek(path -> System.out.println("fileToGroupSorter " + path))
+                        .filter { file: Path ->
+                            if (file.toFile().canRead()) return@filter true
+                            if (options.skipNonReadable) {
+                                log.info("Skipping non-readable file: $file")
+                                return@filter false
                             }
-                            throw new IllegalArgumentException("Unreadable file (try --skipNonReadable): " + file);
-                        } )
-                        .forEach(fileToGroupSorter);
-                log.trace("   *** After walking: " + fileGroupsToConcat);
+                            throw IllegalArgumentException("Unreadable file (try --skipNonReadable): $file")
+                        }
+                        .forEach(fileToGroupSorter)
+                log.trace("   *** After walking: $fileGroupsToConcat")
             }
-        } catch (Exception ex) {
-            throw new CsvCruncherException(String.format("Failed combining the input files in %s: %s", inputPath, ex.getMessage()), ex);
+        } catch (ex: Exception) {
+            throw CsvCruncherException(String.format("Failed combining the input files in %s: %s", inputPath, ex.message), ex)
         }
-        return fileGroupsToConcat;
+        return fileGroupsToConcat
     }
 
     /**
-     * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see {@link Options#includePathsRegex}.
+     * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see [Options.includePathsRegex].
      * Also, skips the empty groups.
      */
-    static Map<Path, List<Path>> filterFileGroups(Map<Path, List<Path>> fileGroupsToConcat, Options options)
-    {
-        Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
-
-        for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            List<Path> filteredPaths = filterPaths(options, fileGroup.getValue());
-
-            Path origin = fileGroup.getKey();
-            List<Path> paths = fileGroup.getValue();
+    @JvmStatic
+    fun filterFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, options: Options): MutableMap<Path?, List<Path>> {
+        val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = HashMap()
+        for ((origin, paths) in fileGroupsToConcat) {
+            val filteredPaths = filterPaths(options, paths)
             if (paths.isEmpty()) {
-                if (origin != null)
-                    log.info("   *** No files found in " + origin + ".");
-                continue;
+                if (origin != null) log.info("   *** No files found in $origin.")
+                continue
             }
-
-            fileGroupsToConcat2.put(origin, filteredPaths);
+            fileGroupsToConcat2[origin] = filteredPaths
         }
-        return fileGroupsToConcat2;
+        return fileGroupsToConcat2
     }
 
-    public static List<Path> filterPaths(Options options, List<Path> paths)
-    {
-        if (options.getIncludePathsRegex() == null && options.getExcludePathsRegex() == null)
-            return paths;
+    @JvmStatic
+    fun filterPaths(options: Options, paths: List<Path>): List<Path> {
+        if (options.includePathsRegex == null && options.excludePathsRegex == null)
+            return paths
 
         return paths.stream()
-                .filter(path -> options.getIncludePathsRegex() == null || options.getIncludePathsRegex().matcher(path.toString()).matches())
-                .filter(path -> options.getExcludePathsRegex() == null || !options.getExcludePathsRegex().matcher(path.toString()).matches())
-                .collect(Collectors.toList());
+                .filter { path: Path -> options.includePathsRegex == null || options.includePathsRegex!!.matcher(path.toString()).matches() }
+                .filter { path: Path -> options.excludePathsRegex == null || !options.excludePathsRegex!!.matcher(path.toString()).matches() }
+                .collect(Collectors.toList())
     }
 
     /**
-     * Sorts the files within the groups by the configured sorting - see {@link Options.SortInputPaths}. Skips the empty groups.
+     * Sorts the files within the groups by the configured sorting - see [Options.SortInputPaths]. Skips the empty groups.
      * @return A map with one entry per group, containing the files in sorted order.
      */
-    private static Map<Path, List<Path>> sortFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat)
-    {
-        if (PARAMS_ORDER.equals(options.getSortInputFileGroups()))
-            throw new IllegalStateException("Input file groups have to be sorted somehow, " + PARAMS_ORDER.getOptionValue() + " not applicable.");
-
-        Map<Path, List<Path>> fileGroupsToConcat2 = new HashMap<>();
-
-        for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
-            Path origin = fileGroup.getKey();
-            List<Path> sortedPaths = sortInputPaths(fileGroup.getValue(), options.getSortInputFileGroups());
-            fileGroupsToConcat2.put(origin, sortedPaths);
-
-            String dirLabel = origin == null ? "all files" : "" + origin;
+    private fun sortFileGroups(options: Options, fileGroupsToConcat: Map<Path?, List<Path>>): MutableMap<Path?, List<Path>> {
+        check(SortInputPaths.PARAMS_ORDER != options.sortInputFileGroups) { "Input file groups have to be sorted somehow, " + SortInputPaths.PARAMS_ORDER.optionValue + " not applicable." }
+        val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = HashMap()
+        for ((origin, value) in fileGroupsToConcat) {
+            val sortedPaths = sortInputPaths(value, options.sortInputFileGroups)
+            fileGroupsToConcat2[origin] = sortedPaths
+            val dirLabel = if (origin == null) "all files" else "" + origin
             log.debug("   *** Will combine files from " + dirLabel + ": "
-                    + sortedPaths.stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
+                    + sortedPaths.stream().map { path: Path -> "\n\t* $path" }.collect(Collectors.joining()))
         }
-        return fileGroupsToConcat2;
+        return fileGroupsToConcat2
     }
-
 
     /**
      * Some groups may contain CSV files which have different headers;
@@ -480,42 +399,37 @@ public class FilesUtils
      * The new subgroups names are the <original group path> + _X, where X is an incrementing number.
      *
      * @return A map with one entry per group, containing the files in the original order, but split per CSV header structure.
-     */
-    private static FileGroupsSplitBySchemaResult splitToSubgroupsPerSameHeaders(Map<Path, List<Path>> fileGroupsToConcat) throws IOException
-    {
+    </original> */
+    @Throws(IOException::class)
+    private fun splitToSubgroupsPerSameHeaders(fileGroupsToConcat: Map<Path?, List<Path>>): FileGroupsSplitBySchemaResult {
         // TODO: Record information about what groups were splitted and to what subgroups.
-        Map<Path, List<Path>> fileGroupsToConcat2 = new LinkedHashMap<>();
-        Map<Path, List<Path>> splittedGroupsInfo_oldGroupToNewGroups = new LinkedHashMap<>();
-        FileGroupsSplitBySchemaResult result = new FileGroupsSplitBySchemaResult(fileGroupsToConcat2, splittedGroupsInfo_oldGroupToNewGroups);
+        val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = LinkedHashMap()
+        val splittedGroupsInfo_oldGroupToNewGroups: MutableMap<Path?, MutableList<Path>> = LinkedHashMap()
+        val result = FileGroupsSplitBySchemaResult(fileGroupsToConcat2, splittedGroupsInfo_oldGroupToNewGroups)
         // TODO: Refactor this into proper models. InputGroup, PerHeaderInputSubgroup, etc.
-
-        for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
+        for ((originalGroupPath, value) in fileGroupsToConcat) {
             // Check if all files have the same columns header.
-            Map<List<String>, List<Path>> subGroups_headerStructureToFiles = new LinkedHashMap<>();
-            for (Path fileToConcat : fileGroup.getValue()) {
-                List<String> headers = parseColumnsFromFirstCsvLine(fileToConcat.toFile());
-                subGroups_headerStructureToFiles.computeIfAbsent(headers, x -> new ArrayList<>()).add(fileToConcat);
+            val subGroups_headerStructureToFiles: MutableMap<List<String>, MutableList<Path>> = LinkedHashMap()
+            for (fileToConcat in value) {
+                val headers = parseColumnsFromFirstCsvLine(fileToConcat.toFile())
+                subGroups_headerStructureToFiles.computeIfAbsent(headers) { ArrayList() }.add(fileToConcat)
             }
-
-            Path originalGroupPath = fileGroup.getKey();
-            if (subGroups_headerStructureToFiles.size() == 1) {
-                fileGroupsToConcat2.put(originalGroupPath, fileGroup.getValue());
-            }
-            else {
+            if (subGroups_headerStructureToFiles.size == 1) {
+                fileGroupsToConcat2[originalGroupPath] = value
+            } else {
                 // Replaces the original group with few subgroups, with paths suffixed with counter: originalPath_1, originalPath_2, ...
-                int counter = 1;
-                for (List<Path> filesWithSameHeaders : subGroups_headerStructureToFiles.values())
-                {
-                    Path subgroupKey = Paths.get("" + originalGroupPath + "_" + counter++);
-                    fileGroupsToConcat2.putIfAbsent(subgroupKey, filesWithSameHeaders);
+                var counter = 1
+                for (filesWithSameHeaders in subGroups_headerStructureToFiles.values) {
+                    val subgroupKey = Paths.get("" + originalGroupPath + "_" + counter++)
+                    fileGroupsToConcat2.putIfAbsent(subgroupKey, filesWithSameHeaders)
                     // Keep information about what groups were splitted and to what subgroups.
                     splittedGroupsInfo_oldGroupToNewGroups
-                            .computeIfAbsent(originalGroupPath, x -> new ArrayList<>())
-                            .add(subgroupKey);
+                            .computeIfAbsent(originalGroupPath) { ArrayList() }
+                            .add(subgroupKey)
                 }
             }
         }
-        return result;
+        return result
     }
 
     /**
@@ -524,21 +438,19 @@ public class FilesUtils
      * @param tmpConcatDir  A directory where the concatenation results shoul go.
      * @return Mapping from the resulting concatenated file to the files that were concatenated.
      */
-    private static List<CruncherInputSubpart> concatenateFilesFromFileGroups(Options options, Map<Path, List<Path>> fileGroupsToConcat, Path tmpConcatDir) throws IOException
-    {
-        List<CruncherInputSubpart> inputSubparts = new ArrayList<>();
-        Set<Path> usedConcatFilePaths = new HashSet<>();
-
-        for (Map.Entry<Path, List<Path>> fileGroup : fileGroupsToConcat.entrySet()) {
+    @Throws(IOException::class)
+    private fun concatenateFilesFromFileGroups(options: Options, fileGroupsToConcat: Map<Path?, List<Path>>, tmpConcatDir: Path): List<CruncherInputSubpart> {
+        val inputSubparts: MutableList<CruncherInputSubpart> = ArrayList()
+        val usedConcatFilePaths: MutableSet<Path> = HashSet()
+        for (fileGroup in fileGroupsToConcat.entries) {
             // Destination directory
             //log.debug("    Into dest dir: " + tmpConcatDir);
-            Files.createDirectories(tmpConcatDir);
-
-            String concatFileName = deriveNameForCombinedFile(fileGroup, usedConcatFilePaths);
-            Path concatenatedFilePath = tmpConcatDir.resolve(concatFileName);
-            usedConcatFilePaths.add(concatenatedFilePath);
-            log.debug("    Into dest file: " + concatenatedFilePath + "\n  will combine these files: "
-                    + fileGroup.getValue().stream().map(path -> "\n\t* " + path).collect(Collectors.joining()));
+            Files.createDirectories(tmpConcatDir)
+            val concatFileName = deriveNameForCombinedFile(fileGroup, usedConcatFilePaths)
+            val concatenatedFilePath = tmpConcatDir.resolve(concatFileName)
+            usedConcatFilePaths.add(concatenatedFilePath)
+            log.debug("""    Into dest file: $concatenatedFilePath
+  will combine these files: ${fileGroup.value.stream().map { path: Path -> "\n\t* $path" }.collect(Collectors.joining())}""")
 
             // TODO: Optionally this could be named better:
             //       1) Find common deepest ancestor dir.
@@ -546,40 +458,36 @@ public class FilesUtils
             //       3) Create the subdirs in tmpConcatDir and save there.
 
             // Combine the file sets.
-            concatFiles(fileGroup.getValue(), concatenatedFilePath, options.getIgnoreFirstLines(), options.getIgnoreLineRegex());
-
-            CruncherInputSubpart inputPart = new CruncherInputSubpart();
-            inputPart.setOriginalInputPath(fileGroup.getKey());
-            inputPart.setCombinedFile(concatenatedFilePath);
-            inputPart.setCombinedFromFiles(fileGroup.getValue());
-
-            inputSubparts.add(inputPart);
+            concatFiles(fileGroup.value, concatenatedFilePath, options.ignoreFirstLines, options.ignoreLineRegex)
+            val inputPart = CruncherInputSubpart(
+                    originalInputPath = fileGroup.key,
+                    combinedFile = concatenatedFilePath,
+                    combinedFromFiles = fileGroup.value,
+            )
+            inputSubparts.add(inputPart)
         }
-        return inputSubparts;
+        return inputSubparts
     }
-
-
 
     /**
      * Come up with some good name for the combined file.
      * If the name was used, append an incrementing number until it is unique.
      *
-     * @param fileGroup  A group of files to combine in the value, and the originating input path in the value.
+     * @param fileGroup  A group of files to combine in the value, and the originating input path in the key.
+     *                   A null key means assorted files.
      */
-    static String deriveNameForCombinedFile(Map.Entry<Path, List<Path>> fileGroup, Set<Path> usedConcatFilePaths)
-    {
-        Path originPath = fileGroup.getKey();
-        if (originPath == null) {
+    @JvmStatic
+    fun deriveNameForCombinedFile(fileGroup: Map.Entry<Path?, List<Path>>, usedConcatFilePaths: MutableSet<Path>): String {
+        var originPath = fileGroup.key
+        return if (originPath == null) {
             // Assorted files will be combined into resultDir/concat.csv.
-            return Paths.get("concat" + Cruncher.FILENAME_SUFFIX_CSV).toString();
-        }
-        else {
-            String pathStr = StringUtils.appendIfMissing(originPath.toString(), Cruncher.FILENAME_SUFFIX_CSV);
-            originPath = Paths.get(pathStr);
-
-            Path concatFilePath = getNonUsedName(originPath, usedConcatFilePaths);
-            usedConcatFilePaths.add(concatFilePath);
-            return concatFilePath.getFileName().toString();
+            Paths.get("concat" + Cruncher.FILENAME_SUFFIX_CSV).toString()
+        } else {
+            val pathStr = StringUtils.appendIfMissing(originPath.toString(), Cruncher.FILENAME_SUFFIX_CSV)
+            originPath = Paths.get(pathStr)
+            val concatFilePath = getNonUsedName(originPath, usedConcatFilePaths)
+            usedConcatFilePaths.add(concatFilePath)
+            concatFilePath!!.fileName.toString()
         }
     }
 
@@ -589,91 +497,73 @@ public class FilesUtils
      * Eg. given "some/output/file.csv", if already used, tries "some/output/file_1.csv", and so on.
      * It does NOT add the used path to the usedPaths set.
      */
-    public static Path getNonUsedName(Path path, final Set<Path> usedPaths)
-    {
-        if (!usedPaths.contains(path))
-            return path;
-
-
-        String suffix = StringUtils.substringAfterLast(""+path.getFileName(), ".");
-        if (!StringUtils.isEmpty(suffix))
-            suffix = "." + suffix;
-
-        String pathWithoutSuffix = StringUtils.removeEnd(path.toString(), suffix);
-
-        int counter = 0;
+    @JvmStatic
+    fun getNonUsedName(path: Path, usedPaths: MutableSet<Path>): Path {
+        var path = path
+        if (!usedPaths.contains(path)) return path
+        var suffix = StringUtils.substringAfterLast("" + path.fileName, ".")
+        if (!StringUtils.isEmpty(suffix)) suffix = ".$suffix"
+        val pathWithoutSuffix = StringUtils.removeEnd(path.toString(), suffix)
+        var counter = 0
         do {
-            path = Paths.get(pathWithoutSuffix + "_" + ++counter + suffix);
-        }
-        while (usedPaths.contains(path));
-        usedPaths.add(path);
-
-        return path;
+            path = Paths.get(pathWithoutSuffix + "_" + ++counter + suffix)
+        } while (usedPaths.contains(path))
+        usedPaths.add(path)
+        return path
     }
-
 
     /**
      * Parse the first line of given file, ignoring the initial #'s, NOT respecting quotes and escaping.
      *
      * @return A list of column names in the order from the file.
      */
-    public static List<String> parseColumnsFromFirstCsvLine(File file) throws IOException
-    {
-        Matcher mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("");
-        ArrayList<String> cols = new ArrayList<>();
-
-        LineIterator lineIterator = FileUtils.lineIterator(file);
-        if (!lineIterator.hasNext())
-        {
-            throw new IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.getPath());
-        }
-        else
-        {
+    @JvmStatic
+    @Throws(IOException::class)
+    fun parseColumnsFromFirstCsvLine(file: File): List<String> {
+        val mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("")
+        val cols = ArrayList<String>()
+        val lineIterator = FileUtils.lineIterator(file)
+        return if (!lineIterator.hasNext()) {
+            throw IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.path)
+        } else {
             /*  I could employ CSVReader if needed.
                 CSVReader csvReader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                 String[] header = csvReader.readNext();
                 csvReader.close();
              */
-
-            String line = lineIterator.nextLine().trim();
-            line = StringUtils.stripStart(line, "#");
-            String[] colNames = StringUtils.splitPreserveAllTokens(line, ",;");
-
-            for (String colName : Arrays.asList(colNames))
-            {
-                colName = colName.trim();
-                if (colName.isEmpty()) {
-                    throw new IllegalStateException(String.format(
+            var line: String? = lineIterator.nextLine().trim { it <= ' ' }
+            line = StringUtils.stripStart(line, "#")
+            val colNames = StringUtils.splitPreserveAllTokens(line, ",;")
+            for (colName in Arrays.asList(*colNames)) {
+                val colName = colName.trim { it <= ' ' }
+                check(!colName.isEmpty()) {
+                    String.format(
                             "Empty column name (separators: ,; ) in: %s\n  The line was: %s",
-                            file.getPath(), line
-                    ));
+                            file.path, line
+                    )
                 }
-
-                if (!mat.reset(colName).matches()) {
-                    throw new IllegalStateException(String.format(
+                check(mat.reset(colName).matches()) {
+                    String.format(
                             "Colname '%s' must be valid SQL identifier, i.e. must match /%s/i in: %s",
-                            colName, Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern(), file.getPath()
-                    ));
+                            colName, Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern(), file.path
+                    )
                 }
-
-                cols.add(colName);
+                cols.add(colName)
             }
-
-            return cols;
+            cols
         }
     }
 
     /**
      * Checks whether the paths point to existing files.
      */
-    public static void validateInputFiles(List<CruncherInputSubpart> inputSubparts)
-    {
-        List<Path> inputPaths = new ArrayList<>(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
-
-        List<Path> notFiles = inputPaths.stream().filter(path -> !path.toFile().isFile()).collect(Collectors.toList());
+    @JvmStatic
+    fun validateInputFiles(inputSubparts: List<CruncherInputSubpart>) {
+        val inputPaths: List<Path> = ArrayList(inputSubparts.stream().map { x: CruncherInputSubpart -> x.combinedFile }.collect(Collectors.toList()))
+        val notFiles = inputPaths.stream().filter { path: Path -> !path.toFile().isFile }.collect(Collectors.toList())
         if (!notFiles.isEmpty()) {
-            String msg = "Some input paths do not point to files: " + notFiles.stream().map(Path::toString).collect(Collectors.joining(", "));
-            throw new IllegalStateException(msg);
+            val msg = "Some input paths do not point to files: " + notFiles.stream().map { obj: Path -> obj.toString() }.collect(Collectors.joining(", "))
+            throw IllegalStateException(msg)
         }
     }
 
@@ -683,18 +573,16 @@ public class FilesUtils
      * they are split into subgroups.
      *
      * TODO: Refactor. Previously this was done into a flat structure, but it seems at least 2 levels will be needed.
-     *       For now I am only putting it to two flat maps "joined" by the subgroup names.
+     * For now I am only putting it to two flat maps "joined" by the subgroup names.
      */
     @Getter
     @AllArgsConstructor
-    static class FileGroupsSplitBySchemaResult
-    {
-        private Map<Path, List<Path>> fileGroupsToCombine = new LinkedHashMap<>();
+    internal class FileGroupsSplitBySchemaResult(
+        val fileGroupsToCombine: Map<Path?, List<Path>> = LinkedHashMap(),
 
         /**
          * Old group to new subgroups.
          */
-        private Map<Path, List<Path>> splittedGroupsInfo = new LinkedHashMap<>();
-    }
-
+        val splittedGroupsInfo: Map<Path?, List<Path>> = LinkedHashMap(),
+    )
 }

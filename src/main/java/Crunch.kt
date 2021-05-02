@@ -1,7 +1,9 @@
-import cz.dynawest.csvcruncher.App;
+import cz.dynawest.csvcruncher.App
 
-public class Crunch {
-   public static void main(String[] args) throws Exception {
-      App.main(args);
-   }
+object Crunch {
+    @Throws(Exception::class)
+    @JvmStatic
+    fun main(args: Array<String>) {
+        App.main(args)
+    }
 }

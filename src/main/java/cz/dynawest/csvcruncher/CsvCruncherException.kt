@@ -1,24 +1,8 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher
 
-public class CsvCruncherException extends RuntimeException
-{
-    public CsvCruncherException(String message)
-    {
-        super(message);
-    }
-
-    public CsvCruncherException(String message, Throwable cause)
-    {
-        super(message, cause);
-    }
-
-    public CsvCruncherException(Throwable cause)
-    {
-        super(cause);
-    }
-
-    public CsvCruncherException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace)
-    {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+class CsvCruncherException : RuntimeException {
+    constructor(message: String?) : super(message) {}
+    constructor(message: String?, cause: Throwable?) : super(message, cause) {}
+    constructor(cause: Throwable?) : super(cause) {}
+    constructor(message: String?, cause: Throwable?, enableSuppression: Boolean, writableStackTrace: Boolean) : super(message, cause, enableSuppression, writableStackTrace) {}
 }

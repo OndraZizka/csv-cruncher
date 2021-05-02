@@ -1,48 +1,38 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Assert;
+import cz.dynawest.csvcruncher.App.mainNoExit
+import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVRecord
+import org.apache.commons.lang3.StringUtils
+import org.junit.Assert
+import java.io.*
+import java.nio.file.Path
+import java.nio.file.Paths
 
-public class CsvCruncherTestUtils
-{
+object CsvCruncherTestUtils {
     /**
      * @return Path to the default test data dir.
      */
-    public static Path getTestDataDir() {
-        return Paths.get(System.getProperty("user.dir")).resolve("src/test/data/");
-    }
+    val testDataDir: Path
+        get() = Paths.get(System.getProperty("user.dir")).resolve("src/test/data/")
 
     /**
      * @return Path to the default test output dir.
      */
-    public static Path getTestOutputDir() {
-        return Paths.get(System.getProperty("user.dir")).resolve("target/testResults/");
-    }
-
+    val testOutputDir: Path
+        get() = Paths.get(System.getProperty("user.dir")).resolve("target/testResults/")
 
     /**
      * Runs CSV Cruncher with the guven command, which is | separated arguments.
      */
-    public static void runCruncherWithArguments(String command) throws Exception
-    {
-        List<String> collect = Arrays.stream(command.split("\\|")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.toList());
-        String[] args = collect.toArray(new String[0]);
-
-        App.mainNoExit(args);
+    @Throws(Exception::class)
+    fun runCruncherWithArguments(command: String) {
+        val arguments = command
+                .splitToSequence("|")
+                .map { obj: String -> obj.trim { it <= ' ' } }
+                .filter { x: String -> !x.isEmpty() }
+                .toList().toTypedArray()
+        mainNoExit(arguments)
     }
 
     /**
@@ -52,34 +42,28 @@ public class CsvCruncherTestUtils
      * @param columnOffset1Based The 1-based column offset to check the values from. Does not parse quotes, just splits by commas.
      * @param successive Whether the checked values must increment by one, or whether they must just grow.
      */
-    public static void checkThatIdsAreIncrementing(List<File> csvFiles, int columnOffset1Based, boolean successive)
-    {
-        Integer previousId = null;
-        for (File csvFile : csvFiles)
-        {
-            try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));)
-            {
-                reader.readLine();
-
-                String line;
-                while (null != (line = reader.readLine())) {
-                    //System.out.println(":: " + line);
-                    String[] values = StringUtils.splitPreserveAllTokens(line, ",");
-                    String idStr = values[columnOffset1Based - 1];
-                    int id = Integer.parseInt(idStr);
-                    if (previousId != null && "I".equals(values[0])) {
-                        String msgT = successive ? "prevId %d +1 = %d in %s" : "prevId %d < %d in %s";
-                        String msg = String.format(msgT, previousId, id, csvFile.getPath());
-                        if (successive)
-                            Assert.assertEquals(msg, previousId + 1, id);
-                        else
-                            Assert.assertTrue(msg, previousId < id);
+    fun checkThatIdsAreIncrementing(csvFiles: List<File>, columnOffset1Based: Int, successive: Boolean) {
+        var previousId: Int? = null
+        for (csvFile in csvFiles) {
+            try {
+                BufferedReader(FileReader(csvFile)).use { reader ->
+                    reader.readLine()
+                    var line: String?
+                    while (null != reader.readLine().also { line = it }) {
+                        //System.out.println(":: " + line);
+                        val values = StringUtils.splitPreserveAllTokens(line, ",")
+                        val idStr = values[columnOffset1Based - 1]
+                        val id = idStr.toInt()
+                        if (previousId != null && "I" == values[0]) {
+                            val msgT = if (successive) "prevId %d +1 = %d in %s" else "prevId %d < %d in %s"
+                            val msg = String.format(msgT, previousId, id, csvFile.path)
+                            if (successive) Assert.assertEquals(msg, (previousId!! + 1).toLong(), id.toLong()) else Assert.assertTrue(msg, previousId!! < id)
+                        }
+                        previousId = id
                     }
-                    previousId = id;
                 }
-            }
-            catch (Exception ex) {
-                throw new RuntimeException("Unexpected error parsing the CSV: " + ex.getMessage(), ex);
+            } catch (ex: Exception) {
+                throw RuntimeException("Unexpected error parsing the CSV: " + ex.message, ex)
             }
         }
     }
@@ -90,38 +74,32 @@ public class CsvCruncherTestUtils
      * @param lineOffset1Based    1 for 1st line, etc.
      * @param columnOffset0Based  0 for 1st column, etc.
      */
-    public static String getCsvCellValue(File csvFile, int lineOffset1Based, int columnOffset0Based)
-    {
-        if (lineOffset1Based < 1)
-            throw new IllegalArgumentException("lineOffset1Based must be >= 1.");
-
-        try {
-            Reader reader = new FileReader(csvFile);
-            Iterable<CSVRecord> records = CSVFormat.DEFAULT
+    fun getCsvCellValue(csvFile: File?, lineOffset1Based: Int, columnOffset0Based: Int): String {
+        require(lineOffset1Based >= 1) { "lineOffset1Based must be >= 1." }
+        return try {
+            val reader: Reader = FileReader(csvFile)
+            val records: Iterable<CSVRecord> = CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
                     .withNullString("")
-                    .parse(reader);
-
-            CSVRecord csvRecord = null;
-            Iterator<CSVRecord> iterator = records.iterator();
-            for (int i = 0; i < lineOffset1Based; i++) {
+                    .parse(reader)
+            var csvRecord: CSVRecord? = null
+            val iterator = records.iterator()
+            for (i in 0 until lineOffset1Based) {
                 if (!iterator.hasNext()) {
-                    String msg = String.format("Looked for %dth line, found only %d in %s", lineOffset1Based, i, csvFile);
-                    throw new RuntimeException(msg);
+                    val msg = String.format("Looked for %dth line, found only %d in %s", lineOffset1Based, i, csvFile)
+                    throw RuntimeException(msg)
                 }
-                csvRecord = iterator.next();
+                csvRecord = iterator.next()
             }
-            if (csvRecord.size() <= columnOffset0Based) {
-                String msg = String.format("Too few columns, looking for %dth, found %d in %s", columnOffset0Based, csvRecord.size(), csvFile);
-                throw new RuntimeException(msg);
+            if (csvRecord!!.size() <= columnOffset0Based) {
+                val msg = String.format("Too few columns, looking for %dth, found %d in %s", columnOffset0Based, csvRecord.size(), csvFile)
+                throw RuntimeException(msg)
             }
-            return csvRecord.get(columnOffset0Based);
-        }
-        catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
+            csvRecord[columnOffset0Based]
+        } catch (e: FileNotFoundException) {
+            throw RuntimeException(e)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
         }
     }
 }

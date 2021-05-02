@@ -1,32 +1,33 @@
-package cz.dynawest.csvcruncher;
+package cz.dynawest.csvcruncher
 
-import static cz.dynawest.csvcruncher.Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.StringUtils;
+import cz.dynawest.csvcruncher.Options.CombineDirectories
+import cz.dynawest.csvcruncher.Options.CombineInputFiles
+import cz.dynawest.csvcruncher.Options.SortInputPaths
+import cz.dynawest.csvcruncher.util.logger
+import lombok.Getter
+import lombok.Setter
+import lombok.extern.slf4j.Slf4j
+import org.apache.commons.lang3.EnumUtils
+import org.apache.commons.lang3.StringUtils
+import java.io.File
+import java.io.FileNotFoundException
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+import java.util.function.Function
+import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 @Setter
 @Getter
 @Slf4j
-public final class Options
-{
-    protected List<String> inputPaths = new ArrayList<>();
-    protected Pattern includePathsRegex;
-    protected Pattern excludePathsRegex;
-    protected boolean skipNonReadable = false;
-    protected String sql;
-    protected String outputPathCsv;
+class Options {
+    var inputPaths: MutableList<String?>? = ArrayList()
+    var includePathsRegex: Pattern? = null
+    var excludePathsRegex: Pattern? = null
+    var skipNonReadable = false
+    var sql: String? = null
+    var outputPathCsv: String? = null
 
     /**
      * The input files in some file group may have different structure.
@@ -36,185 +37,116 @@ public final class Options
      * In this mode, other tables may not be available under the expected names.
      * The SQL may reliably referer only to the processed table as "$table".
      */
-    protected boolean queryPerInputSubpart = false;
-    protected boolean overwrite = false;
-    protected String dbPath = null;
-    public boolean keepWorkFiles = false;
+    var queryPerInputSubpart = false
+    var overwrite = false
+    var dbPath: String? = null
+    var keepWorkFiles = false
+    var ignoreFirstLines = 1
+    var ignoreLineRegex: Pattern? = null
+    var initialRowNumber: Long? = null
+    var sortInputPaths = SortInputPaths.PARAMS_ORDER
+    var sortInputFileGroups = SortInputPaths.ALPHA
+    var combineInputFiles = CombineInputFiles.NONE
+    var combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR
+    var jsonExportFormat = JsonExportFormat.NONE
 
-    protected int ignoreFirstLines = 1;
-    protected Pattern ignoreLineRegex;
+    // && this.sql != null;
+    val isFilled: Boolean
+        get() = inputPaths != null && outputPathCsv != null
 
-    protected Long initialRowNumber = null;
-    protected SortInputPaths sortInputPaths = SortInputPaths.PARAMS_ORDER;
-    protected SortInputPaths sortInputFileGroups = SortInputPaths.ALPHA;
-    protected CombineInputFiles combineInputFiles = CombineInputFiles.NONE;
-    protected CombineDirectories combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR;
-    protected JsonExportFormat jsonExportFormat = JsonExportFormat.NONE;
-
-
-    public boolean isFilled()
-    {
-        return this.inputPaths != null && this.outputPathCsv != null; // && this.sql != null;
-    }
-
-
-    public void validate() throws FileNotFoundException
-    {
-        if (this.inputPaths == null || this.inputPaths.isEmpty())
-            throw new IllegalArgumentException(" -in is not set.");
+    @Throws(FileNotFoundException::class)
+    fun validate() {
+        require(!(inputPaths == null || inputPaths!!.isEmpty())) { " -in is not set." }
 
         // SQL may be omitted if there is a request to combine files or convert to JSON. Otherwise it would be a no-op.
-        if (this.sql == null) {
-            log.debug(" -sql is not set, using default: " + Cruncher.DEFAULT_SQL);
-            this.sql = Cruncher.DEFAULT_SQL;
+        if (sql == null) {
+            Options.log.debug(" -sql is not set, using default: " + Cruncher.Companion.DEFAULT_SQL)
+            sql = Cruncher.Companion.DEFAULT_SQL
         }
-
-        if (this.outputPathCsv == null)
-            throw new IllegalArgumentException(" -out is not set.");
-
-
-        for (String path : this.inputPaths) {
-            File ex = new File(path);
-            if (!ex.exists())
-                throw new FileNotFoundException("CSV file not found: " + ex.getPath());
+        requireNotNull(outputPathCsv) { " -out is not set." }
+        for (path in inputPaths!!) {
+            val ex = File(path)
+            if (!ex.exists()) throw FileNotFoundException("CSV file not found: " + ex.path)
         }
-
-        if (this.queryPerInputSubpart && !StringUtils.isBlank(this.sql) && !this.sql.contains(Cruncher.SQL_TABLE_PLACEHOLDER)) {
-            String msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", Cruncher.SQL_TABLE_PLACEHOLDER);
-            throw new IllegalArgumentException(msg);
+        if (queryPerInputSubpart && !StringUtils.isBlank(sql) && !sql!!.contains(Cruncher.Companion.SQL_TABLE_PLACEHOLDER)) {
+            val msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", Cruncher.Companion.SQL_TABLE_PLACEHOLDER)
+            throw IllegalArgumentException(msg)
         }
-
-        if (COMBINE_PER_INPUT_SUBDIR.equals(this.combineDirs)) {
-            for (String inputPath : this.inputPaths) {
-                if (Paths.get(inputPath).toFile().isFile()) {
-                    String msg = String.format("If using %s, all inputs must be directories> %s", COMBINE_PER_INPUT_SUBDIR.getOptionValue(), inputPath);
-                    throw new IllegalArgumentException(msg);
+        if (CombineDirectories.COMBINE_PER_INPUT_SUBDIR == combineDirs) {
+            for (inputPath in inputPaths!!) {
+                if (Paths.get(inputPath).toFile().isFile) {
+                    val msg = String.format("If using %s, all inputs must be directories> %s", CombineDirectories.COMBINE_PER_INPUT_SUBDIR.optionValue, inputPath)
+                    throw IllegalArgumentException(msg)
                 }
             }
-
         }
     }
 
-
-
-    public String toString()
-    {
-        return   "    dbPath: " + this.dbPath +
-               "\n    inputPaths: " + this.inputPaths +
-               "\n    includePathsRegex: " + this.includePathsRegex +
-               "\n    excludePathsRegex: " + this.excludePathsRegex +
-               "\n    outputPathCsv: " + this.outputPathCsv +
-               "\n    queryPerInputSubpart: " + this.queryPerInputSubpart +
-               "\n    overwrite: " + this.overwrite +
-               "\n    sql: " + this.sql +
-               "\n    ignoreLineRegex: " + this.ignoreLineRegex +
-               "\n    ignoreFirstLines: " + this.ignoreFirstLines +
-               "\n    sortInputPaths: " + this.sortInputPaths +
-               "\n    sortInputFileGroups: " + this.sortInputFileGroups +
-               "\n    combineInputFiles: " + this.combineInputFiles +
-               "\n    combineDirs: " + this.combineDirs +
-               "\n    initialRowNumber: " + this.initialRowNumber +
-               "\n    jsonExportFormat: " + this.jsonExportFormat +
-               "\n    skipNonReadable: " + this.skipNonReadable;
+    override fun toString(): String {
+        return """    dbPath: ${dbPath}
+    inputPaths: ${inputPaths}
+    includePathsRegex: ${includePathsRegex}
+    excludePathsRegex: ${excludePathsRegex}
+    outputPathCsv: ${outputPathCsv}
+    queryPerInputSubpart: ${queryPerInputSubpart}
+    overwrite: ${overwrite}
+    sql: ${sql}
+    ignoreLineRegex: ${ignoreLineRegex}
+    ignoreFirstLines: ${ignoreFirstLines}
+    sortInputPaths: ${sortInputPaths}
+    sortInputFileGroups: ${sortInputFileGroups}
+    combineInputFiles: ${combineInputFiles}
+    combineDirs: ${combineDirs}
+    initialRowNumber: ${initialRowNumber}
+    jsonExportFormat: ${jsonExportFormat}
+    skipNonReadable: ${skipNonReadable}"""
     }
 
-    public Path getMainOutputDir()
-    {
-        Path outPath = Paths.get(this.getOutputPathCsv());
-
-        if (outPath.toFile().isFile())
-            return outPath.getParent();
-        else
-            return outPath;
-    }
-
-
-    public enum SortInputPaths implements OptionEnum
-    {
-        PARAMS_ORDER("paramOrder", "Keep the order from parameters or file system."),
-        ALPHA("alpha", "Sort alphabetically."),
-        TIME("time", "Sort by modification time, ascending.");
-
-        public static final String PARAM_SORT_INPUT_PATHS = "sortInputPaths";
-        public static final String PARAM_SORT_FILE_GROUPS = "sortInputFileGroups";
-
-        private final String optionValue;
-        private final String description;
-
-        SortInputPaths(String value, String description) {
-            this.optionValue = value;
-            this.description = description;
+    val mainOutputDir: Path
+        get() {
+            val outPath: Path = Paths.get(this.outputPathCsv)
+            return if (outPath.toFile().isFile) outPath.parent else outPath
         }
 
-        @Override
-        public String getOptionValue() { return optionValue; }
+    enum class SortInputPaths(override val optionValue: String, private val description: String) : OptionEnum {
+        PARAMS_ORDER("paramOrder", "Keep the order from parameters or file system."), ALPHA("alpha", "Sort alphabetically."), TIME("time", "Sort by modification time, ascending.");
 
-        public static List<String> getOptionValues() {
-            return EnumUtils.getEnumList(SortInputPaths.class).stream().map(SortInputPaths::getOptionValue).filter(Objects::nonNull).collect(Collectors.toList());
+        companion object {
+            const val PARAM_SORT_INPUT_PATHS = "sortInputPaths"
+            const val PARAM_SORT_FILE_GROUPS = "sortInputFileGroups"
+            val optionValues: List<String?>
+                get() = EnumUtils.getEnumList(SortInputPaths::class.java).stream().map { obj: SortInputPaths -> obj.optionValue }.filter { obj: String? -> Objects.nonNull(obj) }.collect(Collectors.toList())
         }
     }
 
-    public enum CombineDirectories implements OptionEnum
-    {
+    enum class CombineDirectories(override val optionValue: String) : OptionEnum {
         //USE_EACH_FILE("none"),
-        COMBINE_PER_EACH_DIR("perDir"),
-        COMBINE_PER_INPUT_DIR("perInputDir"),
-        COMBINE_PER_INPUT_SUBDIR("perInputSubdir"),
-        COMBINE_ALL_FILES("all");
+        COMBINE_PER_EACH_DIR("perDir"), COMBINE_PER_INPUT_DIR("perInputDir"), COMBINE_PER_INPUT_SUBDIR("perInputSubdir"), COMBINE_ALL_FILES("all");
 
-        public static final String PARAM_NAME = "combineDirs";
-
-        private final String optionValue;
-
-        CombineDirectories(String optionValue) {
-            this.optionValue = optionValue;
-        }
-
-        public String getOptionValue() { return optionValue; }
-
-        public static List<String> getOptionValues()
-        {
-            return EnumUtils.getEnumList(Options.CombineDirectories.class).stream().map(Options.CombineDirectories::getOptionValue).filter(Objects::nonNull).collect(Collectors.toList());
+        companion object {
+            const val PARAM_NAME = "combineDirs"
+            val optionValues: List<String>
+                get() = EnumUtils.getEnumList(CombineDirectories::class.java).stream().map(Function<CombineDirectories, String> { it.optionValue }).filter { obj: String? -> Objects.nonNull(obj) }.collect(Collectors.toList())
         }
     }
 
-    public enum CombineInputFiles implements OptionEnum
-    {
-        NONE(      null,         "Uses each input files as a separate table."),
-        CONCAT(    "concat",     "Joins the CSV files into one and processes it as input."),
-        INTERSECT( "intersect",  "Takes the intersection of the CSV files as input."),
-        EXCEPT(    "substract",  "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
+    enum class CombineInputFiles(override val optionValue: String?, private val description: String) : OptionEnum {
+        NONE(null, "Uses each input files as a separate table."), CONCAT("concat", "Joins the CSV files into one and processes it as input."), INTERSECT("intersect", "Takes the intersection of the CSV files as input."), EXCEPT("substract", "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
 
-        public static final String PARAM_NAME = "combineInputs";
-
-        private final String description;
-        private final String optionValue;
-
-        CombineInputFiles(String value, String description) {
-            this.description = description;
-            this.optionValue = value;
-        }
-
-        public String getOptionValue() { return optionValue; }
-
-        public static List<String> getOptionValues()
-        {
-            return EnumUtils.getEnumList(Options.CombineInputFiles.class).stream().map(Options.CombineInputFiles::getOptionValue).filter(Objects::nonNull).collect(Collectors.toList());
+        companion object {
+            const val PARAM_NAME = "combineInputs"
+            val optionValues: List<String>
+                get() = EnumUtils.getEnumList(CombineInputFiles::class.java).stream().map(Function<CombineInputFiles, String> { it.optionValue }).filter { obj: String? -> Objects.nonNull(obj) }.collect(Collectors.toList())
         }
     }
 
-    public enum JsonExportFormat implements OptionEnum
-    {
+    enum class JsonExportFormat(override val optionValue: String?) : OptionEnum {
         NONE(null), ENTRY_PER_LINE("entries"), ARRAY("array");
 
-        public static final String PARAM_NAME = "json";
-
-        private final String optionValue;
-
-        JsonExportFormat(String value) {
-            this.optionValue = value;
+        companion object {
+            const val PARAM_NAME = "json"
         }
-
-        public String getOptionValue() { return optionValue; }
     }
+
+    companion object { private val log = logger() }
 }
