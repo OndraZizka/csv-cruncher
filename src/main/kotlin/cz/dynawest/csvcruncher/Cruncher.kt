@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.Options.JsonExportFormat
+import cz.dynawest.csvcruncher.converters.JsonFileToTabularFileConverter
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
@@ -62,6 +63,14 @@ class Cruncher(private val options: Options) {
             var inputPaths = options.inputPaths!!.stream().map { first: String? -> Paths.get(first) }.collect(Collectors.toList())
             inputPaths = FilesUtils.sortInputPaths(inputPaths, options.sortInputPaths)
             log.debug(" --- Sorted input paths: --- " + inputPaths.stream().map { p: Path -> "\n * $p" }.reduce { obj: String, str: String -> obj + str }.get())
+
+            // TODO: Convert the .json files to .csv files.
+            inputPaths.map { inputPath ->
+                if (inputPath.endsWith(".json"))
+                    convertJsonToCsv(inputPath)
+                else inputPath
+            }
+
             val inputSubparts: List<CruncherInputSubpart>
 
             // Combine files. Should we concat the files or UNION the tables?
@@ -180,6 +189,10 @@ class Cruncher(private val options: Options) {
             jdbcConn!!.close()
             log.debug(" *** END SHUTDOWN CLEANUP SEQUENCE ***")
         }
+    }
+
+    private fun convertJsonToCsv(inputPath: Path): Path {
+        return JsonFileToTabularFileConverter().convert(inputPath)
     }
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String?, File>, outputs: List<CruncherOutputPart>) {

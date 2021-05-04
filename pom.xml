@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.zizka.csvcruncher</groupId>
     <artifactId>csv-cruncher</artifactId>
-    <version>1.14.0</version>
+    <version>1.15.0</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
@@ -435,6 +435,11 @@
             <version>1.1.4</version>
         </dependency>
 
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>2.12.3</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>2.12.3</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-annotations</artifactId><version>2.12.3</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.module</groupId><artifactId>jackson-module-kotlin</artifactId><version>2.12.3</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-cbor</artifactId><version>2.12.3</version></dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -479,6 +484,11 @@
             <artifactId>kotlin-test</artifactId>
             <version>${version.kotlin}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.9.9</version>
         </dependency>
 
     </dependencies>
