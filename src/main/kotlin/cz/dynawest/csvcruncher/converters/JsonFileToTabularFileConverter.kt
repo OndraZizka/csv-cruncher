@@ -13,36 +13,26 @@ import kotlin.io.path.name
 import kotlin.io.path.outputStream
 
 
-interface FileToTabularFileConverter {
-    fun convert(inputPath: Path, mainArrayLocation: Path = Path.of("")): Path
-}
-
-class Entry(
-    keyValues: Map<String, Serializable>
-)
-
-interface EntryProcessor {
-    fun beforeEntries(entry: Entry) {}
-    fun process(entry: Entry)
-    fun afterEntries(entry: Entry) {}
-}
 
 @ExperimentalPathApi
 class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
-    override fun convert(inputPath: Path, mainArrayLocation: Path): Path {
-        // Identify the columns
+    override fun convert(inputPath: Path, mainArrayLocation: String): Path {
+
+        val mainArrayPath = Path.of(mainArrayLocation)
+
+        // 1st pass - Identify the columns
         val propertiesMetadataCollector = TabularPropertiesMetadataCollector()
-        processEntries(inputPath, mainArrayLocation, propertiesMetadataCollector)
+        processEntries(inputPath, mainArrayPath, propertiesMetadataCollector)
 
         // Cancel on too many JSON map keys
         // Optionally covert array properties?
 
-        // Export to CSV
+        // 2nd pass - Export to CSV
         val outputPath = deriveOutputPath(inputPath)
         outputPath.outputStream().use { outputStream ->
             val csvExporter = CsvExporter(outputStream, propertiesMetadataCollector)
-            processEntries(inputPath, mainArrayLocation, csvExporter)
+            processEntries(inputPath, mainArrayPath, csvExporter)
         }
         return outputPath
     }
@@ -92,10 +82,6 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
 }
 
-interface KeyValueWriter {
-    fun writeKeyValue(keyValues: Map<String, Serializable>)
-}
-
 class CsvExporter(
         outputStream: OutputStream,
         propertiesMetadataCollector: TabularPropertiesMetadataCollector
@@ -108,23 +94,4 @@ class CsvExporter(
     }
 }
 
-class TabularPropertiesMetadataCollector : EntryProcessor {
-    val propertiesSoFar: Map<String, PropertyInfo> = hashMapOf()
-    override fun process(entry: Entry) {
-        TODO("Not yet implemented")
-    }
-}
 
-class PropertyInfo(
-    val name: String
-) {
-    val types: TypesCount = TypesCount()
-}
-
-class TypesCount {
-    var string: Int = 0
-    var number: Int = 0
-    var datetime: Int = 0
-    var obj: Int = 0
-    var array: Int = 0
-}
