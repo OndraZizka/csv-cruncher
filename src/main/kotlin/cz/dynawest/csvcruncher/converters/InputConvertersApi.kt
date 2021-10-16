@@ -7,13 +7,13 @@ interface FileToTabularFileConverter {
     fun convert(inputPath: Path, mainArrayLocation: String = ""): Path
 }
 
-class Entry(
-        keyValues: Map<String, Serializable>
+data class Entry(
+    val keyValues: Map<String, Serializable>
 )
 
 interface EntryProcessor {
-    fun beforeEntries(entry: Entry) {}
     fun process(entry: Entry)
+    fun beforeEntries(entry: Entry) {}
     fun afterEntries(entry: Entry) {}
 }
 
@@ -23,7 +23,7 @@ interface KeyValueWriter {
 }
 
 class PropertyInfo(
-        val name: String
+    val name: String
 ) {
     val types: TypesCount = TypesCount()
 }

@@ -16,6 +16,7 @@ import java.nio.file.Paths
 import java.sql.*
 import java.util.regex.Pattern
 import java.util.stream.Collectors
+import kotlin.io.path.ExperimentalPathApi
 
 @Slf4j
 class Cruncher(private val options: Options) {
@@ -47,6 +48,7 @@ class Cruncher(private val options: Options) {
      * Performs the whole process.
      */
     @Throws(Exception::class)
+    @ExperimentalPathApi
     fun crunch() {
         options.validate()
         val addCounterColumn = options.initialRowNumber != null
@@ -67,6 +69,7 @@ class Cruncher(private val options: Options) {
             // TODO: Convert the .json files to .csv files.
             inputPaths.map { inputPath ->
                 if (inputPath.endsWith(".json"))
+
                     convertJsonToCsv(inputPath)
                 else inputPath
             }
@@ -191,6 +194,7 @@ class Cruncher(private val options: Options) {
         }
     }
 
+    @ExperimentalPathApi
     private fun convertJsonToCsv(inputPath: Path): Path {
         return JsonFileToTabularFileConverter().convert(inputPath)
     }

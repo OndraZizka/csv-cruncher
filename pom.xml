@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.kotlin>1.4.32</version.kotlin>
+        <version.kotlin>1.5.20</version.kotlin>
         <version.jdk>11</version.jdk>
 
         <jvm.args.debug></jvm.args.debug> <!-- Used by the -Pdebug profile. -->

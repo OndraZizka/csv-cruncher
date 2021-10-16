@@ -5,6 +5,7 @@ import java.nio.file.Path
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.TreeNode
+import java.io.InputStream
 import java.io.OutputStream
 import java.io.Serializable
 import kotlin.io.path.ExperimentalPathApi
@@ -44,25 +45,29 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
     @ExperimentalPathApi
     fun processEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
-        inputPath.inputStream().use { iss ->
-            JsonFactory().createParser(iss).use { jsonParser: JsonParser ->
-                // Find the main array with items - TODO
-                walkThroughToTheCollectionOfMainItems(jsonParser, mainArrayLocation)
+        inputPath.inputStream().use { inputStream ->
+            processEntries(inputStream, mainArrayLocation, entryProcessor)
+        }
+    }
 
-                // Expect an array of objects -> rows
-                // TODO: Or expect object of objects -> then the property name is a first column, and the objects props the further columns
-                if (jsonParser.nextToken() !== com.fasterxml.jackson.core.JsonToken.START_ARRAY) {
-                    throw IllegalStateException("Expected content to be an array")
-                }
+    fun processEntries(inputStream: InputStream, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
+        JsonFactory().createParser(inputStream).use { jsonParser: JsonParser ->
+            // Find the main array with items - TODO
+            walkThroughToTheCollectionOfMainItems(jsonParser, mainArrayLocation)
 
-                // Iterate over the tokens until the end of the array
-                while (jsonParser.nextToken() !== com.fasterxml.jackson.core.JsonToken.END_ARRAY) {
+            // Expect an array of objects -> rows
+            // TODO: Or expect object of objects -> then the property name is a first column, and the objects props the further columns
+            if (jsonParser.nextToken() !== com.fasterxml.jackson.core.JsonToken.START_ARRAY) {
+                throw IllegalStateException("Expected content to be an array")
+            }
 
-                    readObjectAndPassKeyValues(jsonParser, entryProcessor)
-                }
+            // Iterate over the tokens until the end of the array
+            while (jsonParser.nextToken() !== com.fasterxml.jackson.core.JsonToken.END_ARRAY) {
+                readObjectAndPassKeyValues(jsonParser, entryProcessor)
             }
         }
     }
+
 
     @ExperimentalPathApi
     private fun walkThroughToTheCollectionOfMainItems(jsonParser: JsonParser, mainArrayLocation: Path) {
