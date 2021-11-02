@@ -13,13 +13,11 @@ import kotlin.io.path.ExperimentalPathApi
 * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
 * So please be lenient with the code below :)
 */
-@kotlin.io.path.ExperimentalPathApi
 @Slf4j
 object App {
     const val STR_USAGE = "Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>"
     private val log = logger()
 
-    @kotlin.io.path.ExperimentalPathApi
     @JvmStatic
     @Throws(Exception::class)
     fun mainNoExit(args: Array<String>) {

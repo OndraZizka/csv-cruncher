@@ -48,7 +48,6 @@ class Cruncher(private val options: Options) {
      * Performs the whole process.
      */
     @Throws(Exception::class)
-    @ExperimentalPathApi
     fun crunch() {
         options.validate()
         val addCounterColumn = options.initialRowNumber != null
@@ -194,7 +193,6 @@ class Cruncher(private val options: Options) {
         }
     }
 
-    @ExperimentalPathApi
     private fun convertJsonToCsv(inputPath: Path): Path {
         return JsonFileToTabularFileConverter().convert(inputPath)
     }
@@ -206,10 +204,13 @@ class Cruncher(private val options: Options) {
         //dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
         val outputTablesNames = outputs.stream().map { x: CruncherOutputPart -> x.deriveOutputTableName() }.collect(Collectors.toSet())
         dbHelper!!.detachTables(outputTablesNames, "Could not delete the output table: ")
-    }// A timestamp at the beginning:
+    }
+
+    // A timestamp at the beginning:
     //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
     //executeDbCommand(sql, "Failed creating the counter variable: ");
     // Uh oh. Variables can't be used in SELECTs.
+
     /**
      * @return The initial number to use for unique row IDs.
      * Takes the value from options, or generates from timestamp if not set.

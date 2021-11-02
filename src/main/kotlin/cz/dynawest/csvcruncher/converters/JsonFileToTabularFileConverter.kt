@@ -15,7 +15,6 @@ import kotlin.io.path.outputStream
 
 
 
-@ExperimentalPathApi
 class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
     override fun convert(inputPath: Path, mainArrayLocation: String): Path {
@@ -43,7 +42,6 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         return inputPath.parent.resolve("$baseName.csv")
     }
 
-    @ExperimentalPathApi
     fun processEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
         inputPath.inputStream().use { inputStream ->
             processEntries(inputStream, mainArrayLocation, entryProcessor)
@@ -69,7 +67,6 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
     }
 
 
-    @ExperimentalPathApi
     private fun walkThroughToTheCollectionOfMainItems(jsonParser: JsonParser, mainArrayLocation: Path) {
         for (nextStep in mainArrayLocation) {
             val nextFieldName = jsonParser.nextFieldName()
