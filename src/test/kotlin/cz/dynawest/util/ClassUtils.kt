@@ -2,15 +2,21 @@ package cz.dynawest.util
 
 object ClassUtils {
 
-    fun getCallingClassName(): String? {
-        var thisClassSpotted = false;
+    fun geCurrentClassName(): String? {
+        return getCallingClassName(2)
+    }
+
+    fun getCallingClassName(target: Int = 3): String? {
+
+        var thisClassSpotted = 0;
 
         for (stackItem in Thread.currentThread().stackTrace) {
-            if (stackItem.className == ClassUtils::class.java.name) {
-                thisClassSpotted = true
-                continue
-            } else if (thisClassSpotted) {
+            if (thisClassSpotted == target) {
                 return stackItem.className
+            }
+            else if (stackItem.className == ClassUtils::class.java.name || thisClassSpotted != 0) {
+                thisClassSpotted++
+                continue
             }
         }
 
