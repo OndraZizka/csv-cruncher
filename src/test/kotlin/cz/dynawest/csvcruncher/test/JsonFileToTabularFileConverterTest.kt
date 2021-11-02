@@ -15,7 +15,7 @@ class JsonFileToTabularFileConverterTest {
 
     @Test fun testConvertJson() {
         val converter = JsonFileToTabularFileConverter()
-        val inputStream: InputStream = ResourceLoader.openResourceAtRelativePath(Path.of("sample.json"))
+        val inputStream: InputStream = ResourceLoader.openResourceAtRelativePath(Path.of("01-arrayAtRoot-sameProperties.json"))
         converter.processEntries(inputStream, Path.of("/"), object : EntryProcessor {
             override fun collectPropertiesMetadata(entry: FlattenedEntrySequence) {
                 log.info("Entry: ${entry.consumeToString()}")
