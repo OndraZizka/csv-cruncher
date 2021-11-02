@@ -11,7 +11,7 @@ class TabularPropertiesMetadataCollector : EntryProcessor {
     val propertiesSoFar: MutableMap<String, PropertyInfo> = mutableMapOf()
 
     override fun collectPropertiesMetadata(entry: FlattenedEntry) {
-        for (flattenedField in entry.keyValues) {
+        for (flattenedField in entry.flattenedProperties) {
 
             val propertyName = flattenedField.name
 

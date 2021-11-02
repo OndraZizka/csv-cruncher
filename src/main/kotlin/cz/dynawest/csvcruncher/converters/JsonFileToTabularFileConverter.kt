@@ -6,7 +6,9 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.TreeNode
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
+import org.hsqldb.Tokens.T
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.io.path.inputStream
@@ -49,7 +51,8 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
     }
 
     fun processEntries(inputStream: InputStream, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
-        JsonFactory().createParser(inputStream).use { jsonParser: JsonParser ->
+        val mapper = ObjectMapper()
+        JsonFactory().setCodec(mapper).createParser(inputStream).use { jsonParser: JsonParser ->
             // Find the main array with items
             walkThroughToTheCollectionOfMainItems(jsonParser, mainArrayLocation)
 
@@ -89,36 +92,37 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
     private fun flattenNode(node: JsonNode, flatteningContext: FlatteningContext): FlattenedEntry {
         val fieldsFlattened: Sequence<MyProperty> = node.fields().asSequence().flatMap {
                 (fieldName, value) ->
-            when (value.nodeType) {
-                JsonNodeType.STRING -> sequenceOf( MyProperty.StringMyProperty(fieldName, value.textValue()) )
-                JsonNodeType.NUMBER -> sequenceOf( MyProperty.NumberMyProperty(fieldName, value.numberValue()) )
-                JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.BooleanMyProperty(fieldName, value.booleanValue()) )
-                JsonNodeType.NULL -> sequenceOf( MyProperty.NullMyProperty(fieldName) )
-                JsonNodeType.ARRAY -> TODO()
+            val fullPropertyName = flatteningContext.currentPrefix + fieldName
+                when (value.nodeType) {
+                JsonNodeType.STRING -> sequenceOf( MyProperty.StringMyProperty(fullPropertyName, value.textValue()) )
+                JsonNodeType.NUMBER -> sequenceOf( MyProperty.NumberMyProperty(fullPropertyName, value.numberValue()) )
+                JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.BooleanMyProperty(fullPropertyName, value.booleanValue()) )
+                JsonNodeType.NULL -> sequenceOf( MyProperty.NullMyProperty(fullPropertyName) )
+                JsonNodeType.ARRAY -> sequenceOf( MyProperty.ArrayMyProperty(fullPropertyName, listOf()) )
                 JsonNodeType.OBJECT -> {
-                    val prefixAddition = ".${fieldName}"
+                    val prefixAddition = "${fieldName}."
                     flatteningContext.appendPrefix(prefixAddition)
-                    val flattenedNode = flattenNode(value, flatteningContext)
+                    val flattenedNode: FlattenedEntry = flattenNode(value, flatteningContext)
                     flatteningContext.shortenPrefix(prefixAddition)
-                    sequenceOf( MyProperty.NullMyProperty("") )
+                    flattenedNode.flattenedProperties
                 }
-                /*
-                JsonNodeType.BINARY -> TODO()
-                JsonNodeType.MISSING -> TODO()
-                JsonNodeType.POJO -> TODO()
-                */
-                else -> sequenceOf( MyProperty.NullMyProperty("") )
+                JsonNodeType.BINARY -> throw UnsupportedOperationException("Binary JSON nodes?")
+                JsonNodeType.MISSING -> throw UnsupportedOperationException("Missing JSON nodes?")
+                JsonNodeType.POJO -> throw UnsupportedOperationException("POJO JSON nodes?")
+                else -> sequenceOf( MyProperty.NullMyProperty(fullPropertyName) )
             }
         }
         return FlattenedEntry(fieldsFlattened)
     }
 }
 
-sealed class MyProperty (val name: String) {
-    class NumberMyProperty(name: String, val value: Number): MyProperty(name)
-    class StringMyProperty (name: String, val value: String): MyProperty(name)
-    class BooleanMyProperty (name: String, val value: Boolean): MyProperty(name)
-    class NullMyProperty (name: String): MyProperty(name)
+sealed class MyProperty (open val name: String) {
+    data class NumberMyProperty(override val name: String, val value: Number): MyProperty(name)
+    data class StringMyProperty (override val name: String, val value: String): MyProperty(name)
+    data class BooleanMyProperty (override val name: String, val value: Boolean): MyProperty(name)
+    data class NullMyProperty (override val name: String): MyProperty(name)
+    data class ArrayMyProperty (override val name: String, val items: List<String>): MyProperty(name)
+    data class ObjectMyProperty (override val name: String, val items: Map<String, String>): MyProperty(name)
 }
 
 

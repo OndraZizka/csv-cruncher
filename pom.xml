@@ -13,6 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.kotlin>1.5.31</version.kotlin>
         <version.jdk>11</version.jdk>
+        <version.jackson>2.9.9</version.jackson>
 
         <jvm.args.debug></jvm.args.debug> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
@@ -485,11 +486,10 @@
             <version>${version.kotlin}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>2.9.9</version>
-        </dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${version.jackson}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-annotations</artifactId><version>${version.jackson}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${version.jackson}</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.module</groupId><artifactId>jackson-module-kotlin</artifactId><version>${version.jackson}</version></dependency>
 
     </dependencies>
 

@@ -8,8 +8,10 @@ interface FileToTabularFileConverter {
 }
 
 data class FlattenedEntry(
-    val keyValues: Sequence<MyProperty>
-)
+    val flattenedProperties: Sequence<MyProperty>
+) {
+    override fun toString() = flattenedProperties.joinToString(", ")
+}
 
 interface EntryProcessor {
     fun collectPropertiesMetadata(entry: FlattenedEntry)
