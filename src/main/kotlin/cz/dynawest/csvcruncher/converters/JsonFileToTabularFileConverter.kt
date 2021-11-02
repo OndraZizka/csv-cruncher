@@ -5,10 +5,10 @@ import java.nio.file.Path
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.TreeNode
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeType
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.Serializable
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.outputStream
@@ -50,7 +50,7 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
     fun processEntries(inputStream: InputStream, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
         JsonFactory().createParser(inputStream).use { jsonParser: JsonParser ->
-            // Find the main array with items - TODO
+            // Find the main array with items
             walkThroughToTheCollectionOfMainItems(jsonParser, mainArrayLocation)
 
             // Expect an array of objects -> rows
@@ -79,19 +79,74 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         }
     }
 
+    /** This deals with individual objects to be flattened into rows. */
     fun readObjectAndPassKeyValues(jsonParser: JsonParser, entryProcessor: EntryProcessor) {
+        val node: JsonNode = jsonParser.readValueAsTree()
+        val flatEntry = flattenNode(node, FlatteningContext())
+        entryProcessor.collectPropertiesMetadata(flatEntry)
     }
 
+    private fun flattenNode(node: JsonNode, flatteningContext: FlatteningContext): FlattenedEntry {
+        val fieldsFlattened: Sequence<MyProperty> = node.fields().asSequence().flatMap {
+                (fieldName, value) ->
+            when (value.nodeType) {
+                JsonNodeType.STRING -> sequenceOf( MyProperty.StringMyProperty(fieldName, value.textValue()) )
+                JsonNodeType.NUMBER -> sequenceOf( MyProperty.NumberMyProperty(fieldName, value.numberValue()) )
+                JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.BooleanMyProperty(fieldName, value.booleanValue()) )
+                JsonNodeType.NULL -> sequenceOf( MyProperty.NullMyProperty(fieldName) )
+                JsonNodeType.ARRAY -> TODO()
+                JsonNodeType.OBJECT -> {
+                    val prefixAddition = ".${fieldName}"
+                    flatteningContext.appendPrefix(prefixAddition)
+                    val flattenedNode = flattenNode(value, flatteningContext)
+                    flatteningContext.shortenPrefix(prefixAddition)
+                    sequenceOf( MyProperty.NullMyProperty("") )
+                }
+                /*
+                JsonNodeType.BINARY -> TODO()
+                JsonNodeType.MISSING -> TODO()
+                JsonNodeType.POJO -> TODO()
+                */
+                else -> sequenceOf( MyProperty.NullMyProperty("") )
+            }
+        }
+        return FlattenedEntry(fieldsFlattened)
+    }
 }
+
+sealed class MyProperty (val name: String) {
+    class NumberMyProperty(name: String, val value: Number): MyProperty(name)
+    class StringMyProperty (name: String, val value: String): MyProperty(name)
+    class BooleanMyProperty (name: String, val value: Boolean): MyProperty(name)
+    class NullMyProperty (name: String): MyProperty(name)
+}
+
+
+class FlatteningContext (
+    var currentPrefix: String = ""
+) {
+    fun appendPrefix(addition: String) {
+        currentPrefix += addition
+    }
+
+    fun shortenPrefix(removeFromEnd: String) {
+        val shortened = currentPrefix.removeSuffix(removeFromEnd)
+        if (shortened == currentPrefix)
+            throw IllegalStateException("Tried choping '$removeFromEnd' from flattening prefix '$currentPrefix'.")
+        currentPrefix = shortened
+    }
+}
+
+
 
 class CsvExporter(
         outputStream: OutputStream,
         propertiesMetadataCollector: TabularPropertiesMetadataCollector
 ) : EntryProcessor {
-    override fun beforeEntries(entry: Entry) {
+    override fun beforeEntries(entry: FlattenedEntry) {
         TODO("Write the column headers.")
     }
-    override fun process(entry: Entry) {
+    override fun collectPropertiesMetadata(entry: FlattenedEntry) {
         TODO("Not yet implemented")
     }
 }

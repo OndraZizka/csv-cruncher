@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher.test
 
-import cz.dynawest.csvcruncher.converters.Entry
+import cz.dynawest.csvcruncher.converters.FlattenedEntry
 import cz.dynawest.csvcruncher.converters.EntryProcessor
 import cz.dynawest.csvcruncher.converters.JsonFileToTabularFileConverter
 import cz.dynawest.csvcruncher.util.logger
@@ -17,7 +17,7 @@ class JsonFileToTabularFileConverterTest {
         val converter = JsonFileToTabularFileConverter()
         val inputStream: InputStream = ResourceLoader.openResourceAtRelativePath(Path.of("sample.json"))
         converter.processEntries(inputStream, Path.of("/"), object : EntryProcessor {
-            override fun process(entry: Entry) {
+            override fun collectPropertiesMetadata(entry: FlattenedEntry) {
                 log.info("Entry: $entry")
             }
         })
