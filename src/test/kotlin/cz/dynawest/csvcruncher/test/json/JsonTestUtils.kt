@@ -10,6 +10,7 @@ import java.io.InputStream
 import java.nio.file.Path
 
 object JsonTestUtils {
+
     fun prepareEntriesFromFile(testFilePath: String, itemsArraySprout: String = "/"): MutableList<Map<String, MyProperty>> {
         val converter = JsonFileToTabularFileConverter()
         val inputStream: InputStream = ResourceLoader.openResourceAtRelativePath(Path.of(testFilePath))
@@ -24,5 +25,6 @@ object JsonTestUtils {
         })
         return entries
     }
+
     private val log = logger()
 }

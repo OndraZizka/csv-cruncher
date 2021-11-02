@@ -39,4 +39,8 @@ class TypesCount {
     var nill: Int = 0
     var obj: Int = 0
     var array: Int = 0
+
+    val total: Int
+        get() = string + number + boolean + datetime + nill + obj + array
+
 }

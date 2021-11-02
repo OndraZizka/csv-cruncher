@@ -51,33 +51,35 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         }
     }
 
-    fun processEntries(inputStream: InputStream, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
+    fun processEntries(inputStream: InputStream, sproutPath: Path, entryProcessor: EntryProcessor) {
         val mapper = ObjectMapper()
         JsonFactory().setCodec(mapper).createParser(inputStream).use { jsonParser: JsonParser ->
             // Find the main array with items
-            walkThroughToTheCollectionOfMainItems(jsonParser, mainArrayLocation)
+            walkThroughToTheCollectionOfMainItems(jsonParser, sproutPath)
 
             // Expect an array of objects -> rows
             // TODO: Or expect object of objects -> then the property name is a first column, and the objects props the further columns
+            val locationBefore = jsonParser.currentLocation
             val nextToken = jsonParser.nextToken()
-            if (nextToken !== com.fasterxml.jackson.core.JsonToken.START_ARRAY) {
-                throw IllegalStateException("Expected content to be an array, but was: $nextToken")
+            if (nextToken !== JsonToken.START_ARRAY) {
+                throw ItemsArraySproutNotFound("Items JSON Array not found after traversing over path '$sproutPath', found: $nextToken at $locationBefore")
             }
 
             // Iterate over the tokens until the end of the array
-            while (jsonParser.nextToken() !== com.fasterxml.jackson.core.JsonToken.END_ARRAY) {
+            while (jsonParser.nextToken() !== JsonToken.END_ARRAY) {
                 readObjectAndPassKeyValues(jsonParser, entryProcessor)
             }
         }
     }
 
-    class ItemsArraySproutNotFound(sproutPath: Path, location: JsonLocation) : Exception("Items array not found at '$location'. Not matching at $location.")
-
     private fun walkThroughToTheCollectionOfMainItems(jsonParser: JsonParser, itemsArrayPath: Path) {
         for (nextStep in itemsArrayPath) {
             val nextToken = jsonParser.nextToken()
             if (nextToken != JsonToken.START_OBJECT)
-                throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
+                throw ItemsArraySproutNotFound(
+                    itemsArrayPath,
+                    jsonParser.currentLocation
+                )
 
             val nextFieldName = jsonParser.nextFieldName()
             if (nextFieldName != nextStep.name) {
@@ -151,6 +153,12 @@ class FlatteningContextX (
     }
 
     override fun toString(): String = "FlatteningContext '$currentPrefix'"
+}
+
+
+class ItemsArraySproutNotFound : Exception {
+    constructor(sproutPath: Path, location: JsonLocation) : super("Items JSON Array not found after traversing over path '$sproutPath', Not matching at $location.")
+    constructor(msg: String) : super(msg)
 }
 
 
