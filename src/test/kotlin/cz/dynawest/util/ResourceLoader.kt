@@ -12,7 +12,7 @@ object ResourceLoader {
     }
 
     fun openResourceAtRelativePath(resourcePath: Path): InputStream {
-        val path = getResourceFullPathFromRelative(resourcePath.toString(), ClassUtils.getCallingClassName() ?: throw IllegalStateException("Can't find calling class."))
+        val path = getResourceFullPathFromRelative(resourcePath.toString(), ClassUtils.getCallingClassName() ?: throw IllegalStateException("Can't find the calling class."))
         return javaClass.classLoader!!.getResourceAsStream(path.toString())
             ?: throw FileNotFoundException("Resource '$path' not found in the classpath.")
     }
