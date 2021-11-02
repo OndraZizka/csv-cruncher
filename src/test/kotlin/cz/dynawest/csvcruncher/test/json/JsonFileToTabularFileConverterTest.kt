@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher.test
+package cz.dynawest.csvcruncher.test.json
 
 import cz.dynawest.csvcruncher.converters.FlattenedEntrySequence
 import cz.dynawest.csvcruncher.converters.EntryProcessor

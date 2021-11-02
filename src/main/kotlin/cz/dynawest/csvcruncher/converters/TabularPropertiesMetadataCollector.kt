@@ -17,7 +17,8 @@ class TabularPropertiesMetadataCollector : EntryProcessor {
 
             propertiesSoFar.compute(propertyName) {
                     name: String, propertyInfo: PropertyInfo? ->
-                propertyInfo ?: PropertyInfo(name).apply {
+                (propertyInfo ?: PropertyInfo(name))
+                .apply {
                     when (flattenedField) {
                         is MyProperty.Boolean -> { this.types.boolean++; this.maxLength = max(maxLength, 5) }
                         is MyProperty.Null -> { this.types.nill++; this.maxLength = max(maxLength, 4) }
