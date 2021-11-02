@@ -3,7 +3,9 @@ package cz.dynawest.csvcruncher.converters
 import java.nio.file.Path
 
 import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonLocation
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.TreeNode
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -57,8 +59,9 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
             // Expect an array of objects -> rows
             // TODO: Or expect object of objects -> then the property name is a first column, and the objects props the further columns
-            if (jsonParser.nextToken() !== com.fasterxml.jackson.core.JsonToken.START_ARRAY) {
-                throw IllegalStateException("Expected content to be an array")
+            val nextToken = jsonParser.nextToken()
+            if (nextToken !== com.fasterxml.jackson.core.JsonToken.START_ARRAY) {
+                throw IllegalStateException("Expected content to be an array, but was: $nextToken")
             }
 
             // Iterate over the tokens until the end of the array
@@ -68,17 +71,21 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         }
     }
 
+    class ItemsArraySproutNotFound(sproutPath: Path, location: JsonLocation) : Exception("Items array not found at '$location'. Not matching at $location.")
 
-    private fun walkThroughToTheCollectionOfMainItems(jsonParser: JsonParser, mainArrayLocation: Path) {
-        for (nextStep in mainArrayLocation) {
+    private fun walkThroughToTheCollectionOfMainItems(jsonParser: JsonParser, itemsArrayPath: Path) {
+        for (nextStep in itemsArrayPath) {
+            val nextToken = jsonParser.nextToken()
+            if (nextToken != JsonToken.START_OBJECT)
+                throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
+
             val nextFieldName = jsonParser.nextFieldName()
             if (nextFieldName != nextStep.name) {
                 jsonParser.readValueAsTree<TreeNode>()
                 continue
             }
-
-            jsonParser.nextToken()
         }
+        // Now we should be right before the START_ARRAY.
     }
 
     /** This deals with individual objects to be flattened into rows. */
@@ -93,11 +100,11 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
                 (fieldName, value) ->
             val fullPropertyName = flatteningContext.currentPrefix + fieldName
             when (value.nodeType) {
-                JsonNodeType.STRING -> sequenceOf( MyProperty.StringMyProperty(fullPropertyName, value.textValue()) )
-                JsonNodeType.NUMBER -> sequenceOf( MyProperty.NumberMyProperty(fullPropertyName, value.numberValue()) )
-                JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.BooleanMyProperty(fullPropertyName, value.booleanValue()) )
-                JsonNodeType.NULL -> sequenceOf( MyProperty.NullMyProperty(fullPropertyName) )
-                JsonNodeType.ARRAY -> sequenceOf( MyProperty.ArrayMyProperty(fullPropertyName, listOf()) )
+                JsonNodeType.STRING -> sequenceOf( MyProperty.String(fullPropertyName, value.textValue()) )
+                JsonNodeType.NUMBER -> sequenceOf( MyProperty.Number(fullPropertyName, value.numberValue()) )
+                JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.Boolean(fullPropertyName, value.booleanValue()) )
+                JsonNodeType.NULL -> sequenceOf( MyProperty.Null(fullPropertyName) )
+                JsonNodeType.ARRAY -> sequenceOf( MyProperty.Array(fullPropertyName, listOf()) )
                 JsonNodeType.OBJECT -> {
                     val flattenedNode: FlattenedEntrySequence = flattenNode(value, flatteningContext.withPrefixAddition("${fieldName}."))
 
@@ -106,20 +113,20 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
                 JsonNodeType.BINARY -> throw UnsupportedOperationException("Binary JSON nodes?")
                 JsonNodeType.MISSING -> throw UnsupportedOperationException("Missing JSON nodes?")
                 JsonNodeType.POJO -> throw UnsupportedOperationException("POJO JSON nodes?")
-                else -> sequenceOf( MyProperty.NullMyProperty(fullPropertyName) )
+                else -> sequenceOf( MyProperty.Null(fullPropertyName) )
             }
         }
         return FlattenedEntrySequence(fieldsFlattened)
     }
 }
 
-sealed class MyProperty (open val name: String) {
-    data class NumberMyProperty(override val name: String, val value: Number): MyProperty(name)
-    data class StringMyProperty (override val name: String, val value: String): MyProperty(name)
-    data class BooleanMyProperty (override val name: String, val value: Boolean): MyProperty(name)
-    data class NullMyProperty (override val name: String): MyProperty(name)
-    data class ArrayMyProperty (override val name: String, val items: List<String>): MyProperty(name)
-    data class ObjectMyProperty (override val name: String, val items: Map<String, String>): MyProperty(name)
+sealed class MyProperty (open val name: kotlin.String) {
+    data class Number(override val name: kotlin.String, val value: kotlin.Number): MyProperty(name)
+    data class String (override val name: kotlin.String, val value: kotlin.String): MyProperty(name)
+    data class Boolean (override val name: kotlin.String, val value: kotlin.Boolean): MyProperty(name)
+    data class Null (override val name: kotlin.String): MyProperty(name)
+    data class Array (override val name: kotlin.String, val items: List<kotlin.String>): MyProperty(name)
+    data class Object (override val name: kotlin.String, val items: Map<kotlin.String, kotlin.String>): MyProperty(name)
 }
 
 

@@ -19,10 +19,10 @@ class TabularPropertiesMetadataCollector : EntryProcessor {
                     name: String, propertyInfo: PropertyInfo? ->
                 propertyInfo ?: PropertyInfo(name).apply {
                     when (flattenedField) {
-                        is MyProperty.BooleanMyProperty -> { this.types.boolean++; this.maxLength = max(maxLength, 5) }
-                        is MyProperty.NullMyProperty -> { this.types.nill++; this.maxLength = max(maxLength, 4) }
-                        is MyProperty.NumberMyProperty -> { this.types.number++; this.maxLength = max(maxLength, flattenedField.value.toString().length) }
-                        is MyProperty.StringMyProperty -> { this.types.string++; this.maxLength = max(maxLength, flattenedField.value.length) }
+                        is MyProperty.Boolean -> { this.types.boolean++; this.maxLength = max(maxLength, 5) }
+                        is MyProperty.Null -> { this.types.nill++; this.maxLength = max(maxLength, 4) }
+                        is MyProperty.Number -> { this.types.number++; this.maxLength = max(maxLength, flattenedField.value.toString().length) }
+                        is MyProperty.String -> { this.types.string++; this.maxLength = max(maxLength, flattenedField.value.length) }
                     }
                 }
             }
