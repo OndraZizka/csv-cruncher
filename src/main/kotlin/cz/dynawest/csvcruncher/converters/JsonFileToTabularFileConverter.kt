@@ -8,7 +8,6 @@ import com.fasterxml.jackson.core.TreeNode
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
-import org.hsqldb.Tokens.T
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.io.path.inputStream
@@ -89,21 +88,19 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         entryProcessor.collectPropertiesMetadata(flatEntry)
     }
 
-    private fun flattenNode(node: JsonNode, flatteningContext: FlatteningContext): FlattenedEntry {
+    private fun flattenNode(node: JsonNode, flatteningContext: FlatteningContext): FlattenedEntrySequence {
         val fieldsFlattened: Sequence<MyProperty> = node.fields().asSequence().flatMap {
                 (fieldName, value) ->
             val fullPropertyName = flatteningContext.currentPrefix + fieldName
-                when (value.nodeType) {
+            when (value.nodeType) {
                 JsonNodeType.STRING -> sequenceOf( MyProperty.StringMyProperty(fullPropertyName, value.textValue()) )
                 JsonNodeType.NUMBER -> sequenceOf( MyProperty.NumberMyProperty(fullPropertyName, value.numberValue()) )
                 JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.BooleanMyProperty(fullPropertyName, value.booleanValue()) )
                 JsonNodeType.NULL -> sequenceOf( MyProperty.NullMyProperty(fullPropertyName) )
                 JsonNodeType.ARRAY -> sequenceOf( MyProperty.ArrayMyProperty(fullPropertyName, listOf()) )
                 JsonNodeType.OBJECT -> {
-                    val prefixAddition = "${fieldName}."
-                    flatteningContext.appendPrefix(prefixAddition)
-                    val flattenedNode: FlattenedEntry = flattenNode(value, flatteningContext)
-                    flatteningContext.shortenPrefix(prefixAddition)
+                    val flattenedNode: FlattenedEntrySequence = flattenNode(value, flatteningContext.withPrefixAddition("${fieldName}."))
+
                     flattenedNode.flattenedProperties
                 }
                 JsonNodeType.BINARY -> throw UnsupportedOperationException("Binary JSON nodes?")
@@ -112,7 +109,7 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
                 else -> sequenceOf( MyProperty.NullMyProperty(fullPropertyName) )
             }
         }
-        return FlattenedEntry(fieldsFlattened)
+        return FlattenedEntrySequence(fieldsFlattened)
     }
 }
 
@@ -126,7 +123,13 @@ sealed class MyProperty (open val name: String) {
 }
 
 
-class FlatteningContext (
+data class FlatteningContext (
+    val currentPrefix: String = ""
+) {
+    fun withPrefixAddition(prefixAddition: String) = this.copy(currentPrefix = currentPrefix + prefixAddition)
+}
+
+class FlatteningContextX (
     var currentPrefix: String = ""
 ) {
     fun appendPrefix(addition: String) {
@@ -139,6 +142,8 @@ class FlatteningContext (
             throw IllegalStateException("Tried choping '$removeFromEnd' from flattening prefix '$currentPrefix'.")
         currentPrefix = shortened
     }
+
+    override fun toString(): String = "FlatteningContext '$currentPrefix'"
 }
 
 
@@ -147,10 +152,10 @@ class CsvExporter(
         outputStream: OutputStream,
         propertiesMetadataCollector: TabularPropertiesMetadataCollector
 ) : EntryProcessor {
-    override fun beforeEntries(entry: FlattenedEntry) {
+    override fun beforeEntries(entry: FlattenedEntrySequence) {
         TODO("Write the column headers.")
     }
-    override fun collectPropertiesMetadata(entry: FlattenedEntry) {
+    override fun collectPropertiesMetadata(entry: FlattenedEntrySequence) {
         TODO("Not yet implemented")
     }
 }

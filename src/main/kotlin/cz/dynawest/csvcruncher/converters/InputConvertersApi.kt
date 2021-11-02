@@ -7,16 +7,16 @@ interface FileToTabularFileConverter {
     fun convert(inputPath: Path, mainArrayLocation: String = ""): Path
 }
 
-data class FlattenedEntry(
+data class FlattenedEntrySequence(
     val flattenedProperties: Sequence<MyProperty>
 ) {
-    override fun toString() = flattenedProperties.joinToString(", ")
+    fun consumeToString() = flattenedProperties.joinToString(", ")
 }
 
 interface EntryProcessor {
-    fun collectPropertiesMetadata(entry: FlattenedEntry)
-    fun beforeEntries(entry: FlattenedEntry) {}
-    fun afterEntries(entry: FlattenedEntry) {}
+    fun collectPropertiesMetadata(entry: FlattenedEntrySequence)
+    fun beforeEntries(entry: FlattenedEntrySequence) {}
+    fun afterEntries(entry: FlattenedEntrySequence) {}
 }
 
 
