@@ -1,11 +1,13 @@
 package cz.dynawest.util
 
-import junit.framework.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+
 
 class ClassUtilsTest {
 
-    @Test fun test_getCurrentClass() {
+    @Test
+    fun test_getCurrentClass() {
         assertEquals(ClassUtilsTest::class.java.name, ClassUtils.geCurrentClassName())
     }
 

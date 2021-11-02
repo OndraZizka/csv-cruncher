@@ -3,12 +3,12 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.Options
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.*
 
 class ChangedSchemaIT {
-    @Before
+    @BeforeEach
     fun dropDbSchema() {
     }
 

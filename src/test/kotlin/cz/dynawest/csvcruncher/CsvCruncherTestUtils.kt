@@ -4,7 +4,8 @@ import cz.dynawest.csvcruncher.App.mainNoExit
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import org.apache.commons.lang3.StringUtils
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -57,7 +58,7 @@ object CsvCruncherTestUtils {
                         if (previousId != null && "I" == values[0]) {
                             val msgT = if (successive) "prevId %d +1 = %d in %s" else "prevId %d < %d in %s"
                             val msg = String.format(msgT, previousId, id, csvFile.path)
-                            if (successive) Assert.assertEquals(msg, (previousId!! + 1).toLong(), id.toLong()) else Assert.assertTrue(msg, previousId!! < id)
+                            if (successive) assertEquals((previousId!! + 1).toLong(), id.toLong(), msg) else assertTrue(previousId!! < id, msg)
                         }
                         previousId = id
                     }

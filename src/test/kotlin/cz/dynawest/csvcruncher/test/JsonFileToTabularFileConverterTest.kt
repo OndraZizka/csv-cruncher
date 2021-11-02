@@ -6,13 +6,15 @@ import cz.dynawest.csvcruncher.converters.JsonFileToTabularFileConverter
 import cz.dynawest.csvcruncher.converters.MyProperty
 import cz.dynawest.csvcruncher.util.logger
 import cz.dynawest.util.ResourceLoader
-import org.junit.Test
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Test
 import java.io.InputStream
 import java.nio.file.Path
 
 class JsonFileToTabularFileConverterTest {
 
-    @Test fun testConvertJson() {
+    @Test
+    fun testConvertJson() {
         val converter = JsonFileToTabularFileConverter()
         val inputStream: InputStream = ResourceLoader.openResourceAtRelativePath(Path.of("01-arrayAtRoot-sameProperties.json"))
 
@@ -24,6 +26,8 @@ class JsonFileToTabularFileConverterTest {
                 log.info("Entry: ${entryMap}")
             }
         })
+
+        Assertions.assertThat(entries).size().isEqualTo(3)
     }
 
     companion object { private val log = logger() }

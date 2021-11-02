@@ -2,10 +2,11 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
-import org.junit.Assert
-import org.junit.BeforeClass
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 /**
@@ -33,10 +34,10 @@ class OptionsCombinationsIT {
                 "  FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get("target/testResults/testSimple.csv").toFile()
-        Assert.assertTrue(resultCsv.exists())
+        assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        Assert.assertEquals("Column names fit", columnNames.size.toLong(), 9)
-        Assert.assertEquals(columnNames[8].toLowerCase(), "warmupslower")
+        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
+        assertEquals(columnNames[8].toLowerCase(), "warmupslower")
 
         // TODO: Add content verifications.
     }
@@ -53,7 +54,7 @@ class OptionsCombinationsIT {
                 "  FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get("target/testResults/testSimple.json").toFile()
-        Assert.assertTrue(resultCsv.exists())
+        assertTrue(resultCsv.exists())
 
         // TODO: Add JSON verifications.
     }
@@ -71,10 +72,10 @@ class OptionsCombinationsIT {
                         "   FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get("target/testResults/combineInputFile.csv").toFile()
-        Assert.assertTrue(resultCsv.exists())
+        assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        Assert.assertEquals("Column names fit", columnNames.size.toLong(), 9)
-        Assert.assertEquals(columnNames[8].toLowerCase(), "warmupslower")
+        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
+        assertEquals(columnNames[8].toLowerCase(), "warmupslower")
     }
 
     @Test
@@ -94,7 +95,7 @@ class OptionsCombinationsIT {
     }
 
     @Test
-    @Ignore("Not yet implemented")
+    @Disabled("Not yet implemented")
     @Throws(Exception::class)
     fun combine_perRootSubDir() {
         val command = "--json=entries" +
@@ -108,10 +109,10 @@ class OptionsCombinationsIT {
                 "    FROM concat ORDER BY session_type, created_time DESC"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get("target/testResults/combine_perRootSubDir.csv").toFile()
-        Assert.assertTrue(resultCsv.exists())
+        assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        Assert.assertEquals("Column names fit", columnNames.size.toLong(), 5)
-        Assert.assertEquals(columnNames[4].toLowerCase(), "modified_date")
+        assertEquals(columnNames.size.toLong(), 5, "Column names fit")
+        assertEquals(columnNames[4].toLowerCase(), "modified_date")
 
         // TODO: Add content verifications.
     }
@@ -143,12 +144,12 @@ class OptionsCombinationsIT {
                 " |  -out | " + inputCsv
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get(inputCsv).toFile()
-        Assert.assertTrue(resultCsv.exists())
+        assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        Assert.assertEquals("Column names fit", columnNames.size.toLong(), 10)
-        Assert.assertEquals(columnNames[9].toLowerCase(), "modified_time")
+        assertEquals(columnNames.size.toLong(), 10, "Column names fit")
+        assertEquals(columnNames[9].toLowerCase(), "modified_time")
         val shouldBeNull = CsvCruncherTestUtils.getCsvCellValue(resultCsv, 1, 8)
-        Assert.assertEquals("row 1, col 9 should be null", null, shouldBeNull)
+        assertEquals(null, shouldBeNull, "row 1, col 9 should be null")
     }
 
     @Test
@@ -194,7 +195,7 @@ class OptionsCombinationsIT {
     }
 
     companion object {
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun deletePreviousResults() {
             CsvCruncherTestUtils.testOutputDir.toFile().delete()
