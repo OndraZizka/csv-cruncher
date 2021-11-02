@@ -58,7 +58,7 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
             walkThroughToTheCollectionOfMainItems(jsonParser, sproutPath)
 
             // Expect an array of objects -> rows
-            // TODO: Or expect object of objects -> then the property name is a first column, and the objects props the further columns
+            // TODO: Or expect map of objects -> then the property name is a first column, and the objects props the further columns
             val locationBefore = jsonParser.currentLocation
             val nextToken = jsonParser.nextToken()
             if (nextToken !== JsonToken.START_ARRAY) {
@@ -76,16 +76,21 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         for (nextStep in itemsArrayPath) {
             val nextToken = jsonParser.nextToken()
             if (nextToken != JsonToken.START_OBJECT)
-                throw ItemsArraySproutNotFound(
-                    itemsArrayPath,
-                    jsonParser.currentLocation
-                )
+                throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
 
-            val nextFieldName = jsonParser.nextFieldName()
-            if (nextFieldName != nextStep.name) {
-                jsonParser.readValueAsTree<TreeNode>()
-                continue
-            }
+            do {
+                val nextFieldName = jsonParser.nextFieldName()
+                if (nextFieldName == null)
+                    throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
+
+                if (nextFieldName != nextStep.name) {
+                    jsonParser.skipChildren()
+                    val x = jsonParser.nextValue()
+                    jsonParser.skipChildren()
+                    continue
+                }
+                else break
+            } while (true)
         }
         // Now we should be right before the START_ARRAY.
     }

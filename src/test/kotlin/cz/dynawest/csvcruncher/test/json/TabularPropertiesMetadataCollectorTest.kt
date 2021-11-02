@@ -7,11 +7,12 @@ import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
 import cz.dynawest.csvcruncher.util.logger
 import cz.dynawest.util.ResourceLoader
 import org.assertj.core.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.InputStream
-import java.lang.IllegalStateException
 import java.nio.file.Path
+import kotlin.test.assertEquals
 
 class TabularPropertiesMetadataCollectorTest {
 
@@ -88,6 +89,18 @@ class TabularPropertiesMetadataCollectorTest {
         assertThrows<ItemsArraySproutNotFound> {
             collectProperties("data/basic/12-arrayInObject-sameProperties.json", "/")
         }
+    }
+
+    @Test @Disabled("A bug in walkThroughToTheCollectionOfMainItems()")
+    fun `testConvertJson_real_youtube`() {
+        val collectedProperties = collectProperties("data/real/youtube.json", "/items")
+
+        val propsList = collectedProperties.map { "\n * $it" }.joinToString()
+        assertEquals(5, collectedProperties.size, propsList)
+        assertThat(collectedProperties).containsKeys("kind", "etag", "id.kind", "id.videoId", "id.channelId")
+        assertThat(collectedProperties).doesNotContainKey("id")
+        assertThat(collectedProperties.get("id.kind")!!.types.string).isEqualTo(3)
+        assertThat(collectedProperties.get("id.videoId")!!.types.string).isEqualTo(2)
     }
 
 

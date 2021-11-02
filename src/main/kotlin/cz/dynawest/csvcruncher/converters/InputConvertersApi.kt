@@ -24,22 +24,24 @@ interface KeyValueWriter {
     fun writeKeyValue(keyValues: Map<String, Serializable>)
 }
 
-class PropertyInfo(
+data class PropertyInfo(
     val name: String
 ) {
     val types: TypesCount = TypesCount()
     var maxLength: Int = 0
+
+    override fun toString() = "types: $types maxLength: $maxLength"
 }
 
-class TypesCount {
-    var string: Int = 0
-    var number: Int = 0
-    var boolean: Int = 0
-    var datetime: Int = 0
-    var nill: Int = 0
-    var obj: Int = 0
-    var array: Int = 0
-
+data class TypesCount (
+    var string: Int = 0,
+    var number: Int = 0,
+    var boolean: Int = 0,
+    var datetime: Int = 0,
+    var nill: Int = 0,
+    var obj: Int = 0,
+    var array: Int = 0,
+) {
     val total: Int
         get() = string + number + boolean + datetime + nill + obj + array
 
