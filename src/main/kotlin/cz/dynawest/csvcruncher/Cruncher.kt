@@ -6,7 +6,6 @@ import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
-import lombok.extern.slf4j.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
@@ -17,7 +16,6 @@ import java.sql.*
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
-@Slf4j
 class Cruncher(private val options: Options) {
     private var jdbcConn: Connection? = null
     private var dbHelper: HsqlDbHelper? = null

@@ -3,17 +3,14 @@ package cz.dynawest.csvcruncher
 import cz.dynawest.csvcruncher.Options.*
 import cz.dynawest.csvcruncher.util.Utils.version
 import cz.dynawest.csvcruncher.util.logger
-import lombok.extern.slf4j.Slf4j
 import org.apache.commons.lang3.StringUtils
 import java.io.PrintStream
 import java.util.regex.Pattern
-import kotlin.io.path.ExperimentalPathApi
 
 /*
 * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
 * So please be lenient with the code below :)
 */
-@Slf4j
 object App {
     const val STR_USAGE = "Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>"
     private val log = logger()
