@@ -3,16 +3,18 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.zizka.csvcruncher</groupId>
     <artifactId>csv-cruncher</artifactId>
-    <version>1.31.1-SNAPSHOT</version>
+    <version>1.31.0</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV or JSON files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
+    <url>https://github.com/OndraZizka/csv-cruncher</url>
+    <licenses><license><name>The Apache Software License, Version 2.0</name><url>http://www.apache.org/licenses/LICENSE-2.0.txt</url><distribution>repo</distribution></license></licenses>
+    <developers><developer><name>Ondrej Zizka</name><email>zizka@seznam.cz</email></developer></developers>
+    <issueManagement><system>GitHub Issues</system><url>https://github.com/OndraZizka/csv-cruncher/issues</url></issueManagement>
     <scm>
         <url>https://github.com/OndraZizka/csv-cruncher</url>
         <developerConnection>scm:git:git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
     </scm>
-    <issueManagement><system>GitHub Issues</system><url>https://github.com/OndraZizka/csv-cruncher/issues</url></issueManagement>
-
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -50,20 +52,12 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <includes>
-                        <include>**/*.class</include>
-                        <exclude>**/*.kt</exclude>
-                    </includes>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.1.0</version>
+                <configuration><includes><include>**/*.class</include><exclude>**/*.kt</exclude></includes></configuration>
             </plugin>
 
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.0.0</version>
+                <artifactId>maven-antrun-plugin</artifactId><version>3.0.0</version>
                 <executions>
                     <execution>
                         <phase>generate-test-resources</phase>
@@ -71,7 +65,28 @@
                         <configuration><target><unzip src="src/test/data/json/github_data.zip" dest="target/testData/json/" /></target></configuration>
                     </execution>
                 </executions>
+            </plugin>
 
+            <!-- Generate a JavaDoc and source jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.2.1</version>
+                <configuration><includes>**/*.kt</includes></configuration>
+                <executions><execution><id>attach-sources</id><goals><goal>jar</goal></goals></execution></executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.3.1</version>
+                <executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
+            </plugin>
+            <!-- <plugin> <groupId>org.jetbrains.kotlin</groupId> <artifactId>kdoc-maven-plugin</artifactId> <version>${version.kotlin}</version> </plugin> -->
+            <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>${version.kotlin}</version>
+                <executions>
+                    <execution><id>dokka-site</id><phase>pre-site</phase><goals><goal>dokka</goal></goals></execution>
+                    <execution><id>dokka-jar</id><phase>package</phase><goals><goal>javadocJar</goal></goals></execution>
+                </executions>
+                <configuration><dokkaPlugins><plugin><groupId>org.jetbrains.dokka</groupId><artifactId>kotlin-as-java-plugin</artifactId><version>${version.kotlin}</version></plugin></dokkaPlugins></configuration>
             </plugin>
 
             <plugin>

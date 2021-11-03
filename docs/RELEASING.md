@@ -18,6 +18,6 @@ Releasing
     This should include invocation of the `deploy` plugin.  
     If not, it's possible to do it manually (with `autoReleaseAfterClose` = true and a non-SNAPSHOT version to publish):
     
-       $ mvn clean deploy -Possrh
+       $ mvn clean deploy -Possrh # p..##
 
-4) If `autoReleaseAfterClose` = false, then go to Sonatype OSSRH and release the staged snapshot.
+4) Go to [Sonatype OSSRH](https://oss.sonatype.org/) and release the staged snapshot.
