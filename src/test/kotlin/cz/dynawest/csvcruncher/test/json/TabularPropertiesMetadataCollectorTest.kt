@@ -1,13 +1,12 @@
 package cz.dynawest.csvcruncher.test.json
 
 import cz.dynawest.csvcruncher.converters.ItemsArraySproutNotFound
-import cz.dynawest.csvcruncher.converters.JsonFileToTabularFileConverter
+import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.converters.PropertyInfo
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
 import cz.dynawest.csvcruncher.util.logger
 import cz.dynawest.util.ResourceLoader
 import org.assertj.core.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.InputStream
@@ -119,7 +118,7 @@ class TabularPropertiesMetadataCollectorTest {
 
 
     private fun collectProperties(testFilePath: String, itemsArraySprout: String = "/"): MutableMap<String, PropertyInfo> {
-        val converter = JsonFileToTabularFileConverter()
+        val converter = JsonFileFlattener()
         val inputStream: InputStream =
             if (testFilePath.startsWith("/"))
                 javaClass.classLoader!!.getResourceAsStream(testFilePath)
@@ -127,7 +126,7 @@ class TabularPropertiesMetadataCollectorTest {
                 ResourceLoader.openResourceAtRelativePath(Path.of(testFilePath))
 
         val tabularPropertiesMetadataCollector = TabularPropertiesMetadataCollector()
-        converter.processEntries(inputStream, Path.of(itemsArraySprout), tabularPropertiesMetadataCollector)
+        converter.visitEntries(inputStream, Path.of(itemsArraySprout), tabularPropertiesMetadataCollector)
         val collectedProperties = tabularPropertiesMetadataCollector.propertiesSoFar
         return collectedProperties
     }

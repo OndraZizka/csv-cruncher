@@ -14,7 +14,7 @@ data class FlattenedEntrySequence(
 }
 
 interface EntryProcessor {
-    fun collectPropertiesMetadata(entry: FlattenedEntrySequence)
+    fun processEntry(entry: FlattenedEntrySequence)
     fun beforeEntries(entry: FlattenedEntrySequence) {}
     fun afterEntries(entry: FlattenedEntrySequence) {}
 }

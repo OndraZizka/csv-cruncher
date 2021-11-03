@@ -2,7 +2,7 @@ package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.Options.JsonExportFormat
-import cz.dynawest.csvcruncher.converters.JsonFileToTabularFileConverter
+import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
@@ -16,7 +16,6 @@ import java.nio.file.Paths
 import java.sql.*
 import java.util.regex.Pattern
 import java.util.stream.Collectors
-import kotlin.io.path.ExperimentalPathApi
 
 @Slf4j
 class Cruncher(private val options: Options) {
@@ -194,7 +193,7 @@ class Cruncher(private val options: Options) {
     }
 
     private fun convertJsonToCsv(inputPath: Path): Path {
-        return JsonFileToTabularFileConverter().convert(inputPath)
+        return JsonFileFlattener().convert(inputPath)
     }
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String?, File>, outputs: List<CruncherOutputPart>) {

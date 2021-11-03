@@ -6,19 +6,20 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonLocation
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
-import com.fasterxml.jackson.core.TreeNode
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.OpenOption
+import java.time.LocalDateTime
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.outputStream
 
 
 
-class JsonFileToTabularFileConverter : FileToTabularFileConverter {
+class JsonFileFlattener : FileToTabularFileConverter {
 
     override fun convert(inputPath: Path, mainArrayLocation: String): Path {
 
@@ -26,7 +27,7 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 
         // 1st pass - Identify the columns
         val propertiesMetadataCollector = TabularPropertiesMetadataCollector()
-        processEntries(inputPath, mainArrayPath, propertiesMetadataCollector)
+        visitEntries(inputPath, mainArrayPath, propertiesMetadataCollector)
 
         // Cancel on too many JSON map keys
         // Optionally covert array properties?
@@ -34,8 +35,8 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         // 2nd pass - Export to CSV
         val outputPath = deriveOutputPath(inputPath)
         outputPath.outputStream().use { outputStream ->
-            val csvExporter = CsvExporter(outputStream, propertiesMetadataCollector)
-            processEntries(inputPath, mainArrayPath, csvExporter)
+            val csvExporter = CsvExporter(outputStream, propertiesMetadataCollector.propertiesSoFar)
+            visitEntries(inputPath, mainArrayPath, csvExporter)
         }
         return outputPath
     }
@@ -45,13 +46,13 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
         return inputPath.parent.resolve("$baseName.csv")
     }
 
-    fun processEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
+    fun visitEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
         inputPath.inputStream().use { inputStream ->
-            processEntries(inputStream, mainArrayLocation, entryProcessor)
+            visitEntries(inputStream, mainArrayLocation, entryProcessor)
         }
     }
 
-    fun processEntries(inputStream: InputStream, sproutPath: Path, entryProcessor: EntryProcessor) {
+    fun visitEntries(inputStream: InputStream, sproutPath: Path, entryProcessor: EntryProcessor) {
         val mapper = ObjectMapper()
         JsonFactory().setCodec(mapper).createParser(inputStream).use { jsonParser: JsonParser ->
             // Find the main array with items
@@ -99,7 +100,7 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
     fun readObjectAndPassKeyValues(jsonParser: JsonParser, entryProcessor: EntryProcessor) {
         val node: JsonNode = jsonParser.readValueAsTree()
         val flatEntry = flattenNode(node, FlatteningContext())
-        entryProcessor.collectPropertiesMetadata(flatEntry)
+        entryProcessor.processEntry(flatEntry)
     }
 
     private fun flattenNode(node: JsonNode, flatteningContext: FlatteningContext): FlattenedEntrySequence {
@@ -128,12 +129,14 @@ class JsonFileToTabularFileConverter : FileToTabularFileConverter {
 }
 
 sealed class MyProperty (open val name: kotlin.String) {
-    data class Number(override val name: kotlin.String, val value: kotlin.Number): MyProperty(name)
-    data class String (override val name: kotlin.String, val value: kotlin.String): MyProperty(name)
-    data class Boolean (override val name: kotlin.String, val value: kotlin.Boolean): MyProperty(name)
-    data class Null (override val name: kotlin.String): MyProperty(name)
-    data class Array (override val name: kotlin.String, val items: List<kotlin.String>): MyProperty(name)
-    data class Object (override val name: kotlin.String, val items: Map<kotlin.String, kotlin.String>): MyProperty(name)
+    abstract fun toCsvString(): kotlin.String
+
+    data class Number(override val name: kotlin.String, val value: kotlin.Number): MyProperty(name) { override fun toCsvString() = value.toString() }
+    data class String (override val name: kotlin.String, val value: kotlin.String): MyProperty(name) { override fun toCsvString() = value.toString() }
+    data class Boolean (override val name: kotlin.String, val value: kotlin.Boolean): MyProperty(name) { override fun toCsvString() = value.toString() }
+    data class Null (override val name: kotlin.String): MyProperty(name) { override fun toCsvString() = "NULL" }
+    data class Array (override val name: kotlin.String, val items: List<kotlin.String>): MyProperty(name) { override fun toCsvString() = "[...]" }
+    data class Object (override val name: kotlin.String, val items: Map<kotlin.String, kotlin.String>): MyProperty(name) { override fun toCsvString() = "{...}" }
 }
 
 
@@ -143,23 +146,6 @@ data class FlatteningContext (
     fun withPrefixAddition(prefixAddition: String) = this.copy(currentPrefix = currentPrefix + prefixAddition)
 }
 
-class FlatteningContextX (
-    var currentPrefix: String = ""
-) {
-    fun appendPrefix(addition: String) {
-        currentPrefix += addition
-    }
-
-    fun shortenPrefix(removeFromEnd: String) {
-        val shortened = currentPrefix.removeSuffix(removeFromEnd)
-        if (shortened == currentPrefix)
-            throw IllegalStateException("Tried choping '$removeFromEnd' from flattening prefix '$currentPrefix'.")
-        currentPrefix = shortened
-    }
-
-    override fun toString(): String = "FlatteningContext '$currentPrefix'"
-}
-
 
 class ItemsArraySproutNotFound : Exception {
     constructor(sproutPath: Path, location: JsonLocation) : super("Items JSON Array not found after traversing over path '$sproutPath', Not matching at $location.")
@@ -167,16 +153,24 @@ class ItemsArraySproutNotFound : Exception {
 }
 
 
-
 class CsvExporter(
-        outputStream: OutputStream,
-        propertiesMetadataCollector: TabularPropertiesMetadataCollector
+    val outputStream: OutputStream, // TBD: Rather have the file path and handle opening here?
+    val columnsInfo: MutableMap<String, PropertyInfo>,
+    val columnSeparator: String = ","
 ) : EntryProcessor {
     override fun beforeEntries(entry: FlattenedEntrySequence) {
-        TODO("Write the column headers.")
+        val writer = outputStream.writer()
+        writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}")
+
+        val header = columnsInfo.map { it.value.name }.joinToString(separator = columnSeparator + " ")
+        writer.write(header + "\n")
     }
-    override fun collectPropertiesMetadata(entry: FlattenedEntrySequence) {
-        TODO("Not yet implemented")
+    override fun processEntry(entry: FlattenedEntrySequence) {
+        val entryPropsMap: Map<String, MyProperty> = entry.flattenedProperties.associateBy { it.name }
+        val line = columnsInfo.map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(
+            columnSeparator
+        )
+        outputStream.writer().write(line + "\n\n")
     }
 }
 
