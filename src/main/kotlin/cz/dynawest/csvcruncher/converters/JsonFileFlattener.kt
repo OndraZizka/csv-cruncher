@@ -1,7 +1,5 @@
 package cz.dynawest.csvcruncher.converters
 
-import java.nio.file.Path
-
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonLocation
 import com.fasterxml.jackson.core.JsonParser
@@ -10,13 +8,10 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import java.io.InputStream
-import java.io.OutputStream
-import java.nio.file.OpenOption
-import java.time.LocalDateTime
+import java.nio.file.Path
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.outputStream
-
 
 
 class JsonFileFlattener : FileToTabularFileConverter {
@@ -150,28 +145,6 @@ data class FlatteningContext (
 class ItemsArraySproutNotFound : Exception {
     constructor(sproutPath: Path, location: JsonLocation) : super("Items JSON Array not found after traversing over path '$sproutPath', Not matching at $location.")
     constructor(msg: String) : super(msg)
-}
-
-
-class CsvExporter(
-    val outputStream: OutputStream, // TBD: Rather have the file path and handle opening here?
-    val columnsInfo: MutableMap<String, PropertyInfo>,
-    val columnSeparator: String = ","
-) : EntryProcessor {
-    override fun beforeEntries(entry: FlattenedEntrySequence) {
-        val writer = outputStream.writer()
-        writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}")
-
-        val header = columnsInfo.map { it.value.name }.joinToString(separator = columnSeparator + " ")
-        writer.write(header + "\n")
-    }
-    override fun processEntry(entry: FlattenedEntrySequence) {
-        val entryPropsMap: Map<String, MyProperty> = entry.flattenedProperties.associateBy { it.name }
-        val line = columnsInfo.map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(
-            columnSeparator
-        )
-        outputStream.writer().write(line + "\n\n")
-    }
 }
 
 
