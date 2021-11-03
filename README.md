@@ -1,7 +1,8 @@
-CSV Cruncher - query and process your CSVs using SQL.
-====================================================
+CSV Cruncher - query and process your CSV and JSON files using SQL.
+===================================================================
 
-A tool which treats CSV files as SQL tables, and exports CSV and JSON files using a SQL `SELECT` statement.
+A tool which treats CSV and JSON files as SQL tables, performs SQL `SELECT` queries on them,
+and stores the result into CSV and JSON files.
 
 <img src="./docs/images/icon.png" align="left" style="float: left;">
 
@@ -13,10 +14,12 @@ http://static.openheatmap.com/images/googleicon.png
 Many tools and systems can export their data to CSV - comma separated values.
 Typical work with these data is importing them into some spreadsheet like Excel and process them manually.
 
+Web services typically produce results as JSON arrays of objects. Reviewing them in JSON format is not too human friendly,
+and processing them using `jq` is quite complicated.
+
 <div style="clear: both; height: 10px"></div>
 
-
-With this tool, you can automate this processing by writing SQL queries, which produce another CSV as a result.
+With CSV Cruncher, you can automate this processing by writing SQL queries, which produce another CSV or JSON as a result.
 The SQL operations can be quite powerful – just consider what everything you have at hand:
 
  * Simple selects - ordering, filtering, grouping, aggregating, etc.
@@ -39,11 +42,11 @@ On top of that, CSV Cruncher can:
  * Add a unique incrementing number to each row of the result
 
 Features in progress:
- * Import JSON files
+ * Read JSON files
 
 And this is planned:
- * Import and export Excel (XLS) files
- * Import any text files, parsed into columns by a regular expression groups
+ * Read and export Excel (XLS) files
+ * Read any text files, parsed into columns by a regular expression groups
  * Export HTML tables
 
 All this is backed by [HyperSQL database](http://hsqldb.org/).
