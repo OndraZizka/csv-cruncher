@@ -91,7 +91,7 @@ class TabularPropertiesMetadataCollectorTest {
         }
     }
 
-    @Test @Disabled("A bug in walkThroughToTheCollectionOfMainItems()")
+    @Test //@Disabled("A bug in walkThroughToTheCollectionOfMainItems()")
     fun `testConvertJson_real_youtube`() {
         val collectedProperties = collectProperties("data/real/youtube.json", "/items")
 
@@ -103,11 +103,29 @@ class TabularPropertiesMetadataCollectorTest {
         assertThat(collectedProperties.get("id.videoId")!!.types.string).isEqualTo(2)
     }
 
+    @Test
+    fun `testConvertJson_large_github`() {
+        val collectedProperties = collectProperties("/target/testData/json/github_data.json", "/")
+
+        val propsList = collectedProperties.map { "\n * $it" }.joinToString()
+        assertEquals(615, collectedProperties.size, propsList)
+        assertThat(collectedProperties).containsKeys("id", "actor.id", "actor.login", "actor.url", "payload.release.author.id")
+        assertThat(collectedProperties).doesNotContainKey("payload")
+        assertThat(collectedProperties.get("repo.name")!!.types.string).isEqualTo(11351)
+        assertThat(collectedProperties.get("repo.id")!!.types.number).isEqualTo(11351)
+        assertThat(collectedProperties.get("repo.id")!!.maxLength).isEqualTo(8)
+    }
+
 
 
     private fun collectProperties(testFilePath: String, itemsArraySprout: String = "/"): MutableMap<String, PropertyInfo> {
         val converter = JsonFileToTabularFileConverter()
-        val inputStream: InputStream = ResourceLoader.openResourceAtRelativePath(Path.of(testFilePath))
+        val inputStream: InputStream =
+            if (testFilePath.startsWith("/"))
+                javaClass.classLoader!!.getResourceAsStream(testFilePath)
+            else
+                ResourceLoader.openResourceAtRelativePath(Path.of(testFilePath))
+
         val tabularPropertiesMetadataCollector = TabularPropertiesMetadataCollector()
         converter.processEntries(inputStream, Path.of(itemsArraySprout), tabularPropertiesMetadataCollector)
         val collectedProperties = tabularPropertiesMetadataCollector.propertiesSoFar

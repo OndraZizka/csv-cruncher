@@ -30,7 +30,7 @@ data class PropertyInfo(
     val types: TypesCount = TypesCount()
     var maxLength: Int = 0
 
-    override fun toString() = "types: $types maxLength: $maxLength"
+    override fun toString() = "max $maxLength, types: $types"
 }
 
 data class TypesCount (
