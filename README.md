@@ -55,7 +55,8 @@ See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc
 Download
 =====
 
-Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases).
+Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases).  
+Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:1.31.0`
 
 Usage
 =====
@@ -65,59 +66,63 @@ Usage
 ### Options:
 
  * `-in`
-    Input paths. Can be files or directories.
+    * Input paths, comma and/or space separated.
+    * Can be CSV files, JSON files (if ending `.json`), or directories with such files.  
+    * Multiple files may be imported to the same table, see `--combineInputs`.
 
  * `-out`
-    Output path. Currently only one output table/file is supported.
+    * Output path. If ends with `.json`, the output is JSON. 
+    * Currently only one output table/file is supported.
 
  * `-sql`
-    The SQL operation to be performed. The input files (or the results of preprocessing them) are available as tables.
-    See [HSQLDB documentation](http://hsqldb.org/doc/2.0/guide/guide.html#sqlgeneral-chapt) for the vast SQL operations at hand.
+    The SQL `SELECT` to be performed.
+    * The input files (or the results of preprocessing them) are available as tables.
+    * See [HSQLDB documentation](http://hsqldb.org/doc/2.0/guide/guide.html#sqlgeneral-chapt) for the vast SQL operations at hand.
 
  * `-db <pathToDatabaseDirectory>`
-    Determines where the files of the underlying database will be stored. Default is `hsqldb/cruncher`.
+    * Determines where the files of the underlying database will be stored. Defaults to `hsqldb/cruncher`.
 
  * `--include=<regex>`, `--exclude=<regex>`
-    Filters which input files are taken as input.
-    The whole path relative to the is matched, so make sure to use `.*` at the beginning.
-    The `--exclude` is applied after `--include`, so include does not override excluded files.
-    If not specified, CSV Cruncher behaves as if `--include` was `.*\.csv$` and `--exclude` had no match.
+    * Filters which input files are taken as input.
+    * The whole path relative to the is matched, so make sure to use `.*` at the beginning.
+    * The `--exclude` is applied after `--include`, so include does not override excluded files.
+    * If not specified, CSV Cruncher behaves as if `--include` was `.*\.csv$` and `--exclude` had no match.
 
 ##### Pre-processing
 
- * --ignoreLinesMatching=<regEx>
-    Ignore lines matching given regular expression.
+ * `--ignoreLinesMatching=<regEx>`
+    * Ignore lines matching given regular expression.
 
- * --ignoreFirstLines[=<number>]
-    Ignore first `number` lines; the first is considered a header with column names.
-    This counts regardless of `ignoreLineRegex`.
+ * `--ignoreFirstLines[=<number>]`
+    * Ignore first `number` lines; the first is considered a header with column names.
+    * This counts regardless of `ignoreLineRegex`.
 
  * `--combineInputs\[=concat|intersect|substract]`
-    Combine the input files into one file, optionally computing an intersection or substracting one from another.
+    * Combine the input files into one file, optionally computing an intersection or substracting one from another.
 
  * `--combineDirs\[=perDir|perInputDir|perInputSubdir|all]`
-    Controls which files are combined together. Default is `all`.
-    If the files within one resulting group have different structure (different columns),
-    they are automatically divided into subgroups per structure.
-    This can be used to process database incremental change logs which sometomes change the schema.
+    * Controls which files are combined together. Default is `all`.
+    * If the files within one resulting group have different structure (different columns),
+    * they are automatically divided into subgroups per structure.
+    * This can be used to process database incremental change logs which sometomes change the schema.
 
  * `--sortInputs\[=paramsOrder|alpha|time]`
-    Controls how files are sorted before combining, and in which order the tables are created.
+    * Controls how files are sorted before combining, and in which order the tables are created.
 
-    Read the logs or use `-sql SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
+Read the logs or use `-sql SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
 
 ##### Post-processing
 
  * `--rowNumbers\[=<firstNumber>|remember]`
-    Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
-    By specifying `<firstNumber>`, the first number to be used can be set.
-    By default, a milliseconds-based timestamp times 1000 is used.
-    `remember` is yet to be implemented, and will continue where the last run stopped.
+    * Will add a column named `crunchCounter` to the output with unique and incrementing number for each row.
+    * By specifying `<firstNumber>`, the first number to be used can be set.
+    * By default, a milliseconds-based timestamp times 1000 is used.
+    * `remember` is yet to be implemented, and will continue where the last run stopped.
 
  * `--json\[=entries|array]`
-    Create the output in JSON format.
-    `entries` (default) will create a JSON entry per line, representing the original rows.
-    `array` will create a file with a JSON array (`[...,...]`).
+    * Create the output in JSON format.
+    * `entries` (default) will create a JSON entry per line, representing the original rows.
+    * `array` will create a file with a JSON array (`[...,...]`).
 
 
 This README may be slightly obsolete; For a full list of options, check the
@@ -127,13 +132,13 @@ This README may be slightly obsolete; For a full list of options, check the
 Usage example
 =============
 
-Simple SQL operation on a single CSV file:
+Simple SQL SELECT on a single CSV file:
 
     crunch -in myInput.csv -out output.csv
         -sql "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
         --json
 
-With input files searched in a directory and concatenated:
+With input files searched in a directory and concatenated into one table:
 
     crunch
         -in src/test/data/sampleMultiFilesPerDir/apollo_session/
