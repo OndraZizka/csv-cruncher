@@ -38,9 +38,11 @@ On top of that, CSV Cruncher can:
  * Filter the CSV lines using regular expression
  * Add a unique incrementing number to each row of the result
 
+Features in progress:
+ * Import JSON files
+
 And this is planned:
  * Import and export Excel (XLS) files
- * Import JSON files
  * Import any text files, parsed into columns by a regular expression groups
  * Export HTML tables
 
