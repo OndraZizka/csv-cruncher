@@ -168,7 +168,7 @@ object FilesUtils {
     private fun addTheRightTypeToJavaxJsonBuilder(resultSet: ResultSet, colIndex: Int, builder: JsonObjectBuilder) {
         val metaData = resultSet.metaData
         var columnLabel = metaData.getColumnLabel(colIndex)
-        if (columnLabel.matches("[A-Z][A-Z_]*".toRegex())) columnLabel = columnLabel.toLowerCase()
+        if (columnLabel.matches("[A-Z][A-Z_]*".toRegex())) columnLabel = columnLabel.lowercase()
         if (resultSet.getObject(colIndex) == null) {
             builder.addNull(columnLabel)
             return

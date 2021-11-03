@@ -11,7 +11,7 @@ object DbUtils {
     fun getResultSetColumnNames(rs: ResultSet): List<String> {
         val colNames_ = arrayOfNulls<String>(rs.metaData.columnCount)
         for (colIndex in colNames_.indices) {
-            colNames_[colIndex] = rs.metaData.getColumnName(colIndex + 1).toLowerCase()
+            colNames_[colIndex] = rs.metaData.getColumnName(colIndex + 1).lowercase()
         }
         return Arrays.asList(*colNames_).map { it!! }
     }
@@ -41,12 +41,12 @@ object DbUtils {
         var message = message
         var notFoundName = StringUtils.substringAfter(message, "object not found: ")
         notFoundName = StringUtils.substringBefore(notFoundName, " in statement [")
-        message = message.toUpperCase().replace('\n', ' ')
+        message = message.uppercase().replace('\n', ' ')
 
         //String sqlRegex = "[^']*\\[SELECT .*" + notFoundName + ".*FROM.*";
         val sqlRegex = ".*SELECT.*$notFoundName.*FROM.*"
         //LOG.finer(String.format("\n\tNot found object: %s\n\tMsg: %s\n\tRegex: %s", notFoundName, message.toUpperCase(), sqlRegex));
-        return message.toUpperCase().matches(sqlRegex.toRegex())
+        return message.uppercase().matches(sqlRegex.toRegex())
     }
 
     /**

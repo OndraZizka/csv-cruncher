@@ -80,7 +80,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
             val columnName = escapeSql(columnDef.key)
             var columnType = columnDef.value
             columnType =
-                if (columnType == null || "VARCHAR" == columnType.toUpperCase())
+                if (columnType == null || "VARCHAR" == columnType.uppercase())
                     "VARCHAR(" + MAX_STRING_COLUMN_LENGTH + ")"
                 else escapeSql(columnType)
             sbCsvHeader.append(columnName).append(", ")
@@ -302,7 +302,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                     val columnTypeRes = st.executeQuery(sqlCheck)
                     if (!columnTypeRes.next()) {
                         log.error("Column not found?? {}.{}", tableName, colName)
-                        testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('" + tableName.toUpperCase() + "')", jdbcConn)
+                        testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('" + tableName.uppercase() + "')", jdbcConn)
                         throw ColumnNotFoundException(tableName, colName)
                     }
                     val newType = columnTypeRes.getString("data_type")
