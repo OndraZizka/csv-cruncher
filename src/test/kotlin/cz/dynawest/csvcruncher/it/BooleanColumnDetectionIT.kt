@@ -1,9 +1,9 @@
 package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
-import org.junit.Assert
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.io.*
 import java.nio.file.Paths
 import javax.json.Json
@@ -25,7 +25,7 @@ class BooleanColumnDetectionIT {
                 " | -sql | SELECT boolTable.* FROM boolTable"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val jsonFile = File(outputDir.toString().replaceFirst("\\.csv$".toRegex(), ".json"))
-        Assert.assertTrue(jsonFile.exists())
+        Assertions.assertTrue(jsonFile.exists())
         verifyBooleanResults(jsonFile)
     }
 
@@ -57,11 +57,10 @@ class BooleanColumnDetectionIT {
         val expectedValue = if (expectedValues) JsonValue.ValueType.TRUE else JsonValue.ValueType.FALSE
         val jsonValue = row[propertyName]
         val boolUpperValType = jsonValue!!.valueType
-        Assert.assertEquals("$propertyName should be a boolean, specifically $expectedValue", expectedValue, boolUpperValType)
+        Assertions.assertEquals(expectedValue, boolUpperValType, "$propertyName should be a boolean, specifically $expectedValue")
     }
 
-    @Test
-    @Ignore // Should throw Invalid...
+    @Test @Disabled
     @Throws(Exception::class)
     fun invalidCombination_noSqlWithoutPerTableQuery() {
         val outputDir = Paths.get("target/testResults/testBooleanColumns.csv")

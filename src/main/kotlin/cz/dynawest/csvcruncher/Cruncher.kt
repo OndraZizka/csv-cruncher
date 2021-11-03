@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.Options.JsonExportFormat
+import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
@@ -62,6 +63,15 @@ class Cruncher(private val options: Options) {
             var inputPaths = options.inputPaths!!.stream().map { first: String? -> Paths.get(first) }.collect(Collectors.toList())
             inputPaths = FilesUtils.sortInputPaths(inputPaths, options.sortInputPaths)
             log.debug(" --- Sorted input paths: --- " + inputPaths.stream().map { p: Path -> "\n * $p" }.reduce { obj: String, str: String -> obj + str }.get())
+
+            // TODO: Convert the .json files to .csv files.
+            inputPaths.map { inputPath ->
+                if (inputPath.endsWith(".json"))
+
+                    convertJsonToCsv(inputPath)
+                else inputPath
+            }
+
             val inputSubparts: List<CruncherInputSubpart>
 
             // Combine files. Should we concat the files or UNION the tables?
@@ -182,6 +192,10 @@ class Cruncher(private val options: Options) {
         }
     }
 
+    private fun convertJsonToCsv(inputPath: Path): Path {
+        return JsonFileFlattener().convert(inputPath)
+    }
+
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String?, File>, outputs: List<CruncherOutputPart>) {
         // TODO: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
         dbHelper!!.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
@@ -189,10 +203,13 @@ class Cruncher(private val options: Options) {
         //dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
         val outputTablesNames = outputs.stream().map { x: CruncherOutputPart -> x.deriveOutputTableName() }.collect(Collectors.toSet())
         dbHelper!!.detachTables(outputTablesNames, "Could not delete the output table: ")
-    }// A timestamp at the beginning:
+    }
+
+    // A timestamp at the beginning:
     //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
     //executeDbCommand(sql, "Failed creating the counter variable: ");
     // Uh oh. Variables can't be used in SELECTs.
+
     /**
      * @return The initial number to use for unique row IDs.
      * Takes the value from options, or generates from timestamp if not set.

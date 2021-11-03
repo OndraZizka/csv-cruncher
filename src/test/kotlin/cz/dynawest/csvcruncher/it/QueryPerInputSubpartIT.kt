@@ -1,8 +1,9 @@
 package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -47,21 +48,21 @@ class QueryPerInputSubpartIT {
                 " | -sql | SELECT oauth_consumer.* FROM oauth_consumer"
         try {
             CsvCruncherTestUtils.runCruncherWithArguments(command)
-            Assert.fail("Should have thrown IllegalArgumentException, --queryPerInputSubpart needs generic SQL.")
+            Assertions.fail("Should have thrown IllegalArgumentException, --queryPerInputSubpart needs generic SQL.")
         } catch (ex: IllegalArgumentException) {
-            Assert.assertTrue(ex.message!!.contains("queryPerInputSubpart"))
-            Assert.assertTrue(ex.message!!.contains("\$table"))
+            assertTrue(ex.message!!.contains("queryPerInputSubpart"))
+            assertTrue(ex.message!!.contains("\$table"))
         }
     }
 
     private fun checkOutputFiles(outputDir: Path) {
-        Assert.assertTrue(outputDir.toFile().exists())
-        Assert.assertTrue(outputDir.resolve("oauth_consumer_1.json").toFile().exists())
-        Assert.assertTrue(outputDir.resolve("oauth_consumer_2.json").toFile().exists())
+        assertTrue(outputDir.toFile().exists())
+        assertTrue(outputDir.resolve("oauth_consumer_1.json").toFile().exists())
+        assertTrue(outputDir.resolve("oauth_consumer_2.json").toFile().exists())
         val csv1 = Paths.get(outputDir.toString() + "_concat").resolve("oauth_consumer_1.csv").toFile()
         val csv2 = Paths.get(outputDir.toString() + "_concat").resolve("oauth_consumer_2.csv").toFile()
-        Assert.assertTrue(csv1.exists())
-        Assert.assertTrue(csv2.exists())
+        assertTrue(csv1.exists())
+        assertTrue(csv2.exists())
         val files = Arrays.asList(csv1, csv2)
         CsvCruncherTestUtils.checkThatIdsAreIncrementing(files, 2, false)
     }

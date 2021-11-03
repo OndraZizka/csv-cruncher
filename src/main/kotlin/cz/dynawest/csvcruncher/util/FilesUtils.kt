@@ -32,7 +32,7 @@ import javax.json.JsonObjectBuilder
  * TODO: Convert the concat related methods to a context-based class.
  */
 @Slf4j
-@Suppress("NAME_SHADOWING")
+//@Suppress("NAME_SHADOWING")
 object FilesUtils {
     private const val CONCAT_WORK_SUBDIR_NAME = "concat"
     private val log = org.slf4j.LoggerFactory.getLogger(FileUtils::class.java)
@@ -249,7 +249,7 @@ object FilesUtils {
     @Throws(IOException::class)
     fun combineInputFiles(fileGroupsToCombine: Map<Path?, List<Path>>, options: Options): List<CruncherInputSubpart> {
         // Split into subgroups by column names in the CSV header.
-        var fileGroupsToCombine = fileGroupsToCombine
+        @Suppress("NAME_SHADOWING") var fileGroupsToCombine = fileGroupsToCombine
         val splitResult: FileGroupsSplitBySchemaResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine)
         fileGroupsToCombine = splitResult.fileGroupsToCombine
         logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:")

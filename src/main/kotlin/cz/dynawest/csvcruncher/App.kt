@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j
 import org.apache.commons.lang3.StringUtils
 import java.io.PrintStream
 import java.util.regex.Pattern
+import kotlin.io.path.ExperimentalPathApi
 
 /*
 * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
