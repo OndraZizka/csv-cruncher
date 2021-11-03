@@ -128,16 +128,16 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
             if (true || (ex.message?.contains("for cast") ?: false)) {
                 // List column names with types.
                 addToMsg = """
-  Tables and column types:
-${this.formatListOfAvailableTables(true)}"""
+                    |  Tables and column types:
+                    |${this.formatListOfAvailableTables(true)}""".trimMargin()
             }
             if (ex.message!!.contains("cannot be converted to target type")) {
                 errorMsg = StringUtils.defaultString(errorMsg) + " Looks like the data in the input files do not match."
             }
             if (StringUtils.isBlank(errorMsg)) errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL."
             throw CsvCruncherException("""$errorMsg
-  SQL: $sql
-  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg""".trimMargin()
+                |  SQL: $sql
+                |  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg""".trimMargin()
             )
         }
     }
@@ -184,19 +184,21 @@ ${this.formatListOfAvailableTables(true)}"""
         val notFoundIsColumn = analyzeWhatWasNotFound(ex.message!!)
         val tableNames = formatListOfAvailableTables(notFoundIsColumn)
         val hintMsg = if (notFoundIsColumn) """
-  Looks like you are referring to a column that is not present in the table(s).
-  Check the header (first line) in the CSV.
-  Here are the tables and columns are actually available:
-""" else """
-  Looks like you are referring to a table that was not created.
-  This could mean that you have a typo in the input file name,
-  or maybe you use --combineInputs but try to use the original inputs.
-  These tables are actually available:
-"""
+            |  Looks like you are referring to a column that is not present in the table(s).
+            |  Check the header (first line) in the CSV.
+            |  Here are the tables and columns are actually available:
+            """.trimMargin()
+        else """
+            |  Looks like you are referring to a table that was not created.
+            |  This could mean that you have a typo in the input file name,
+            |  or maybe you use --combineInputs but try to use the original inputs.
+            |  These tables are actually available:
+            """.trimMargin()
+
         return CsvCruncherException(
                 """$hintMsg$tableNames
-Message from the database:
-  ${ex.message}""", ex)
+                |Message from the database:
+                |    ${ex.message}""".trimMargin(), ex)
     }
 
     /**
@@ -212,14 +214,14 @@ Message from the database:
                 throw throwHintForObjectNotFound(ex)
             }
             throw CsvCruncherException("""
-    Seems your SQL contains errors:
-    ${ex.message}
-    """.trimIndent(), ex)
+                |    Seems your SQL contains errors:
+                |    ${ex.message}
+                |    """.trimMargin(), ex)
         } catch (ex: SQLException) {
             throw CsvCruncherException("""
-    Failed executing the SQL:
-    ${ex.message}
-    """.trimIndent(), ex)
+                |    Failed executing the SQL:
+                |    ${ex.message}
+                |    """.trimMargin(), ex)
         }
         val rs = statement.executeQuery()
 

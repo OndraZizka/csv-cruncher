@@ -277,8 +277,7 @@ object FilesUtils {
         ((Logger) log).log(event);*/
         log.debug("--- $label ---")
         for ((key, value) in fileGroupsToConcat) {
-            val msg = """
- * Path: $key: ${value.stream().map { path: Path -> "\n\t- $path" }.collect(Collectors.joining())}"""
+            val msg = """\n * Path: $key: ${value.stream().map { path: Path -> "\n\t- $path" }.collect(Collectors.joining())}"""
             log.debug(msg)
         }
     }
@@ -445,8 +444,8 @@ object FilesUtils {
             val concatFileName = deriveNameForCombinedFile(fileGroup, usedConcatFilePaths)
             val concatenatedFilePath = tmpConcatDir.resolve(concatFileName)
             usedConcatFilePaths.add(concatenatedFilePath)
-            log.debug("""    Into dest file: $concatenatedFilePath
-  will combine these files: ${fileGroup.value.stream().map { path: Path -> "\n\t* $path" }.collect(Collectors.joining())}""")
+            log.debug("Into dest file: $concatenatedFilePath\n   Will combine these files: "
+                + fileGroup.value.stream().map { path: Path -> "\n|\t* $path" }.collect(Collectors.joining()))
 
             // TODO: Optionally this could be named better:
             //       1) Find common deepest ancestor dir.
