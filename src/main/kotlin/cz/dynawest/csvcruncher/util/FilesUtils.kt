@@ -5,9 +5,6 @@ import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.Options
 import cz.dynawest.csvcruncher.Options.*
-import lombok.AllArgsConstructor
-import lombok.Getter
-import lombok.extern.slf4j.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.event.Level
@@ -31,7 +28,6 @@ import javax.json.JsonObjectBuilder
 /**
  * TODO: Convert the concat related methods to a context-based class.
  */
-@Slf4j
 //@Suppress("NAME_SHADOWING")
 object FilesUtils {
     private const val CONCAT_WORK_SUBDIR_NAME = "concat"
@@ -575,8 +571,8 @@ object FilesUtils {
      * TODO: Refactor. Previously this was done into a flat structure, but it seems at least 2 levels will be needed.
      * For now I am only putting it to two flat maps "joined" by the subgroup names.
      */
-    @Getter
-    @AllArgsConstructor
+    //@Getter
+    //@AllArgsConstructor
     internal class FileGroupsSplitBySchemaResult(
         val fileGroupsToCombine: Map<Path?, List<Path>> = LinkedHashMap(),
 

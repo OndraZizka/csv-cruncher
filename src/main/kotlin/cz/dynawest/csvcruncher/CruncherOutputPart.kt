@@ -1,12 +1,10 @@
 package cz.dynawest.csvcruncher
 
-import lombok.Data
 import java.nio.file.Path
 
 /**
  * Info about one file to be created by one SQL query.
  */
-@Data
 class CruncherOutputPart(
     val outputFile: Path,
     val inputTableName: String? = null,

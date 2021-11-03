@@ -4,9 +4,6 @@ import cz.dynawest.csvcruncher.Options.CombineDirectories
 import cz.dynawest.csvcruncher.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.Options.SortInputPaths
 import cz.dynawest.csvcruncher.util.logger
-import lombok.Getter
-import lombok.Setter
-import lombok.extern.slf4j.Slf4j
 import org.apache.commons.lang3.EnumUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
@@ -18,9 +15,6 @@ import java.util.function.Function
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
-@Setter
-@Getter
-@Slf4j
 class Options {
     var inputPaths: MutableList<String?>? = ArrayList()
     var includePathsRegex: Pattern? = null

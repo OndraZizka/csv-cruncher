@@ -4,7 +4,6 @@ import cz.dynawest.csvcruncher.util.DbUtils.analyzeWhatWasNotFound
 import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
 import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
-import lombok.extern.slf4j.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
@@ -12,7 +11,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.sql.*
 
-@Slf4j
 @Suppress("NAME_SHADOWING")
 class HsqlDbHelper(private val jdbcConn: Connection?) {
 
