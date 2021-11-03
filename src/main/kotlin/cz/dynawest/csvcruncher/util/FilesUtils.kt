@@ -262,6 +262,7 @@ object FilesUtils {
                 log.debug("Concatenating input files.")
                 return concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir)
             }
+            CombineInputFiles.NONE -> {}
         }
         throw IllegalStateException("Did we miss some CombineInputFiles choice?")
     }
@@ -304,7 +305,7 @@ object FilesUtils {
             if (inputPath.toFile().isFile) fileGroupsToConcat[null]!!.add(inputPath)
             // Walk directories for CSV, and group them as per options.combineDirs.
             if (inputPath.toFile().isDirectory) {
-                var fileToGroupSorter: Consumer<Path>? = null
+                var fileToGroupSorter: Consumer<Path>?
                 fileToGroupSorter = when (options.combineDirs) {
                     CombineDirectories.COMBINE_ALL_FILES -> {
                         val fileGroup = fileGroupsToConcat[null]!!
@@ -483,7 +484,7 @@ object FilesUtils {
             originPath = Paths.get(pathStr)
             val concatFilePath = test_getNonUsedName(originPath, usedConcatFilePaths)
             usedConcatFilePaths.add(concatFilePath)
-            concatFilePath!!.fileName.toString()
+            concatFilePath.fileName.toString()
         }
     }
 

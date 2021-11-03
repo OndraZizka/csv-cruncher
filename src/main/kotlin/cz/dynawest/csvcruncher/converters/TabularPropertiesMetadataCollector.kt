@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.converters
 
+import org.hsqldb.Tokens.T
 import kotlin.math.max
 
 
@@ -24,6 +25,8 @@ class TabularPropertiesMetadataCollector : EntryProcessor {
                         is MyProperty.Null -> { this.types.nill++; this.maxLength = max(maxLength, 4) }
                         is MyProperty.Number -> { this.types.number++; this.maxLength = max(maxLength, flattenedField.value.toString().length) }
                         is MyProperty.String -> { this.types.string++; this.maxLength = max(maxLength, flattenedField.value.length) }
+                        is MyProperty.Array -> { this.types.array++; this.maxLength = max(maxLength, 2) } // Just "[]"
+                        is MyProperty.Object -> { this.types.obj++; this.maxLength = max(maxLength, 2) } // Just "{}"
                     }
                 }
             }

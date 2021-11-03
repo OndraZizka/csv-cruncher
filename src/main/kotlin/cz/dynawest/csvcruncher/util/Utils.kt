@@ -23,6 +23,9 @@ fun Any.logger(): Logger {
 }
 
 
+/*
+ * Note that this source code was auto-migrated so it's a bit ugly.
+ */
 object Utils {
 
     private val log = logger()
@@ -35,7 +38,8 @@ object Utils {
     @JvmStatic
     fun escapeSql(str: String): String {
         return str.replace("'", "''")
-    }//props.list(System.out);
+    }
+
 
     /*resEnum = Thread.currentThread().getContextClassLoader().getResources(versionFilePath);
     while (resEnum.hasMoreElements()) {
@@ -60,6 +64,9 @@ object Utils {
             String version = props.getProperty(versionKey);
         }
     }*/
+
+
+
     //String versionFilePath = JarFile.MANIFEST_NAME;
     //String versionKey = "Implementation-Version";
     //String versionKey = "Release-Version";
@@ -71,12 +78,11 @@ object Utils {
             //String versionKey = "Release-Version";
             val versionFilePath = "META-INF/maven/cz.dynawest.csvcruncher/CsvCruncher/pom.properties"
             val versionKey = "version"
-            val isManifest = false
-            var resEnum: Enumeration<*>
+
             try {
-                val `is` = Utils::class.java.classLoader.getResourceAsStream(versionFilePath)
+                val inStream = Utils::class.java.classLoader.getResourceAsStream(versionFilePath)
                 val props = Properties()
-                props.load(`is`)
+                props.load(inStream)
                 //props.list(System.out);
                 return props.getProperty(versionKey)
 
@@ -108,6 +114,10 @@ object Utils {
             }
             return null
         }
+
+
+
+
     /* This would need a bit of reflection or using normal class rather than enum to represent an option.
     public static <EnumClass extends Enum> EnumClass processOptionIfMatches(String arg, Class<EnumClass> enumClass)
     {
@@ -127,6 +137,10 @@ object Utils {
 
     }
     / **/
+
+
+
+
     /**
      * This is for the case we use hand-made JSON marshalling.
      * Returns null if the column value was null, or if the returned type is not supported.
@@ -134,8 +148,8 @@ object Utils {
     @Throws(SQLException::class)
     private fun formatValueForJson(resultSet: ResultSet, colIndex: Int, colsAreNumbers: BooleanArray): String? {
         val metaData = resultSet.metaData
-        val `val`: String
-        `val` = when (metaData.getColumnType(colIndex)) {
+        val value: String
+        value = when (metaData.getColumnType(colIndex)) {
             Types.VARCHAR, Types.CHAR, Types.CLOB -> resultSet.getString(colIndex)
             Types.TINYINT, Types.BIT -> "" + resultSet.getByte(colIndex)
             Types.SMALLINT -> "" + resultSet.getShort(colIndex)
@@ -153,6 +167,6 @@ object Utils {
                 return null
             }
         }
-        return if (resultSet.wasNull()) null else `val`
+        return if (resultSet.wasNull()) null else value
     }
 }
