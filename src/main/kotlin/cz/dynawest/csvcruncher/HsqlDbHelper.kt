@@ -267,7 +267,6 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
         // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
         // Maybe I need to duplicate the TEXT table into a native table first?
         for (colName in colNames) {
-            var typeUsed: String?
 
             // Note: Tried also "CHAR", but seems that HSQL does some auto casting and the values wouldn't fit. Need to investigate.
             // Note: Tried also "VARCHAR(255)", but size limits is not handled below.
@@ -279,7 +278,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                 try {
                     jdbcConn!!.createStatement().use { st ->
                         st.execute(sqlCol)
-                        log.trace(String.format("Column %s.%s fits to %s", tableName, colName, sqlType.also { typeUsed = it }))
+                        log.trace(String.format("Column %s.%s fits to %s", tableName, colName, sqlType))
                         columnsFitIntoType.put(colName, sqlType)
                     }
                 } catch (ex: SQLException) {

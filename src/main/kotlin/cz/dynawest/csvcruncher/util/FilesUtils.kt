@@ -271,7 +271,7 @@ object FilesUtils {
         return inputPaths.stream().collect(Collectors.toMap(Function { x: Path? -> x }, Function<Path, List<Path>> { o: Path? -> listOf(o!!) }))
     }
 
-    private fun logFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, level: Level, label: String) {
+    private fun logFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, @Suppress("SameParameterValue") level: Level, label: String) {
         // TBD: Apply level.
         /*SubstituteLoggingEvent event = new SubstituteLoggingEvent();
         event.setLevel(level);

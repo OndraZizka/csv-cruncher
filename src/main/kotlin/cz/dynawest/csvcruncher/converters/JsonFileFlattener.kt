@@ -81,7 +81,7 @@ class JsonFileFlattener : FileToTabularFileConverter {
 
                 if (nextFieldName != nextStep.name) {
                     jsonParser.skipChildren()
-                    val x = jsonParser.nextValue()
+                    jsonParser.nextValue()
                     jsonParser.skipChildren()
                     continue
                 }

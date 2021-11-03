@@ -158,6 +158,9 @@ class Cruncher(private val options: Options) {
                 val userSql = "INSERT INTO $outputTableName ($selectSql)"
                 log.debug(" * User's SQL: $userSql")
                 //log.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
+
+
+                @Suppress("UNUSED_VARIABLE")
                 val rowsAffected = dbHelper!!.executeDbCommand(userSql, "Error executing user SQL: ")
 
 
