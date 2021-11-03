@@ -174,6 +174,11 @@ So you may issue such SQL query:
      FROM eapData ORDER BY deployDur
 
 
+Build status
+==============
+
+[![Java CI with Maven](https://github.com/OndraZizka/csv-cruncher/actions/workflows/maven-ci.yml/badge.svg)](https://github.com/OndraZizka/csv-cruncher/actions/workflows/maven-ci.yml)
+
 License
 =======
 
