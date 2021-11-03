@@ -13,6 +13,8 @@
         <connection>scm:git:https://github.com/OndraZizka/csv-cruncher.git</connection>
         <developerConnection>scm:git:ssh://git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
     </scm>
+    <issueManagement><system>GitHub Issues</system><url>https://github.com/OndraZizka/csv-cruncher/issues</url></issueManagement>
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
