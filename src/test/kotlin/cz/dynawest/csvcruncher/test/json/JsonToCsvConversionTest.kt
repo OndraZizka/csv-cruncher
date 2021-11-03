@@ -9,9 +9,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Path
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.random.Random
 
 class JsonToCsvConversionTest {
 
@@ -20,6 +18,8 @@ class JsonToCsvConversionTest {
         val x = DateTimeFormatter.ofPattern("")
         val testInputPath = "target/testData/json/github_data.json"
         val testOutputPath = "target/testData/json/github_data_${System.currentTimeMillis()}.csv"
+
+        // TBD - move this to some use case class.
 
         val flattener = JsonFileFlattener()
         val collectedProperties = FileInputStream(testInputPath).use { inputStream ->
@@ -33,7 +33,9 @@ class JsonToCsvConversionTest {
         FileInputStream(testInputPath).use { inputStream ->
             FileOutputStream(testOutputPath).use { outputStream ->
                 val csvExporter = CsvExporter(outputStream, collectedProperties)
+                csvExporter.beforeEntries()
                 flattener.visitEntries(inputStream, Path.of("/"), csvExporter)
+                csvExporter.afterEntries()
             }
         }
 

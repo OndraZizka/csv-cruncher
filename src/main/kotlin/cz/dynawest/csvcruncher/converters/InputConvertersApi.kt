@@ -15,8 +15,8 @@ data class FlattenedEntrySequence(
 
 interface EntryProcessor {
     fun processEntry(entry: FlattenedEntrySequence)
-    fun beforeEntries(entry: FlattenedEntrySequence) {}
-    fun afterEntries(entry: FlattenedEntrySequence) {}
+    fun beforeEntries() {}
+    fun afterEntries() {}
 }
 
 

@@ -8,9 +8,9 @@ class CsvExporter(
     val columnsInfo: MutableMap<String, PropertyInfo>,
     val columnSeparator: String = ","
 ) : EntryProcessor {
-    override fun beforeEntries(entry: FlattenedEntrySequence) {
+    override fun beforeEntries() {
         val writer = outputStream.writer()
-        writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}")
+        writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}\n")
 
         val header = columnsInfo.map { it.value.name }.joinToString(separator = columnSeparator + " ")
         writer.write(header + "\n")
