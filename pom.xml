@@ -10,8 +10,7 @@
     <scm>
         <url>https://github.com/OndraZizka/csv-cruncher</url>
         <developerConnection>scm:git:git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+    </scm>
     <issueManagement><system>GitHub Issues</system><url>https://github.com/OndraZizka/csv-cruncher/issues</url></issueManagement>
 
 
@@ -25,6 +24,7 @@
         <mainClass>Crunch</mainClass>
         <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
         <skipE2E>false</skipE2E>
+        <ossrh.host>oss.sonatype.org</ossrh.host>
     </properties>
 
     <build>
@@ -488,8 +488,8 @@
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <nexusUrl>https://${ossrh.host}/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
 
@@ -521,7 +521,7 @@
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <url>https://${ossrh.host}/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 </project>
