@@ -153,6 +153,9 @@
                 </configuration>
             </plugin>
 
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.2.0</version></plugin>
+
+
             <!-- A "test suite". -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -375,6 +378,7 @@
         </plugins>
     </build>
 
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -402,61 +406,25 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${version.kotlin}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-reflect</artifactId>
-            <version>${version.kotlin}</version>
-        </dependency>
+        <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-stdlib-jdk8</artifactId><version>${version.kotlin}</version></dependency>
+        <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-reflect</artifactId><version>${version.kotlin}</version></dependency>
 
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.6.1</version>
-        </dependency>
+        <dependency><groupId>org.hsqldb</groupId><artifactId>hsqldb</artifactId><version>2.6.1</version></dependency>
 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.8.0</version>
-        </dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.12.0</version></dependency>
+        <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><version>2.8.0</version></dependency>
 
         <!-- Just for the JSON encoding. 355 kB.
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.11</version>
-        </dependency>
+        <dependency> <groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> <version>1.11</version> </dependency>
          -->
 
         <!-- Just for the JSON encoding. 16 kB. -->
         <!-- Not used now, as we use javax.json, see below.
-        <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1</version>
-        </dependency>
+        <dependency> <groupId>com.googlecode.json-simple</groupId> <artifactId>json-simple</artifactId> <version>1.1</version> </dependency>
         -->
 
-        <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-            <version>1.1.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
-            <version>1.1.4</version>
-        </dependency>
+        <dependency><groupId>javax.json</groupId><artifactId>javax.json-api</artifactId><version>1.1.4</version></dependency>
+        <dependency><groupId>org.glassfish</groupId><artifactId>javax.json</artifactId><version>1.1.4</version></dependency>
 
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${version.jackson}</version></dependency>
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${version.jackson}</version></dependency>
@@ -473,20 +441,8 @@
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.7.0</version><scope>test</scope></dependency>
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-params</artifactId><version>5.7.0</version><scope>test</scope></dependency>
         <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><version>3.21.0</version><scope>test</scope></dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>1.9.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${version.kotlin}</version>
-            <scope>test</scope>
-        </dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId><version>1.9.0</version><scope>test</scope></dependency>
+        <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-test</artifactId><version>${version.kotlin}</version><scope>test</scope></dependency>
 
     </dependencies>
 
