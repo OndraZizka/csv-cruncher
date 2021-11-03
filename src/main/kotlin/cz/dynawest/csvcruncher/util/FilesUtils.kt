@@ -79,6 +79,7 @@ object FilesUtils {
 
     @JvmStatic
     fun sortInputPaths(inputPaths: List<Path>?, sortMethod: SortInputPaths?): List<Path> {
+        @Suppress("NAME_SHADOWING")
         var inputPaths = inputPaths
         return when (sortMethod) {
             SortInputPaths.PARAMS_ORDER -> Collections.unmodifiableList(inputPaths)
@@ -494,15 +495,19 @@ object FilesUtils {
      */
     @JvmStatic
     fun test_getNonUsedName(path: Path, usedPaths: MutableSet<Path>): Path {
+        @Suppress("NAME_SHADOWING")
         var path = path
         if (!usedPaths.contains(path)) return path
+
         var suffix = StringUtils.substringAfterLast("" + path.fileName, ".")
         if (!StringUtils.isEmpty(suffix)) suffix = ".$suffix"
+
         val pathWithoutSuffix = StringUtils.removeEnd(path.toString(), suffix)
         var counter = 0
         do {
             path = Paths.get(pathWithoutSuffix + "_" + ++counter + suffix)
         } while (usedPaths.contains(path))
+
         usedPaths.add(path)
         return path
     }
@@ -528,8 +533,10 @@ object FilesUtils {
              */
             var line: String? = lineIterator.nextLine().trim { it <= ' ' }
             line = StringUtils.stripStart(line, "#")
+
             val colNames = StringUtils.splitPreserveAllTokens(line, ",;")
             for (colName in Arrays.asList(*colNames)) {
+                @Suppress("NAME_SHADOWING")
                 val colName = colName.trim { it <= ' ' }
                 check(!colName.isEmpty()) {
                     String.format(

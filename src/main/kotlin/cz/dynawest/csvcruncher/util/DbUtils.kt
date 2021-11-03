@@ -38,6 +38,7 @@ object DbUtils {
      */
     @JvmStatic
     fun analyzeWhatWasNotFound(message: String): Boolean {
+        @Suppress("NAME_SHADOWING")
         var message = message
         var notFoundName = StringUtils.substringAfter(message, "object not found: ")
         notFoundName = StringUtils.substringBefore(notFoundName, " in statement [")
