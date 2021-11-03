@@ -10,8 +10,7 @@
     <description>Treats CSV or JSON files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
     <scm>
         <url>https://github.com/OndraZizka/csv-cruncher</url>
-        <connection>scm:git:https://github.com/OndraZizka/csv-cruncher.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
     </scm>
     <issueManagement><system>GitHub Issues</system><url>https://github.com/OndraZizka/csv-cruncher/issues</url></issueManagement>
 
