@@ -1,7 +1,8 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.Options.CombineInputFiles
-import cz.dynawest.csvcruncher.Options.JsonExportFormat
+import cz.dynawest.csvcruncher.app.Options
+import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
+import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative

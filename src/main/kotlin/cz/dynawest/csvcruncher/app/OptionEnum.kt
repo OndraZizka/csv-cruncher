@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher
+package cz.dynawest.csvcruncher.app
 
 interface OptionEnum {
     // TODO: List<String> getOptionsAvailable();

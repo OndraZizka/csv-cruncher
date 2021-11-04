@@ -1,4 +1,4 @@
-import cz.dynawest.csvcruncher.App
+import cz.dynawest.csvcruncher.app.App
 
 object Crunch {
     @Throws(Exception::class)

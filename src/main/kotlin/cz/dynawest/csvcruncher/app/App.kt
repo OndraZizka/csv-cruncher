@@ -1,6 +1,8 @@
-package cz.dynawest.csvcruncher
+package cz.dynawest.csvcruncher.app
 
-import cz.dynawest.csvcruncher.Options.*
+import cz.dynawest.csvcruncher.Cruncher
+import cz.dynawest.csvcruncher.CsvCruncherException
+import cz.dynawest.csvcruncher.app.Options.*
 import cz.dynawest.csvcruncher.util.Utils.version
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils

@@ -1,9 +1,7 @@
-package cz.dynawest.csvcruncher
+package cz.dynawest.csvcruncher.app
 
+import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.Cruncher.Companion.SQL_TABLE_PLACEHOLDER
-import cz.dynawest.csvcruncher.Options.CombineDirectories
-import cz.dynawest.csvcruncher.Options.CombineInputFiles
-import cz.dynawest.csvcruncher.Options.SortInputPaths
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.EnumUtils
 import org.apache.commons.lang3.StringUtils
