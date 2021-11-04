@@ -1,6 +1,8 @@
 package cz.dynawest.csvcruncher.app
 
 interface OptionEnum {
-    // TODO: List<String> getOptionsAvailable();
+    val optionName: String
     val optionValue: String?
+
+    // TODO: List<String> getOptionsAvailable();
 }

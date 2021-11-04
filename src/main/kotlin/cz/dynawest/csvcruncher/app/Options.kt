@@ -108,6 +108,8 @@ class Options {
         ALPHA("alpha", "Sort alphabetically."),
         TIME("time", "Sort by modification time, ascending.");
 
+        override val optionName: String by lazy { PARAM_SORT_INPUT_PATHS }
+
         companion object {
             const val PARAM_SORT_INPUT_PATHS = "sortInputPaths"
             const val PARAM_SORT_FILE_GROUPS = "sortInputFileGroups"
@@ -117,6 +119,7 @@ class Options {
                     .filter { obj: String? -> Objects.nonNull(obj) }
                     .collect(Collectors.toList())
         }
+
     }
 
     enum class CombineDirectories(override val optionValue: String) : OptionEnum {
@@ -125,6 +128,8 @@ class Options {
         COMBINE_PER_INPUT_DIR("perInputDir"),
         COMBINE_PER_INPUT_SUBDIR("perInputSubdir"),
         COMBINE_ALL_FILES("all");
+
+        override val optionName: String by lazy { PARAM_NAME }
 
         companion object {
             const val PARAM_NAME = "combineDirs"
@@ -142,6 +147,8 @@ class Options {
         INTERSECT("intersect", "Takes the intersection of the CSV files as input."),
         EXCEPT("substract", "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
 
+        override val optionName: String by lazy { PARAM_NAME }
+
         companion object {
             const val PARAM_NAME = "combineInputs"
             val optionValues: List<String>
@@ -156,6 +163,8 @@ class Options {
         NONE(null),
         ENTRY_PER_LINE("entries"),
         ARRAY("array");
+
+        override val optionName: String by lazy { PARAM_NAME }
 
         companion object {
             const val PARAM_NAME = "json"
