@@ -6,7 +6,7 @@ internal enum class ReachedCrunchStage {
     NONE, INPUT_FILES_PREPROCESSED, INPUT_TABLES_CREATED, OUTPUT_TABLE_CREATED, OUTPUT_TABLE_FILLED, OUTPUT_JSON_CONVERTED;
 
     fun passed(stage: ReachedCrunchStage): Boolean {
-        log.info(String.format("%s >= %s?", ordinal, stage.ordinal))
+        log.info("$ordinal >= ${stage.ordinal}?")
         return ordinal >= stage.ordinal
     }
 

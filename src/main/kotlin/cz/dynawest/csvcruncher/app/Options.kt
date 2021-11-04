@@ -62,13 +62,15 @@ class Options {
             if (!ex.exists()) throw FileNotFoundException("CSV file not found: " + ex.path)
         }
         if (queryPerInputSubpart && !StringUtils.isBlank(sql) && !sql!!.contains(SQL_TABLE_PLACEHOLDER)) {
-            val msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", SQL_TABLE_PLACEHOLDER)
+            val msg =
+                "queryPerInputSubpart is enabled, but the SQL is not generic (does not use $SQL_TABLE_PLACEHOLDER), which doesn't make sense."
             throw IllegalArgumentException(msg)
         }
         if (CombineDirectories.COMBINE_PER_INPUT_SUBDIR == combineDirs) {
             for (inputPath in inputPaths!!) {
                 if (Paths.get(inputPath).toFile().isFile) {
-                    val msg = String.format("If using %s, all inputs must be directories> %s", CombineDirectories.COMBINE_PER_INPUT_SUBDIR.optionValue, inputPath)
+                    val msg =
+                        "If using ${CombineDirectories.COMBINE_PER_INPUT_SUBDIR.optionValue}, all inputs must be directories> $inputPath"
                     throw IllegalArgumentException(msg)
                 }
             }

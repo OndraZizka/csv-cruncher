@@ -338,7 +338,7 @@ object FilesUtils {
                 log.trace("   *** After walking: $fileGroupsToConcat")
             }
         } catch (ex: Exception) {
-            throw CsvCruncherException(String.format("Failed combining the input files in %s: %s", inputPath, ex.message), ex)
+            throw CsvCruncherException("Failed combining the input files in $inputPath: ${ex.message}", ex)
         }
         return fileGroupsToConcat
     }
@@ -540,16 +540,10 @@ object FilesUtils {
                 @Suppress("NAME_SHADOWING")
                 val colName = colName.trim { it <= ' ' }
                 check(!colName.isEmpty()) {
-                    String.format(
-                            "Empty column name (separators: ,; ) in: %s\n  The line was: %s",
-                            file.path, line
-                    )
+                    "Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line"
                 }
                 check(mat.reset(colName).matches()) {
-                    String.format(
-                            "Colname '%s' must be valid SQL identifier, i.e. must match /%s/i in: %s",
-                            colName, Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern(), file.path
-                    )
+                    "Colname '$colName' must be valid SQL identifier, i.e. must match /${Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern()}/i in: ${file.path}"
                 }
                 cols.add(colName)
             }

@@ -81,7 +81,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
             var columnType = columnDef.value
             columnType =
                 if (columnType == null || "VARCHAR" == columnType.uppercase())
-                    "VARCHAR(" + MAX_STRING_COLUMN_LENGTH + ")"
+                    "VARCHAR($MAX_STRING_COLUMN_LENGTH)"
                 else escapeSql(columnType)
             sbCsvHeader.append(columnName).append(", ")
             sbSql.append(columnName).append(" ").append(columnType).append(", ")
@@ -100,13 +100,13 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
         val ignoreFirstFlag = if (ignoreFirst) "ignore_first=true;" else ""
         val csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter
         val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
-        var sql = String.format("SET TABLE %s SOURCE '%s;%s' %s", tableName, csvPath, csvSettings, DESC)
+        var sql = "SET TABLE $tableName SOURCE '$csvPath;$csvSettings' $DESC"
         log.debug("CSV import SQL: $sql")
         executeDbCommand(sql, "Failed to import CSV: ")
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
-            sql = String.format("SET TABLE %s SOURCE HEADER '%s'", tableName, sbCsvHeader.toString())
+            sql = "SET TABLE $tableName SOURCE HEADER '$sbCsvHeader'"
             log.debug("CSV source header SQL: $sql")
             executeDbCommand(sql, "Failed to set CSV header: ")
         }
@@ -235,7 +235,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
      */
     @Throws(SQLException::class)
     fun detachTable(tableName: String?, drop: Boolean) {
-        log.debug(String.format("Detaching%s table: %s", if (drop) " and dropping" else "", tableName))
+        log.debug("Detaching${if (drop) " and dropping" else ""} table: $tableName")
         var sql = "SET TABLE " + escapeSql(tableName!!) + " SOURCE OFF"
         executeDbCommand(sql, "Failed to detach/attach the table: ")
         if (drop) {
@@ -272,13 +272,13 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
             // Note: Tried also "VARCHAR(255)", but size limits is not handled below.
             for (sqlType in arrayOf("TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN")) {
                 // Try CAST( AS ...)
-                val sqlCol = String.format("SELECT CAST(%s AS %s) FROM %s", colName, sqlType, tableName)
+                val sqlCol = "SELECT CAST($colName AS $sqlType) FROM $tableName"
                 //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
                 log.trace("Column change attempt SQL: $sqlCol")
                 try {
                     jdbcConn!!.createStatement().use { st ->
                         st.execute(sqlCol)
-                        log.trace(String.format("Column %s.%s fits to %s", tableName, colName, sqlType))
+                        log.trace("Column $tableName.$colName fits to $sqlType")
                         columnsFitIntoType.put(colName, sqlType)
                     }
                 } catch (ex: SQLException) {
@@ -290,8 +290,9 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
 
         // ALTER COLUMNs
         for ((colName, sqlType) in columnsFitIntoType) {
-            val sqlAlter = String.format("ALTER TABLE %s ALTER COLUMN %s SET DATA TYPE %s", tableName, colName, sqlType)
-            val sqlCheck = String.format("SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('%s') AND LOWER(column_name) = LOWER('%s')", tableName, colName)
+            val sqlAlter = "ALTER TABLE $tableName ALTER COLUMN $colName SET DATA TYPE $sqlType"
+            val sqlCheck =
+                "SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('$tableName') AND LOWER(column_name) = LOWER('$colName')"
             log.trace("Changing the column {} to {}", colName, sqlType)
             try {
                 jdbcConn!!.createStatement().use { st ->
@@ -306,11 +307,11 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                     }
                     val newType = columnTypeRes.getString("data_type")
                     if (newType != sqlType) {
-                        log.error(String.format("Column %s.%s did not really change the type to %s, stayed %s.", tableName, colName, sqlType, newType))
+                        log.error("Column $tableName.$colName did not really change the type to $sqlType, stayed $newType.")
                     }
                 }
             } catch (ex: SQLException) {
-                log.error(String.format("Error changing type of column %s.%s to %s.\n  %s", tableName, colName, sqlType, ex.message))
+                log.error("Error changing type of column $tableName.$colName to $sqlType.\n  ${ex.message}")
             }
             catch (ex: ColumnNotFoundException) {
                 continue

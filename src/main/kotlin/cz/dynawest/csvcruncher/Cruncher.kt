@@ -35,9 +35,9 @@ class Cruncher(private val options: Options) {
             FileUtils.forceMkdir(File(dbPath))
             jdbcConn = DriverManager.getConnection("jdbc:hsqldb:file:$dbPath;shutdown=true", "SA", "")
         } catch (e: IOException) {
-            throw CsvCruncherException(String.format("Can't create HSQLDB data dir %s: %s", dbPath, e.message), e)
+            throw CsvCruncherException("Can't create HSQLDB data dir $dbPath: ${e.message}", e)
         } catch (e: SQLException) {
-            throw CsvCruncherException(String.format("Can't connect to the database %s: %s", dbPath, e.message), e)
+            throw CsvCruncherException("Can't connect to the database $dbPath: ${e.message}", e)
         }
         dbHelper = HsqlDbHelper(jdbcConn)
     }
@@ -273,7 +273,7 @@ class Cruncher(private val options: Options) {
         const val FILENAME_SUFFIX_CSV = ".csv"
         val REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE)
         const val SQL_TABLE_PLACEHOLDER = "\$table"
-        const val DEFAULT_SQL = "SELECT " + SQL_TABLE_PLACEHOLDER + ".* FROM " + SQL_TABLE_PLACEHOLDER
+        const val DEFAULT_SQL = "SELECT $SQL_TABLE_PLACEHOLDER.* FROM $SQL_TABLE_PLACEHOLDER"
     }
 
     init {

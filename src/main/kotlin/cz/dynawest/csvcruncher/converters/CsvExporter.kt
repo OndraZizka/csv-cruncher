@@ -12,7 +12,7 @@ class CsvExporter(
         val writer = outputStream.writer()
         writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}\n")
 
-        val header = columnsInfo.map { it.value.name }.joinToString(separator = columnSeparator + " ")
+        val header = columnsInfo.map { it.value.name }.joinToString(separator = "$columnSeparator ")
         writer.write(header + "\n")
     }
     override fun processEntry(entry: FlattenedEntrySequence) {
