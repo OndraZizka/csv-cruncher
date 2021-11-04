@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher
 
+import cz.dynawest.csvcruncher.Cruncher.Companion.SQL_TABLE_PLACEHOLDER
 import cz.dynawest.csvcruncher.Options.CombineDirectories
 import cz.dynawest.csvcruncher.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.Options.SortInputPaths
@@ -54,16 +55,16 @@ class Options {
 
         // SQL may be omitted if there is a request to combine files or convert to JSON. Otherwise it would be a no-op.
         if (sql == null) {
-            Options.log.debug(" -sql is not set, using default: " + Cruncher.Companion.DEFAULT_SQL)
-            sql = Cruncher.Companion.DEFAULT_SQL
+            log.debug(" -sql is not set, using default: " + Cruncher.DEFAULT_SQL)
+            sql = Cruncher.DEFAULT_SQL
         }
         requireNotNull(outputPathCsv) { " -out is not set." }
         for (path in inputPaths!!) {
             val ex = File(path)
             if (!ex.exists()) throw FileNotFoundException("CSV file not found: " + ex.path)
         }
-        if (queryPerInputSubpart && !StringUtils.isBlank(sql) && !sql!!.contains(Cruncher.Companion.SQL_TABLE_PLACEHOLDER)) {
-            val msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", Cruncher.Companion.SQL_TABLE_PLACEHOLDER)
+        if (queryPerInputSubpart && !StringUtils.isBlank(sql) && !sql!!.contains(SQL_TABLE_PLACEHOLDER)) {
+            val msg = String.format("queryPerInputSubpart is enabled, but the SQL is not generic (does not use %s), which doesn't make sense.", SQL_TABLE_PLACEHOLDER)
             throw IllegalArgumentException(msg)
         }
         if (CombineDirectories.COMBINE_PER_INPUT_SUBDIR == combineDirs) {
@@ -103,39 +104,58 @@ class Options {
         }
 
     enum class SortInputPaths(override val optionValue: String, private val description: String) : OptionEnum {
-        PARAMS_ORDER("paramOrder", "Keep the order from parameters or file system."), ALPHA("alpha", "Sort alphabetically."), TIME("time", "Sort by modification time, ascending.");
+        PARAMS_ORDER("paramOrder", "Keep the order from parameters or file system."),
+        ALPHA("alpha", "Sort alphabetically."),
+        TIME("time", "Sort by modification time, ascending.");
 
         companion object {
             const val PARAM_SORT_INPUT_PATHS = "sortInputPaths"
             const val PARAM_SORT_FILE_GROUPS = "sortInputFileGroups"
             val optionValues: List<String?>
-                get() = EnumUtils.getEnumList(SortInputPaths::class.java).stream().map { obj: SortInputPaths -> obj.optionValue }.filter { obj: String? -> Objects.nonNull(obj) }.collect(Collectors.toList())
+                get() = EnumUtils.getEnumList(SortInputPaths::class.java).stream()
+                    .map { obj: SortInputPaths -> obj.optionValue }
+                    .filter { obj: String? -> Objects.nonNull(obj) }
+                    .collect(Collectors.toList())
         }
     }
 
     enum class CombineDirectories(override val optionValue: String) : OptionEnum {
         //USE_EACH_FILE("none"),
-        COMBINE_PER_EACH_DIR("perDir"), COMBINE_PER_INPUT_DIR("perInputDir"), COMBINE_PER_INPUT_SUBDIR("perInputSubdir"), COMBINE_ALL_FILES("all");
+        COMBINE_PER_EACH_DIR("perDir"),
+        COMBINE_PER_INPUT_DIR("perInputDir"),
+        COMBINE_PER_INPUT_SUBDIR("perInputSubdir"),
+        COMBINE_ALL_FILES("all");
 
         companion object {
             const val PARAM_NAME = "combineDirs"
             val optionValues: List<String>
-                get() = EnumUtils.getEnumList(CombineDirectories::class.java).stream().map(Function<CombineDirectories, String> { it.optionValue }).filter { obj: String? -> Objects.nonNull(obj) }.collect(Collectors.toList())
+                get() = EnumUtils.getEnumList(CombineDirectories::class.java).stream()
+                    .map { it.optionValue }
+                    .filter { obj: String? -> Objects.nonNull(obj) }
+                    .collect(Collectors.toList())
         }
     }
 
     enum class CombineInputFiles(override val optionValue: String?, private val description: String) : OptionEnum {
-        NONE(null, "Uses each input files as a separate table."), CONCAT("concat", "Joins the CSV files into one and processes it as input."), INTERSECT("intersect", "Takes the intersection of the CSV files as input."), EXCEPT("substract", "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
+        NONE(null, "Uses each input files as a separate table."),
+        CONCAT("concat", "Joins the CSV files into one and processes it as input."),
+        INTERSECT("intersect", "Takes the intersection of the CSV files as input."),
+        EXCEPT("substract", "Substracts 2nd CSV file from the first (only works with 2) and uses it as input.");
 
         companion object {
             const val PARAM_NAME = "combineInputs"
             val optionValues: List<String>
-                get() = EnumUtils.getEnumList(CombineInputFiles::class.java).stream().map(Function<CombineInputFiles, String> { it.optionValue }).filter { obj: String? -> Objects.nonNull(obj) }.collect(Collectors.toList())
+                get() = EnumUtils.getEnumList(CombineInputFiles::class.java).stream()
+                    .map(Function<CombineInputFiles, String> { it.optionValue })
+                    .filter { obj: String? -> Objects.nonNull(obj) }
+                    .collect(Collectors.toList())
         }
     }
 
     enum class JsonExportFormat(override val optionValue: String?) : OptionEnum {
-        NONE(null), ENTRY_PER_LINE("entries"), ARRAY("array");
+        NONE(null),
+        ENTRY_PER_LINE("entries"),
+        ARRAY("array");
 
         companion object {
             const val PARAM_NAME = "json"
