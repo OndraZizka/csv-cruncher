@@ -8,7 +8,7 @@ Releasing
 
 2) On MacOS, to prevent `gpg: signing failed: Inappropriate ioctl for device `, run:
 
-         $ export GPG_TTY=$(tty)
+       $ export GPG_TTY=$(tty)
 
 3) To do the actual tag:
 

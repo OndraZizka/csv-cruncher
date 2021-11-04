@@ -6,6 +6,7 @@ import java.io.PrintStream
 
 /*
 * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
+* And then auto-converted to Kotlin.
 * So please be lenient with the code below :)
 */
 object App {
