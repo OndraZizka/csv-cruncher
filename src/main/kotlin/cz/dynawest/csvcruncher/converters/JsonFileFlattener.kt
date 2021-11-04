@@ -76,8 +76,7 @@ class JsonFileFlattener : FileToTabularFileConverter {
 
             do {
                 val nextFieldName = jsonParser.nextFieldName()
-                if (nextFieldName == null)
-                    throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
+                    ?: throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
 
                 if (nextFieldName != nextStep.name) {
                     jsonParser.skipChildren()

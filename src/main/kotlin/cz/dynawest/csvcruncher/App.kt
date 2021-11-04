@@ -12,7 +12,6 @@ import java.util.regex.Pattern
 * So please be lenient with the code below :)
 */
 object App {
-    const val STR_USAGE = "Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL>"
     private val log = logger()
 
     @JvmStatic
@@ -32,7 +31,7 @@ object App {
             println("" + ex.message)
             System.exit(1)
         } catch (ex: Throwable) {
-            App.log.error("CSV Cruncher failed: " + ex.message, ex)
+            log.error("CSV Cruncher failed: " + ex.message, ex)
             System.exit(127)
         }
     }
@@ -41,127 +40,191 @@ object App {
         val opt = Options()
         var relPos = -1
         var next: OptionsNext? = null
-        App.log.debug(" Parameters: ")
+        log.debug(" Parameters: ")
         for (i in args.indices) {
             val arg = args[i]
             //System.out.println(" * " + arg);
-            App.log.debug(" * $arg")
+            log.debug(" * $arg")
 
             // JSON output
-            if (arg.startsWith("--" + JsonExportFormat.Companion.PARAM_NAME)) {
-                if (arg.endsWith("=" + JsonExportFormat.ARRAY.optionValue)) opt.jsonExportFormat = JsonExportFormat.ARRAY else opt.jsonExportFormat = JsonExportFormat.ENTRY_PER_LINE
-            } else if (arg.startsWith("--include")) {
+            if (arg.startsWith("--" + JsonExportFormat.PARAM_NAME)) {
+                if (arg.endsWith("=" + JsonExportFormat.ARRAY.optionValue)) opt.jsonExportFormat =
+                    JsonExportFormat.ARRAY
+                else opt.jsonExportFormat = JsonExportFormat.ENTRY_PER_LINE
+            }
+            else if (arg.startsWith("--include")) {
                 require(arg.startsWith("--include=")) { "Option --include has to have a value (regular expression)." }
                 val regex = StringUtils.removeStart(arg, "--include=")
                 try {
                     opt.includePathsRegex = Pattern.compile(regex)
-                } catch (ex: Exception) {
+                }
+                catch (ex: Exception) {
                     throw CsvCruncherException("Not a valid regex: " + regex + ". " + ex.message, ex)
                 }
-            } else if (arg.startsWith("--exclude")) {
+            }
+            else if (arg.startsWith("--exclude")) {
                 require(arg.startsWith("--exclude=")) { "Option --exclude has to have a value (regular expression)." }
                 val regex = StringUtils.removeStart(arg, "--exclude=")
                 try {
                     opt.excludePathsRegex = Pattern.compile(regex)
-                } catch (ex: Exception) {
+                }
+                catch (ex: Exception) {
                     throw CsvCruncherException("Not a valid regex: " + regex + ". " + ex.message, ex)
                 }
-            } else if (arg.startsWith("--ignoreFirstLines")) {
+            }
+            else if (arg.startsWith("--ignoreFirstLines")) {
                 opt.ignoreFirstLines = 1
                 if (arg.startsWith("--ignoreFirstLines=")) {
                     val numberStr = StringUtils.removeStart(arg, "--ignoreFirstLines=")
                     try {
                         val number = numberStr.toInt()
                         opt.ignoreFirstLines = number
-                    } catch (ex: Exception) {
+                    }
+                    catch (ex: Exception) {
                         throw CsvCruncherException("Not a valid number: " + numberStr + ". " + ex.message, ex)
                     }
                 }
-            } else if (arg.startsWith("--ignoreLinesMatching")) {
+            }
+            else if (arg.startsWith("--ignoreLinesMatching")) {
                 require(arg.startsWith("--ignoreLinesMatching=")) { "Option --ignoreLinesMatching has to have a value (regular expression)." }
                 val regex = StringUtils.removeStart(arg, "--ignoreFirstLines=")
                 try {
                     opt.ignoreLineRegex = Pattern.compile(regex)
-                } catch (ex: Exception) {
+                }
+                catch (ex: Exception) {
                     throw CsvCruncherException("Not a valid regex: " + regex + ". " + ex.message, ex)
                 }
-            } else if (arg.startsWith("--rowNumbers")) {
+            }
+            else if (arg.startsWith("--rowNumbers")) {
                 opt.initialRowNumber = -1L
                 if (arg.startsWith("--rowNumbers=")) {
                     val numberStr = StringUtils.removeStart(arg, "--rowNumbers=")
                     try {
                         val number = numberStr.toLong()
                         opt.initialRowNumber = number
-                    } catch (ex: Exception) {
+                    }
+                    catch (ex: Exception) {
                         throw CsvCruncherException("Not a valid number: " + numberStr + ". " + ex.message, ex)
                     }
                 }
-            } else if (arg.startsWith("--" + SortInputPaths.Companion.PARAM_SORT_INPUT_PATHS)) {
-                if (arg.endsWith("--" + SortInputPaths.Companion.PARAM_SORT_INPUT_PATHS) ||
-                        arg.endsWith("=" + SortInputPaths.PARAMS_ORDER.optionValue)) opt.sortInputPaths = SortInputPaths.PARAMS_ORDER else if (arg.endsWith("=" + SortInputPaths.ALPHA.optionValue)) opt.sortInputPaths = SortInputPaths.ALPHA else if (arg.endsWith("=" + SortInputPaths.TIME.optionValue)) opt.sortInputPaths = SortInputPaths.TIME else throw IllegalArgumentException(String.format(
+            }
+            else if (arg.startsWith("--" + SortInputPaths.PARAM_SORT_INPUT_PATHS)) {
+                if (arg.endsWith("--" + SortInputPaths.PARAM_SORT_INPUT_PATHS) ||
+                    arg.endsWith("=" + SortInputPaths.PARAMS_ORDER.optionValue)
+                ) opt.sortInputPaths = SortInputPaths.PARAMS_ORDER
+                else if (arg.endsWith("=" + SortInputPaths.ALPHA.optionValue)) 
+                    opt.sortInputPaths = SortInputPaths.ALPHA
+                else if (arg.endsWith("=" + SortInputPaths.TIME.optionValue)) 
+                    opt.sortInputPaths = SortInputPaths.TIME
+                else throw IllegalArgumentException(
+                    String.format(
                         "Unknown value for %s: %s Try one of %s",
-                        SortInputPaths.Companion.PARAM_SORT_INPUT_PATHS, arg,
-                        SortInputPaths.Companion.optionValues
-                ))
-            } else if (arg.startsWith("--" + SortInputPaths.Companion.PARAM_SORT_FILE_GROUPS)) {
-                if (arg.endsWith("--" + SortInputPaths.Companion.PARAM_SORT_FILE_GROUPS) ||
-                        arg.endsWith("=" + SortInputPaths.ALPHA.optionValue)) opt.sortInputFileGroups = SortInputPaths.ALPHA else if (arg.endsWith("=" + SortInputPaths.TIME.optionValue)) opt.sortInputFileGroups = SortInputPaths.TIME else if (arg.endsWith("=" + SortInputPaths.PARAMS_ORDER.optionValue)) opt.sortInputFileGroups = SortInputPaths.PARAMS_ORDER else throw IllegalArgumentException(String.format(
+                        SortInputPaths.PARAM_SORT_INPUT_PATHS, arg,
+                        SortInputPaths.optionValues
+                    )
+                )
+            }
+            else if (arg.startsWith("--" + SortInputPaths.PARAM_SORT_FILE_GROUPS)) {
+                if (arg.endsWith("--" + SortInputPaths.PARAM_SORT_FILE_GROUPS) ||
+                    arg.endsWith("=" + SortInputPaths.ALPHA.optionValue)
+                ) opt.sortInputFileGroups = SortInputPaths.ALPHA
+                else if (arg.endsWith("=" + SortInputPaths.TIME.optionValue)) 
+                    opt.sortInputFileGroups = SortInputPaths.TIME
+                else if (arg.endsWith("=" + SortInputPaths.PARAMS_ORDER.optionValue)) 
+                    opt.sortInputFileGroups = SortInputPaths.PARAMS_ORDER
+                else throw IllegalArgumentException(
+                    String.format(
                         "Unknown value for %s: %s Try one of %s",
-                        SortInputPaths.Companion.PARAM_SORT_FILE_GROUPS, arg,
-                        SortInputPaths.Companion.optionValues
-                ))
-            } else if (arg.startsWith("--" + CombineInputFiles.Companion.PARAM_NAME)) {
-                if (arg.endsWith("--" + CombineInputFiles.Companion.PARAM_NAME) ||
-                        arg.endsWith("=" + CombineInputFiles.CONCAT.optionValue)) opt.combineInputFiles = CombineInputFiles.CONCAT else if (arg.endsWith("=" + CombineInputFiles.INTERSECT.optionValue)) opt.combineInputFiles = CombineInputFiles.INTERSECT else if (arg.endsWith("=" + CombineInputFiles.EXCEPT.optionValue)) opt.combineInputFiles = CombineInputFiles.EXCEPT else throw IllegalArgumentException(String.format(
+                        SortInputPaths.PARAM_SORT_FILE_GROUPS, arg,
+                        SortInputPaths.optionValues
+                    )
+                )
+            }
+            else if (arg.startsWith("--" + CombineInputFiles.PARAM_NAME)) {
+                if (arg.endsWith("--" + CombineInputFiles.PARAM_NAME) ||
+                    arg.endsWith("=" + CombineInputFiles.CONCAT.optionValue)
+                ) opt.combineInputFiles = CombineInputFiles.CONCAT
+                else if (arg.endsWith("=" + CombineInputFiles.INTERSECT.optionValue)) opt.combineInputFiles =
+                    CombineInputFiles.INTERSECT
+                else if (arg.endsWith("=" + CombineInputFiles.EXCEPT.optionValue)) opt.combineInputFiles =
+                    CombineInputFiles.EXCEPT
+                else throw IllegalArgumentException(
+                    String.format(
                         "Unknown value for %s: %s Try one of %s",
-                        CombineInputFiles.Companion.PARAM_NAME, arg,
-                        CombineInputFiles.Companion.optionValues
-                ))
+                        CombineInputFiles.PARAM_NAME, arg,
+                        CombineInputFiles.optionValues
+                    )
+                )
                 // TODO: Do something like this instead:
                 //opt.combineInputFiles = Utils.processOptionIfMatches(arg, Options.CombineInputFiles.class, Options.CombineInputFiles.CONCAT);
                 // Or move it to the respective enum class.
                 // Enum<Options.CombineDirectories> val = Options.CombineDirectories.COMBINE_ALL_FILES;
-            } else if (arg.startsWith("--" + CombineDirectories.Companion.PARAM_NAME)) {
+            }
+            else if (arg.startsWith("--" + CombineDirectories.PARAM_NAME)) {
                 // Sorted from most fine-grained to least.
-                if (arg.endsWith("=" + CombineDirectories.COMBINE_PER_EACH_DIR.optionValue)) opt.combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR else if (arg.endsWith("=" + CombineDirectories.COMBINE_PER_INPUT_SUBDIR.optionValue)) opt.combineDirs = CombineDirectories.COMBINE_PER_INPUT_SUBDIR else if (arg.endsWith("=" + CombineDirectories.COMBINE_PER_INPUT_DIR.optionValue)) opt.combineDirs = CombineDirectories.COMBINE_PER_INPUT_DIR else if (arg.endsWith("=" + CombineDirectories.COMBINE_ALL_FILES.optionValue)) opt.combineDirs = CombineDirectories.COMBINE_ALL_FILES else if (arg == "--" + CombineDirectories.Companion.PARAM_NAME) opt.combineDirs = CombineDirectories.COMBINE_ALL_FILES else {
-                    throw IllegalArgumentException(String.format(
+                if (arg.endsWith("=" + CombineDirectories.COMBINE_PER_EACH_DIR.optionValue)) opt.combineDirs =
+                    CombineDirectories.COMBINE_PER_EACH_DIR
+                else if (arg.endsWith("=" + CombineDirectories.COMBINE_PER_INPUT_SUBDIR.optionValue)) opt.combineDirs =
+                    CombineDirectories.COMBINE_PER_INPUT_SUBDIR
+                else if (arg.endsWith("=" + CombineDirectories.COMBINE_PER_INPUT_DIR.optionValue)) opt.combineDirs =
+                    CombineDirectories.COMBINE_PER_INPUT_DIR
+                else if (arg.endsWith("=" + CombineDirectories.COMBINE_ALL_FILES.optionValue)) opt.combineDirs =
+                    CombineDirectories.COMBINE_ALL_FILES
+                else if (arg == "--" + CombineDirectories.PARAM_NAME) opt.combineDirs =
+                    CombineDirectories.COMBINE_ALL_FILES
+                else {
+                    throw IllegalArgumentException(
+                        String.format(
                             "Unknown value for %s: %s Try one of %s",
-                            CombineDirectories.Companion.PARAM_NAME, arg,
-                            CombineDirectories.Companion.optionValues
-                    ))
+                            CombineDirectories.PARAM_NAME, arg,
+                            CombineDirectories.optionValues
+                        )
+                    )
                 }
-            } else if ("--queryPerInputSubpart" == arg) {
+            }
+            else if ("--queryPerInputSubpart" == arg) {
                 opt.queryPerInputSubpart = true
-            } else if ("-in" == arg) {
+            }
+            else if ("-in" == arg) {
                 next = OptionsNext.IN
-            } else if ("--skipNonReadable" == arg) {
+            }
+            else if ("--skipNonReadable" == arg) {
                 opt.skipNonReadable = true
-            } else if ("--keepWorkFiles" == arg) {
+            }
+            else if ("--keepWorkFiles" == arg) {
                 opt.keepWorkFiles = true
-            } else if ("-out" == arg) {
+            }
+            else if ("-out" == arg) {
                 next = OptionsNext.OUT
                 relPos = 2
-            } else if ("-sql" == arg) {
+            }
+            else if ("-sql" == arg) {
                 next = OptionsNext.SQL
                 relPos = 3
-            } else if ("-db" == arg) {
+            }
+            else if ("-db" == arg) {
                 next = OptionsNext.DBPATH
-            } else if ("-v" == arg || "--version" == arg) {
+            }
+            else if ("-v" == arg || "--version" == arg) {
                 val version = version
                 println(" CSV Cruncher version $version")
                 return null
-            } else if ("-h" == arg || "--help" == arg) {
+            }
+            else if ("-h" == arg || "--help" == arg) {
                 val version = version
                 println(" CSV Cruncher version $version")
                 printUsage(System.out)
                 return null
-            } else if (arg.startsWith("--overwrite")) {
+            }
+            else if (arg.startsWith("--overwrite")) {
                 opt.overwrite = true
-            } else if (arg.startsWith("-")) {
+            }
+            else if (arg.startsWith("-")) {
                 val msg = "Unknown parameter: $arg"
                 println("ERROR: $msg")
                 throw IllegalArgumentException(msg)
-            } else {
+            }
+            else {
                 if (next != null) {
                     when (next) {
                         OptionsNext.IN -> {
@@ -188,9 +251,11 @@ object App {
                 ++relPos
                 if (relPos == 0) {
                     opt.inputPaths!!.add(arg)
-                } else if (relPos == 1) {
+                }
+                else if (relPos == 1) {
                     opt.outputPathCsv = arg
-                } else {
+                }
+                else {
                     if (relPos != 2) {
                         printUsage(System.out)
                         throw IllegalArgumentException("Wrong arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...")
@@ -209,7 +274,7 @@ object App {
     Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'.
     Use table-qualified way: `SELECT myTable.*`"""
                 if (itsForSure) {
-                    App.log.error("""
+                    log.error("""
     
     $msg
     
@@ -218,7 +283,7 @@ object App {
                     throw IllegalArgumentException(msg)
                 } else {
                     val notSure = "\n    (This detection is not reliable so the program will continue, but likely fail.)"
-                    App.log.warn("""
+                    log.warn("""
     
     $msg$notSure
     
