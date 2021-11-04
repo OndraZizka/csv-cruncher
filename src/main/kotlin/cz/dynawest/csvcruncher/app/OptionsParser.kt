@@ -222,10 +222,10 @@ object OptionsParser {
         if (options.initialRowNumber != null && options.sql != null) {
             val itsForSure = options.sql!!.matches(".*SELECT +\\*.*|.*[^.]\\* +FROM .*".toRegex())
             if (itsForSure || options.sql!!.matches(".*SELECT.*[^.]\\* .*FROM.*".toRegex())) {
-                val msg = """
-    WARNING! It looks like you use --rowNumbers with `SELECT *`.
-    Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'.
-    Use table-qualified way: `SELECT myTable.*`"""
+                val msg = """|
+                             |    WARNING! It looks like you use --rowNumbers with `SELECT *`.
+                             |    Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'.
+                             |    Use table-qualified way: `SELECT myTable.*`""".trimMargin()
                 if (itsForSure) {
                     log.error("\n$msg\n\n")
                     throw IllegalArgumentException(msg)
