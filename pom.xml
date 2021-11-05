@@ -75,6 +75,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.surefire}</version>
                 <configuration>
+                    <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
                         <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
                         <target.dir>${project.build.directory}</target.dir>
@@ -88,6 +89,7 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${version.surefire}</version>
                 <configuration>
+                    <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
                         <test.cruncher.runCmd>${testRunCmd}</test.cruncher.runCmd>
                         <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
