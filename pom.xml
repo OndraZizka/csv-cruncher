@@ -260,9 +260,9 @@
                                 ${testRunCmd}
                                 --json --combineInputs --rowNumbers
                                 --exclude=.*/LOAD.*\.csv
-                                -sql 'SELECT session_telephony_pins.* FROM session_telephony_pins'
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
+                                -sql 'SELECT session_telephony_pins.* FROM session_telephony_pins'
                             </commandlineArgs>
                         </configuration>
                     </execution>
@@ -277,9 +277,9 @@
                                 ${testRunCmd}
                                 --json --combineInputs
                                 --exclude=.*/LOAD.*\.csv
-                                -sql 'SELECT * FROM apollo_recording_group'
                                 -in src/test/data/sample-collab/apollo_recording_group/
                                 -out target/results/apollo_recording_group.csv
+                                -sql 'SELECT * FROM apollo_recording_group'
                             </commandlineArgs>
                         </configuration>
                     </execution>
