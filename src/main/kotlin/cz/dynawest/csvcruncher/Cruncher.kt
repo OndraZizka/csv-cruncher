@@ -1,6 +1,5 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.JsonFileFlattener
@@ -17,7 +16,7 @@ import java.sql.*
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
-class Cruncher(private val options: Options) {
+class Cruncher(private val options: Options2) {
     private var jdbcConn: Connection? = null
     private var dbHelper: HsqlDbHelper? = null
     private val log = logger()
@@ -45,9 +44,12 @@ class Cruncher(private val options: Options) {
     /**
      * Performs the whole process.
      */
-    @Throws(Exception::class)
     fun crunch() {
-        options.validate()
+        try { options.validateAndApplyDefaults() }
+        catch (ex: Exception) {
+            throw CrucherConfigException("ERROR: Invalid options: ${ex.message}")
+        }
+
         val addCounterColumn = options.initialRowNumber != null
         val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE
         val printAsArray = options.jsonExportFormat == JsonExportFormat.ARRAY
@@ -59,14 +61,13 @@ class Cruncher(private val options: Options) {
         if (addCounterColumn) counterColumn.setDdlAndVal()
         try {
             // Sort the input paths.
-            var inputPaths = options.inputPaths!!.stream().map { first: String? -> Paths.get(first) }.collect(Collectors.toList())
+            var inputPaths = options.importArguments.map { it.path }.filterNotNull()
             inputPaths = FilesUtils.sortInputPaths(inputPaths, options.sortInputPaths)
-            log.debug(" --- Sorted input paths: --- " + inputPaths.stream().map { p: Path -> "\n * $p" }.reduce { obj: String, str: String -> obj + str }.get())
+            log.debug(" --- Sorted input paths: --- " + inputPaths.map { "\n * $it" }.joinToString())
 
             // TODO: Convert the .json files to .csv files.
             inputPaths.map { inputPath ->
                 if (inputPath.endsWith(".json"))
-
                     convertJsonToCsv(inputPath)
                 else inputPath
             }
@@ -79,15 +80,9 @@ class Cruncher(private val options: Options) {
 
                 ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
                 inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options)
-                ///inputPaths = new ArrayList<>(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
-                ///log.info(" --- Combined input files: --- " + inputPaths.stream().map(p -> "\n * " + p).reduce(String::concat).orElse("NONE"));
-                log.info(" --- Combined input files: --- " + inputSubparts.stream().map { p: CruncherInputSubpart ->
-                    """
- * ${p.combinedFile}"""
-                }.reduce { obj: String, str: String -> obj + str }.orElse("NONE"))
+                log.info(" --- Combined input files: --- " + inputSubparts.map { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" }.joinToString())
             } else {
                 inputSubparts = inputPaths.stream().map { path: Path -> CruncherInputSubpart.trivial(path) }.collect(Collectors.toList())
-                //inputPaths = new ArrayList<>(inputSubparts.stream().map(x -> x.getCombinedFile()).collect(Collectors.toList()));
             }
             if (inputSubparts.isEmpty()) return
             FilesUtils.validateInputFiles(inputSubparts)
@@ -104,87 +99,95 @@ class Cruncher(private val options: Options) {
                 dbHelper!!.createTableForInputFile(tableName, csvInFile, colNames, true, options.overwrite)
                 inputSubpart.tableName = tableName
             }
-            val genericSql = StringUtils.defaultString(options.sql, DEFAULT_SQL)
-            outputs = ArrayList()
 
 
-            // SQL can be executed:
-            // * for all tables, and generate a single result; if some table has changed, it would fail.
-            if (!options.queryPerInputSubpart) {
-                val csvOutFile = resolvePathToUserDirIfRelative(Paths.get(options.outputPathCsv))
-                val output = CruncherOutputPart(csvOutFile.toPath(), null)
-                outputs.add(output)
-            } else {
-                val usedOutputFiles: MutableSet<Path> = HashSet()
-                for (inputSubpart in inputSubparts) {
-                    var outputFile = Paths.get(options.outputPathCsv).resolve(inputSubpart.combinedFile.fileName)
-                    outputFile = FilesUtils.test_getNonUsedName(outputFile, usedOutputFiles)
-                    val output = CruncherOutputPart(outputFile, inputSubpart.tableName)
+            // Perform the SQL SELECTs
+
+            if (options.exportArguments.size > 1)
+                throw UnsupportedOperationException("Currently, only 1 export is supported.")
+
+            for (export in options.exportArguments) {
+
+                val genericSql = StringUtils.defaultString(export.sqlQuery, DEFAULT_SQL)
+                outputs = mutableListOf()
+
+                // SQL can be executed:
+                // * for all tables, and generate a single result; if some table has changed, it would fail.
+                if (!options.queryPerInputSubpart) {
+                    val csvOutFile = resolvePathToUserDirIfRelative(export.path!!)
+                    val output = CruncherOutputPart(csvOutFile.toPath(), null)
                     outputs.add(output)
-                }
-            }
-
-
-            // TODO: For each output...
-            for (output in outputs) {
-                log.debug("Output part: {}", output)
-                val csvOutFile = output.outputFile.toFile()
-                var sql = genericSql
-                //String outputTableName = TABLE_NAME__OUTPUT;
-                val outputTableName = output.deriveOutputTableName()
-                if (output.inputTableName != null) {
-                    sql = sql.replace(SQL_TABLE_PLACEHOLDER, output.inputTableName)
-                    //outputTableName = output.getInputTableName() + "_out";
+                } else {
+                    val usedOutputFiles: MutableSet<Path> = HashSet()
+                    for (inputSubpart in inputSubparts) {
+                        var outputFile = export.path!!.resolve(inputSubpart.combinedFile.fileName)
+                        outputFile = FilesUtils.test_getNonUsedName(outputFile, usedOutputFiles)
+                        val output = CruncherOutputPart(outputFile, inputSubpart.tableName)
+                        outputs.add(output)
+                    }
                 }
 
 
-                // Create the parent dir.
-                val dirToCreate = csvOutFile.absoluteFile.parentFile
-                dirToCreate.mkdirs()
-
-                // Get the columns info: Perform the SQL, LIMIT 1.
-                val columnsDef: Map<String, String> = dbHelper!!.extractColumnsInfoFrom1LineSelect(sql)
-                output.columnNamesAndTypes = columnsDef
-
-
-                // Write the result into a CSV
-                log.info(" * CSV output: $csvOutFile")
-                dbHelper!!.createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
-
-                // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
-                //String selectSql = this.options.sql.replace("@counter", value);
-                // On the other hand, that's too much space for the user to screw up. Let's force it:
-                val selectSql = sql.replace("SELECT ", "SELECT " + counterColumn.value + " ")
-                output.sql = selectSql
-                val userSql = "INSERT INTO $outputTableName ($selectSql)"
-                log.debug(" * User's SQL: $userSql")
-                //log.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
+                // For each output...
+                for (output in outputs) {
+                    log.debug("Output part: {}", output)
+                    val csvOutFile = output.outputFile.toFile()
+                    var sql = genericSql
+                    //String outputTableName = TABLE_NAME__OUTPUT;
+                    val outputTableName = output.deriveOutputTableName()
+                    if (output.inputTableName != null) {
+                        sql = sql.replace(SQL_TABLE_PLACEHOLDER, output.inputTableName)
+                        //outputTableName = output.getInputTableName() + "_out";
+                    }
 
 
-                @Suppress("UNUSED_VARIABLE")
-                val rowsAffected = dbHelper!!.executeDbCommand(userSql, "Error executing user SQL: ")
+                    // Create the parent dir.
+                    val dirToCreate = csvOutFile.absoluteFile.parentFile
+                    dirToCreate.mkdirs()
+
+                    // Get the columns info: Perform the SQL, LIMIT 1.
+                    val columnsDef: Map<String, String> = dbHelper!!.extractColumnsInfoFrom1LineSelect(sql)
+                    output.columnNamesAndTypes = columnsDef
 
 
-                // Now let's convert it to JSON if necessary.
-                if (convertResultToJson) {
-                    var pathStr: String? = csvOutFile.toPath().toString()
-                    pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")
-                    pathStr = StringUtils.appendIfMissing(pathStr, ".json")
-                    val destJsonFile = Paths.get(pathStr)
-                    log.info(" * JSON output: $destJsonFile")
-                    jdbcConn!!.createStatement().use { statement2 ->
-                        FilesUtils.convertResultToJson(
-                                statement2.executeQuery("SELECT * FROM $outputTableName"),
-                                destJsonFile,
-                                printAsArray
-                        )
-                        if (!options.keepWorkFiles) csvOutFile.deleteOnExit()
+                    // Write the result into a CSV
+                    log.info(" * CSV output: $csvOutFile")
+                    dbHelper!!.createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
+
+                    // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
+                    //String selectSql = this.options.sql.replace("@counter", value);
+                    // On the other hand, that's too much space for the user to screw up. Let's force it:
+                    val selectSql = sql.replace("SELECT ", "SELECT " + counterColumn.value + " ")
+                    output.sql = selectSql
+                    val userSql = "INSERT INTO $outputTableName ($selectSql)"
+                    log.debug(" * User's SQL: $userSql")
+                    //log.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
+
+
+                    @Suppress("UNUSED_VARIABLE")
+                    val rowsAffected = dbHelper!!.executeDbCommand(userSql, "Error executing user SQL: ")
+
+
+                    // Now let's convert it to JSON if necessary.
+                    if (convertResultToJson) {
+                        var pathStr: String? = csvOutFile.toPath().toString()
+                        pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")
+                        pathStr = StringUtils.appendIfMissing(pathStr, ".json")
+                        val destJsonFile = Paths.get(pathStr)
+                        log.info(" * JSON output: $destJsonFile")
+                        jdbcConn!!.createStatement().use { statement2 ->
+                            FilesUtils.convertResultToJson(
+                                    statement2.executeQuery("SELECT * FROM $outputTableName"),
+                                    destJsonFile,
+                                    printAsArray
+                            )
+                            if (!options.keepWorkFiles) csvOutFile.deleteOnExit()
+                        }
                     }
                 }
             }
         } catch (ex: Exception) {
-            //throw new CsvCruncherException("(DB tables and files cleanup was performed.)", ex);
-            throw ex // The wrapper above was more confusing than helping.
+            throw ex
         } finally {
             log.debug(" *** SHUTDOWN CLEANUP SEQUENCE ***")
             cleanUpInputOutputTables(tablesToFiles, outputs)

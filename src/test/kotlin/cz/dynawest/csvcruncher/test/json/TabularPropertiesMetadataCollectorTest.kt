@@ -9,6 +9,7 @@ import cz.dynawest.util.ResourceLoader
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.test.assertEquals
@@ -104,7 +105,7 @@ class TabularPropertiesMetadataCollectorTest {
 
     @Test
     fun `testConvertJson_large_github`() {
-        val collectedProperties = collectProperties("/target/testData/json/github_data.json", "/")
+        val collectedProperties = collectProperties("./target/testData/json/github_data.json", "/")
 
         val propsList = collectedProperties.map { "\n * $it" }.joinToString()
         assertEquals(615, collectedProperties.size, propsList)
@@ -120,8 +121,10 @@ class TabularPropertiesMetadataCollectorTest {
     private fun collectProperties(testFilePath: String, itemsArraySprout: String = "/"): MutableMap<String, PropertyInfo> {
         val converter = JsonFileFlattener()
         val inputStream: InputStream =
-            if (testFilePath.startsWith("/"))
-                javaClass.classLoader!!.getResourceAsStream(testFilePath)
+            if (testFilePath.startsWith("#"))
+                javaClass.classLoader.getResourceAsStream(testFilePath)
+            else if (testFilePath.startsWith("./"))
+                FileInputStream(testFilePath)
             else
                 ResourceLoader.openResourceAtRelativePath(Path.of(testFilePath))
 

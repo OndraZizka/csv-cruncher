@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.App.mainNoExit
+import cz.dynawest.csvcruncher.app.App
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import org.apache.commons.lang3.StringUtils
@@ -33,7 +33,7 @@ object CsvCruncherTestUtils {
                 .map { obj: String -> obj.trim { it <= ' ' } }
                 .filter { x: String -> !x.isEmpty() }
                 .toList().toTypedArray()
-        mainNoExit(arguments)
+        App.mainNoExit(arguments)
     }
 
     /**

@@ -3,6 +3,7 @@ package cz.dynawest.csvcruncher.util
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
+import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.Options.*
 import org.apache.commons.io.FileUtils
@@ -199,7 +200,7 @@ object FilesUtils {
      * @return Input files grouped by the given input paths. CSV headers are not yet checked.
      */
     @JvmStatic
-    fun expandFilterSortInputFilesGroups(inputPaths: List<Path>, options: Options): Map<Path?, List<Path>> {
+    fun expandFilterSortInputFilesGroups(inputPaths: List<Path>, options: Options2): Map<Path?, List<Path>> {
         if (CombineInputFiles.NONE == options.combineInputFiles) {
             // No splitting - return a list with the same item.
             return mapOfIdentityToSingletonList(inputPaths)
@@ -244,7 +245,7 @@ object FilesUtils {
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun combineInputFiles(fileGroupsToCombine: Map<Path?, List<Path>>, options: Options): List<CruncherInputSubpart> {
+    fun combineInputFiles(fileGroupsToCombine: Map<Path?, List<Path>>, options: Options2): List<CruncherInputSubpart> {
         // Split into subgroups by column names in the CSV header.
         @Suppress("NAME_SHADOWING") var fileGroupsToCombine = fileGroupsToCombine
         val splitResult: FileGroupsSplitBySchemaResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine)
@@ -291,7 +292,7 @@ object FilesUtils {
      * @return A map with one entry per group, containing the files.
      */
     @JvmStatic
-    fun expandDirectories(inputPaths: List<Path>, options: Options): MutableMap<Path?, MutableList<Path>> {
+    fun expandDirectories(inputPaths: List<Path>, options: Options2): MutableMap<Path?, MutableList<Path>> {
         val fileGroupsToConcat: MutableMap<Path?, MutableList<Path>> = HashMap()
         // null will be used as a special key for COMBINE_ALL_FILES.
         fileGroupsToConcat[null] = ArrayList()
@@ -348,7 +349,7 @@ object FilesUtils {
      * Also, skips the empty groups.
      */
     @JvmStatic
-    fun filterFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, options: Options): MutableMap<Path?, List<Path>> {
+    fun filterFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, options: Options2): MutableMap<Path?, List<Path>> {
         val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = HashMap()
         for ((origin, paths) in fileGroupsToConcat) {
             val filteredPaths = filterPaths(options, paths)
@@ -362,7 +363,7 @@ object FilesUtils {
     }
 
     @JvmStatic
-    fun filterPaths(options: Options, paths: List<Path>): List<Path> {
+    fun filterPaths(options: Options2, paths: List<Path>): List<Path> {
         if (options.includePathsRegex == null && options.excludePathsRegex == null)
             return paths
 
@@ -376,7 +377,7 @@ object FilesUtils {
      * Sorts the files within the groups by the configured sorting - see [Options.SortInputPaths]. Skips the empty groups.
      * @return A map with one entry per group, containing the files in sorted order.
      */
-    private fun sortFileGroups(options: Options, fileGroupsToConcat: Map<Path?, List<Path>>): MutableMap<Path?, List<Path>> {
+    private fun sortFileGroups(options: Options2, fileGroupsToConcat: Map<Path?, List<Path>>): MutableMap<Path?, List<Path>> {
         check(SortInputPaths.PARAMS_ORDER != options.sortInputFileGroups) { "Input file groups have to be sorted somehow, " + SortInputPaths.PARAMS_ORDER.optionValue + " not applicable." }
         val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = HashMap()
         for ((origin, value) in fileGroupsToConcat) {
@@ -436,7 +437,7 @@ object FilesUtils {
      * @return Mapping from the resulting concatenated file to the files that were concatenated.
      */
     @Throws(IOException::class)
-    private fun concatenateFilesFromFileGroups(options: Options, fileGroupsToConcat: Map<Path?, List<Path>>, tmpConcatDir: Path): List<CruncherInputSubpart> {
+    private fun concatenateFilesFromFileGroups(options: Options2, fileGroupsToConcat: Map<Path?, List<Path>>, tmpConcatDir: Path): List<CruncherInputSubpart> {
         val inputSubparts: MutableList<CruncherInputSubpart> = ArrayList()
         val usedConcatFilePaths: MutableSet<Path> = HashSet()
         for (fileGroup in fileGroupsToConcat.entries) {

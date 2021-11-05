@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.app
 
+import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.Cruncher.Companion.SQL_TABLE_PLACEHOLDER
 import cz.dynawest.csvcruncher.util.logger
@@ -43,7 +44,6 @@ class Options {
     var combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR
     var jsonExportFormat = JsonExportFormat.NONE
 
-    // && this.sql != null;
     val isFilled: Boolean
         get() = inputPaths != null && outputPathCsv != null
 
@@ -64,37 +64,37 @@ class Options {
         if (queryPerInputSubpart && !StringUtils.isBlank(sql) && !sql!!.contains(SQL_TABLE_PLACEHOLDER)) {
             val msg =
                 "queryPerInputSubpart is enabled, but the SQL is not generic (does not use $SQL_TABLE_PLACEHOLDER), which doesn't make sense."
-            throw IllegalArgumentException(msg)
+            throw CrucherConfigException(msg)
         }
         if (CombineDirectories.COMBINE_PER_INPUT_SUBDIR == combineDirs) {
             for (inputPath in inputPaths!!) {
                 if (Paths.get(inputPath).toFile().isFile) {
                     val msg =
                         "If using ${CombineDirectories.COMBINE_PER_INPUT_SUBDIR.optionValue}, all inputs must be directories> $inputPath"
-                    throw IllegalArgumentException(msg)
+                    throw CrucherConfigException(msg)
                 }
             }
         }
     }
 
     override fun toString(): String {
-        return """    dbPath: ${dbPath}
-    inputPaths: ${inputPaths}
-    includePathsRegex: ${includePathsRegex}
-    excludePathsRegex: ${excludePathsRegex}
-    outputPathCsv: ${outputPathCsv}
-    queryPerInputSubpart: ${queryPerInputSubpart}
-    overwrite: ${overwrite}
-    sql: ${sql}
-    ignoreLineRegex: ${ignoreLineRegex}
-    ignoreFirstLines: ${ignoreFirstLines}
-    sortInputPaths: ${sortInputPaths}
-    sortInputFileGroups: ${sortInputFileGroups}
-    combineInputFiles: ${combineInputFiles}
-    combineDirs: ${combineDirs}
-    initialRowNumber: ${initialRowNumber}
-    jsonExportFormat: ${jsonExportFormat}
-    skipNonReadable: ${skipNonReadable}"""
+        return """  |    dbPath: ${dbPath}
+                    |    inputPaths: ${inputPaths}
+                    |    includePathsRegex: ${includePathsRegex}
+                    |    excludePathsRegex: ${excludePathsRegex}
+                    |    outputPathCsv: ${outputPathCsv}
+                    |    queryPerInputSubpart: ${queryPerInputSubpart}
+                    |    overwrite: ${overwrite}
+                    |    sql: ${sql}
+                    |    ignoreLineRegex: ${ignoreLineRegex}
+                    |    ignoreFirstLines: ${ignoreFirstLines}
+                    |    sortInputPaths: ${sortInputPaths}
+                    |    sortInputFileGroups: ${sortInputFileGroups}
+                    |    combineInputFiles: ${combineInputFiles}
+                    |    combineDirs: ${combineDirs}
+                    |    initialRowNumber: ${initialRowNumber}
+                    |    jsonExportFormat: ${jsonExportFormat}
+                    |    skipNonReadable: ${skipNonReadable}""".trimMargin()
     }
 
     val mainOutputDir: Path

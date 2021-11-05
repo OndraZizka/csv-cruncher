@@ -21,6 +21,7 @@
         <version.kotlin>1.5.31</version.kotlin>
         <version.jdk>11</version.jdk>
         <version.jackson>2.13.0</version.jackson>
+        <version.surefire>3.0.0-M5</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
@@ -48,6 +49,7 @@
                 <excludes><exclude>*.java</exclude><exclude>*.kt</exclude></excludes>
             </testResource>
         </testResources>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
         <plugins>
 
@@ -71,7 +73,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>${version.surefire}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
@@ -84,7 +86,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>${version.surefire}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <test.cruncher.runCmd>${testRunCmd}</test.cruncher.runCmd>
@@ -234,10 +236,10 @@
                             <commandlineArgs>
                                 ${testRunCmd}
                                 --json --combineInputs --rowNumbers
-                                -sql 'SELECT * FROM session_telephony_pins'
                                 --exclude=.*/LOAD.*\.csv
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
+                                -sql 'SELECT * FROM session_telephony_pins'
                             </commandlineArgs>
                             <!-- Suppress output. This will fail because the input files don't match. -->
                             <outputFile>${project.build.outputDirectory}/testOutput</outputFile>
@@ -259,9 +261,9 @@
                                 ${testRunCmd}
                                 --json --combineInputs --rowNumbers
                                 --exclude=.*/LOAD.*\.csv
-                                -sql 'SELECT session_telephony_pins.* FROM session_telephony_pins'
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
+                                -sql 'SELECT session_telephony_pins.* FROM session_telephony_pins'
                             </commandlineArgs>
                         </configuration>
                     </execution>
@@ -276,9 +278,9 @@
                                 ${testRunCmd}
                                 --json --combineInputs
                                 --exclude=.*/LOAD.*\.csv
-                                -sql 'SELECT * FROM apollo_recording_group'
                                 -in src/test/data/sample-collab/apollo_recording_group/
                                 -out target/results/apollo_recording_group.csv
+                                -sql 'SELECT * FROM apollo_recording_group'
                             </commandlineArgs>
                         </configuration>
                     </execution>
@@ -352,6 +354,9 @@
                 </executions>
                 <configuration>
                     <jvmTarget>${version.jdk}</jvmTarget>
+                    <sourceDirs>
+                        <sourceDir>src/main/kotlin</sourceDir>
+                    </sourceDirs>
                 </configuration>
             </plugin>
 

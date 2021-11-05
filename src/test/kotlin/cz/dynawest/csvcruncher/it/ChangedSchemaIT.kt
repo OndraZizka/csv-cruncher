@@ -2,7 +2,8 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
-import cz.dynawest.csvcruncher.Options
+import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.Options
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -17,15 +18,17 @@ class ChangedSchemaIT {
     fun changedSchema() {
         val testDataDir = CsvCruncherTestUtils.testDataDir.resolve("sample-changedSchema")
         val testOutputDir = CsvCruncherTestUtils.testOutputDir.resolve("sample-changedSchema")
-        val options = Options()
-        options.inputPaths = Arrays.asList(testDataDir.toString())
+        val options = Options2()
+        options.newImportArgument().apply { this.path = testDataDir }
         options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES
         options.combineInputFiles = Options.CombineInputFiles.CONCAT
-        options.outputPathCsv = testOutputDir.resolve("testResult.csv").toString()
+        options.newExportArgument().apply {
+            path = testOutputDir.resolve("testResult.csv")
+            sqlQuery = "SELECT ${Cruncher.SQL_TABLE_PLACEHOLDER}.* FROM ${Cruncher.SQL_TABLE_PLACEHOLDER}"
+        }
         options.overwrite = true
         options.queryPerInputSubpart = true // This is key.
         options.initialRowNumber = 1L
-        options.sql = "SELECT " + Cruncher.SQL_TABLE_PLACEHOLDER + ".* FROM " + Cruncher.SQL_TABLE_PLACEHOLDER
 
         // TODO: This test fails, because the tables created are NULL_1, NULL_2
         //      which is OK per se, but I need to implement dumping without -sql

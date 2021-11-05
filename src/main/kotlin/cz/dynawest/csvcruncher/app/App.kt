@@ -20,7 +20,6 @@ object App {
     }
 
     @JvmStatic
-    @Throws(Exception::class)
     fun main(args: Array<String>) {
         try {
             mainNoExit(args)

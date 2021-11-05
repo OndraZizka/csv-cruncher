@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.it
 
+import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -13,8 +14,8 @@ import java.util.*
  */
 class QueryPerInputSubpartIT {
     var inPath = Paths.get("src/test/data/sample-queryPerInputSubpart/oauth_consumer")
+
     @Test
-    @Throws(Exception::class)
     fun queryPerInputSubpart() {
         val outputDir = Paths.get("target/testResults/queryPerInputSubpart.csv")
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
@@ -35,7 +36,6 @@ class QueryPerInputSubpartIT {
                 " | -out | " + outputDir
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         checkOutputFiles(outputDir)
-
         // TODO: Add the verifications.
     }
 
@@ -48,8 +48,8 @@ class QueryPerInputSubpartIT {
                 " | -sql | SELECT oauth_consumer.* FROM oauth_consumer"
         try {
             CsvCruncherTestUtils.runCruncherWithArguments(command)
-            Assertions.fail("Should have thrown IllegalArgumentException, --queryPerInputSubpart needs generic SQL.")
-        } catch (ex: IllegalArgumentException) {
+            Assertions.fail("Should have thrown CsvCrucherConfigException, --queryPerInputSubpart needs generic SQL.")
+        } catch (ex: CrucherConfigException) {
             assertTrue(ex.message!!.contains("queryPerInputSubpart"))
             assertTrue(ex.message!!.contains("\$table"))
         }
