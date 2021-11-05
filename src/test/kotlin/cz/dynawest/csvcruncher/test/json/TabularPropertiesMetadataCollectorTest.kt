@@ -121,7 +121,7 @@ class TabularPropertiesMetadataCollectorTest {
         val converter = JsonFileFlattener()
         val inputStream: InputStream =
             if (testFilePath.startsWith("/"))
-                javaClass.classLoader!!.getResourceAsStream(testFilePath)
+                javaClass.classLoader.getResourceAsStream(testFilePath)
             else
                 ResourceLoader.openResourceAtRelativePath(Path.of(testFilePath))
 
