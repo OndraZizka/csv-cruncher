@@ -25,7 +25,7 @@ class ImportArgument {
     var jsonExportFormat: Options.JsonExportFormat? = null
 
     override fun toString(): String {
-        return "($alias) $format $path initRowNum: $initialRowNumber"
+        return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path "
     }
 }
 
@@ -37,7 +37,7 @@ class ExportArgument {
     val formats: MutableSet<Format> = mutableSetOf(Format.CSV)
 
     override fun toString(): String {
-        return "($alias) $formats $sqlQuery -> $path"
+        return "(${alias?:"no alias"}) $formats \"$sqlQuery\" -> $path"
     }
 }
 
@@ -129,11 +129,11 @@ class Options2 {
     }
 
     override fun toString(): String {
-        return """  |    dbPath: ${dbPath}
-                    |    imports: ${importArguments.map { "\n|      * $it" }.joinToString() }
+        return """  |    imports: ${importArguments.map { "\n|      * $it" }.joinToString() }
+                    |    exports: ${exportArguments.map { "\n|      * $it" }.joinToString() }
+                    |    dbPath: ${dbPath}
                     |    includePathsRegex: ${includePathsRegex}
                     |    excludePathsRegex: ${excludePathsRegex}
-                    |    exports: ${exportArguments.map { "\n|      * $it" }.joinToString() }
                     |    queryPerInputSubpart: ${queryPerInputSubpart}
                     |    overwrite: ${overwrite}
                     |    ignoreLineRegex: ${ignoreLineRegex}
