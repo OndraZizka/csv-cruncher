@@ -121,10 +121,11 @@ class OptionsCombinationsIT {
     @Throws(Exception::class)
     fun combine_selectStar_negative() {
         val command = "--json | --combineInputs | --rowNumbers" +
-                " |  -sql | SELECT * FROM session_telephony_pins" +
                 " |  --exclude=.*/LOAD.*\\.csv" +
                 " |  -in | src/test/data/sampleMultiFilesPerDir/session_telephony_pins/" +
-                " |  -out | target/results/session_telephony_pins.csv"
+                " |  -out | target/results/session_telephony_pins.csv" +
+                " |  -sql | SELECT * FROM session_telephony_pins"
+
         try {
             CsvCruncherTestUtils.runCruncherWithArguments(command)
         } catch (ex: IllegalArgumentException) { /**/
@@ -139,9 +140,10 @@ class OptionsCombinationsIT {
         val inputCsv = "target/testResults/combine_selectStar_qualified.csv"
         val command = "--json | --combineInputs | --rowNumbers" +
                 " |  --exclude=.*/LOAD.*\\.csv" +
-                " |  -sql | SELECT session_telephony_pins.* FROM session_telephony_pins" +
                 " |  -in  | src/test/data/sampleMultiFilesPerDir/session_telephony_pins/" +
-                " |  -out | " + inputCsv
+                " |  -out | $inputCsv" +
+                " |  -sql | SELECT session_telephony_pins.* FROM session_telephony_pins"
+
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get(inputCsv).toFile()
         assertTrue(resultCsv.exists())
@@ -157,9 +159,10 @@ class OptionsCombinationsIT {
     fun collab_ApolloRecGroup() {
         val command = "--json | --combineInputs" +
                 " |  --exclude=.*/LOAD.*\\.csv" +
-                " |  -sql | SELECT * FROM apollo_recording_group" +
                 " |  -in  | src/test/data/sample-collab/apollo_recording_group/" +
-                " |  -out | target/testResults/apollo_recording_group.csv"
+                " |  -out | target/testResults/apollo_recording_group.csv" +
+                " |  -sql | SELECT * FROM apollo_recording_group"
+
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         // TODO: Add the verifications.

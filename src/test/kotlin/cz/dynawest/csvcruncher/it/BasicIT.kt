@@ -27,7 +27,7 @@ class BasicIT {
 
     @Test
     fun queryPerInputSubpart() {
-        val outputDir = Paths.get("target/results")
+        val outputDir = Paths.get("target/results/queryPerInputSubpart.csv")
         val command =
             """--json=entries | --rowNumbers | -in  | $inPath | -out | $outputDir | -sql |
                  SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
