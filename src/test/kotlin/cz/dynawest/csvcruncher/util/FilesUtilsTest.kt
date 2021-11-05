@@ -1,6 +1,9 @@
 package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
+import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.util.FilesUtils.combineInputFiles
 import cz.dynawest.csvcruncher.util.FilesUtils.deriveNameForCombinedFile
 import cz.dynawest.csvcruncher.util.FilesUtils.expandDirectories
@@ -27,7 +30,7 @@ class FilesUtilsTest {
         paths.add(Paths.get("foo.foo"))
         paths.add(Paths.get("bar.foo"))
         paths.add(Paths.get("bar.bar"))
-        val options = Options()
+        val options = Options2()
         options.includePathsRegex = Pattern.compile("^foo\\..*")
         options.excludePathsRegex = Pattern.compile(".*\\.bar$")
         var paths1: List<Path?> = filterPaths(options, paths)
@@ -123,15 +126,18 @@ class FilesUtilsTest {
     @Test
     @Throws(IOException::class)
     fun combineInputFiles_changedSchema() {
-        val options = Options()
-        options.inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema").toString())
+        val options = Options2()
+        options.newImportArgument().apply { path = testDataDir.resolve("sample-changedSchema") }
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
         options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES
         options.combineInputFiles = Options.CombineInputFiles.CONCAT
-        options.outputPathCsv = testOutputDir.resolve("combineInputFilesTest.csv").toString()
+        options.newExportArgument().apply {
+            path = testOutputDir.resolve("combineInputFilesTest.csv")
+            sqlQuery = "SELECT * FROM concat"
+        }
         options.overwrite = true
         options.initialRowNumber = 1L
-        options.sql = "SELECT * FROM concat"
+
         val inputPaths = listOf(testDataDir.resolve("sample-changedSchema"))
         val inputFileGroups = expandFilterSortInputFilesGroups(inputPaths, options)
         val inputSubparts = combineInputFiles(inputFileGroups, options)
@@ -146,9 +152,9 @@ class FilesUtilsTest {
 
     @Test
     fun expandDirectories() {
-        val options = Options()
+        val options = Options2()
         val inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema"))
-        options.inputPaths = mutableListOf(inputPaths[0].toString())
+        options.newImportArgument().apply { path = inputPaths[0] }
         options.includePathsRegex = Pattern.compile(".*\\.csv")
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
         options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES

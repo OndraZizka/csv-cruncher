@@ -2,27 +2,76 @@ package cz.dynawest.csvcruncher.app
 
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.app.Options.*
+import cz.dynawest.csvcruncher.ExportArgument
+import cz.dynawest.csvcruncher.Format
+import cz.dynawest.csvcruncher.ImportArgument
+import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
+import java.nio.file.Path
 import java.util.regex.Pattern
-import kotlin.math.max
 
 object OptionsParser {
 
-    fun parseArgs(args: Array<String>): Options? {
+    fun parseArgs(args: Array<String>): Options2? {
 
-        val options = Options()
-        var relativePosition = -1
-        var next: OptionsCurrentContext? = null
+        val options = Options2()
+        var next: OptionsCurrentContext = OptionsCurrentContext.GLOBAL
+
+        lateinit var currentImport: ImportArgument
+        lateinit var currentExport: ExportArgument
+
         log.debug(" Parameters: ")
 
-        for (i in args.indices) {
-            val arg = args[i]
+        var argIndex = 0
+        while (argIndex < args.size) {
+            val arg = args[argIndex]
             log.debug(" * $arg")
 
+            if ("-in" == arg) {
+                next = OptionsCurrentContext.IN
+                currentImport = options.newImportArgument()
+            }
+            else if ("-out" == arg) {
+                next = OptionsCurrentContext.OUT
+                currentExport = options.newExportArgument()
+            }
+            else if ("-all" == arg) {
+                next = OptionsCurrentContext.GLOBAL
+            }
+            else if (!arg.startsWith("-")) {
+                when (next) {
+                    OptionsCurrentContext.IN -> currentImport.path = Path.of(arg)
+                    OptionsCurrentContext.OUT -> currentExport.path = Path.of(arg)
+                    OptionsCurrentContext.DBPATH -> options.dbPath = arg
+                }
+            }
+            else if ("-as" == arg) {
+                when (next) {
+                    OptionsCurrentContext.IN -> currentImport.alias = args.getOrNull(++argIndex)
+                    OptionsCurrentContext.OUT -> currentExport.alias = args.getOrNull(++argIndex)
+                }
+            }
+            else if ("-format" == arg) {
+                val format = enumValueOr(args.getOrNull(++argIndex), Format.CSV)
+                when (next) {
+                    OptionsCurrentContext.IN -> currentImport.format = format
+                    OptionsCurrentContext.OUT -> currentExport.formats.add(format)
+                }
+            }
+            else if ("-sql" == arg) {
+                when (next) {
+                    OptionsCurrentContext.IN -> {
+                        next = OptionsCurrentContext.OUT
+                        currentExport = options.newExportArgument()
+                    }
+                }
+                currentExport.sqlQuery = arg
+            }
+
             // JSON output
-            if (arg.startsWith("--" + JsonExportFormat.PARAM_NAME)) {
+            else if (arg.startsWith("--" + JsonExportFormat.PARAM_NAME)) {
                 if (arg.endsWith("=" + JsonExportFormat.ARRAY.optionValue))
                     options.jsonExportFormat = JsonExportFormat.ARRAY
                 else options.jsonExportFormat = JsonExportFormat.ENTRY_PER_LINE
@@ -39,7 +88,7 @@ object OptionsParser {
             }
             else if (arg.startsWith("--exclude")) {
                 require(arg.startsWith("--exclude=")) { "Option --exclude has to have a value (regular expression)." }
-                val regex = StringUtils.removeStart(arg, "--exclude=")
+                val regex = arg.removePrefix("--exclude=")
                 try {
                     options.excludePathsRegex = Pattern.compile(regex)
                 }
@@ -50,7 +99,7 @@ object OptionsParser {
             else if (arg.startsWith("--ignoreFirstLines")) {
                 options.ignoreFirstLines = 1
                 if (arg.startsWith("--ignoreFirstLines=")) {
-                    val numberStr = StringUtils.removeStart(arg, "--ignoreFirstLines=")
+                    val numberStr = arg.removePrefix("--ignoreFirstLines=")
                     try {
                         val number = numberStr.toInt()
                         options.ignoreFirstLines = number
@@ -62,7 +111,7 @@ object OptionsParser {
             }
             else if (arg.startsWith("--ignoreLinesMatching")) {
                 require(arg.startsWith("--ignoreLinesMatching=")) { "Option --ignoreLinesMatching has to have a value (regular expression)." }
-                val regex = StringUtils.removeStart(arg, "--ignoreFirstLines=")
+                val regex = arg.removePrefix("--ignoreFirstLines=")
                 try {
                     options.ignoreLineRegex = Pattern.compile(regex)
                 }
@@ -73,7 +122,7 @@ object OptionsParser {
             else if (arg.startsWith("--rowNumbers")) {
                 options.initialRowNumber = -1L
                 if (arg.startsWith("--rowNumbers=")) {
-                    val numberStr = StringUtils.removeStart(arg, "--rowNumbers=")
+                    val numberStr = arg.removePrefix("--rowNumbers=")
                     try {
                         val number = numberStr.toLong()
                         options.initialRowNumber = number
@@ -139,22 +188,15 @@ object OptionsParser {
             else if ("--queryPerInputSubpart" == arg) {
                 options.queryPerInputSubpart = true
             }
-            else if ("-in" == arg) {
-                next = OptionsCurrentContext.IN
-            }
             else if ("--skipNonReadable" == arg) {
                 options.skipNonReadable = true
             }
+
+
+            // Global only options
+
             else if ("--keepWorkFiles" == arg) {
                 options.keepWorkFiles = true
-            }
-            else if ("-out" == arg) {
-                next = OptionsCurrentContext.OUT
-                relativePosition = 2
-            }
-            else if ("-sql" == arg) {
-                next = OptionsCurrentContext.SQL
-                relativePosition = 3
             }
             else if ("-db" == arg) {
                 next = OptionsCurrentContext.DBPATH
@@ -178,54 +220,38 @@ object OptionsParser {
                 println("ERROR: $msg")
                 throw IllegalArgumentException(msg)
             }
-            else {
-                if (next != null) {
-                    when (next) {
-                        OptionsCurrentContext.IN -> {
-                            options.inputPaths!!.add(arg)
-                            relativePosition = max(relativePosition, 1)
-                            continue
-                        }
-                        OptionsCurrentContext.OUT -> {
-                            options.outputPathCsv = arg
-                            relativePosition = max(relativePosition, 2)
-                            continue
-                        }
-                        OptionsCurrentContext.SQL -> {
-                            options.sql = arg
-                            relativePosition = max(relativePosition, 3)
-                            continue
-                        }
-                        OptionsCurrentContext.DBPATH -> {
-                            options.dbPath = arg
-                            continue
-                        }
-                    }
-                }
-                ++relativePosition
 
-                when (relativePosition) {
-                    0 -> options.inputPaths!!.add(arg)
-                    1 -> options.outputPathCsv = arg
-                    else -> {
-                        if (relativePosition != 2) {
-                            App.printUsage(System.out)
-                            throw IllegalArgumentException("Wrong arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...")
-                        }
-                        options.sql = arg
-                    }
-                }
-            }
+            argIndex++
         }
 
-        // HSQLDB bug, see https://stackoverflow.com/questions/52708378/hsqldb-insert-into-select-null-from-leads-to-duplicate-column-name
-        if (options.initialRowNumber != null && options.sql != null) {
-            val itsForSure = options.sql!!.matches(".*SELECT +\\*.*|.*[^.]\\* +FROM .*".toRegex())
-            if (itsForSure || options.sql!!.matches(".*SELECT.*[^.]\\* .*FROM.*".toRegex())) {
+        preventHsqldbBug(options)
+
+        return if (!options.isFilled) {
+            App.printUsage(System.out)
+            throw IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...")
+        } else {
+            options
+        }
+    }
+
+    /** HSQLDB bug, see https://stackoverflow.com/questions/52708378/hsqldb-insert-into-select-null-from-leads-to-duplicate-column-name */
+    private fun preventHsqldbBug(options: Options2) {
+        val numberedImport = options.importArguments.firstOrNull { import ->
+            val initialRowNumber = import.initialRowNumber ?: options.initialRowNumber
+            initialRowNumber != null
+        }
+        if (numberedImport == null) return
+
+        for (export in options.exportArguments) {
+            if (export.sqlQuery == null) continue
+
+            val itsForSure = export.sqlQuery!!.matches(".*SELECT +\\*.*|.*[^.]\\* +FROM .*".toRegex())
+            if (itsForSure || export.sqlQuery!!.matches(".*SELECT.*[^.]\\* .*FROM.*".toRegex())) {
                 val msg = """|
-                             |    WARNING! It looks like you use --rowNumbers with `SELECT *`.
-                             |    Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'.
-                             |    Use table-qualified way: `SELECT myTable.*`""".trimMargin()
+                         |    WARNING! It looks like you use --rowNumbers for ${numberedImport.path} with `SELECT *` in:
+                         |      ${export.sqlQuery}.
+                         |    Due to a bug in HSQLDB, this causes an error 'duplicate column name in derived table'.
+                         |    Use table-qualified way: `SELECT myTable.*`""".trimMargin()
                 if (itsForSure) {
                     log.error("\n$msg\n\n")
                     throw IllegalArgumentException(msg)
@@ -234,12 +260,6 @@ object OptionsParser {
                     log.warn("\n$msg$notSure\n\n")
                 }
             }
-        }
-        return if (!options.isFilled) {
-            App.printUsage(System.out)
-            throw IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...")
-        } else {
-            options
         }
     }
 
@@ -260,8 +280,18 @@ object OptionsParser {
     }
 
     enum class OptionsCurrentContext {
-        IN, OUT, SQL, DBPATH
+        GLOBAL, IN, OUT, SQL, DBPATH
     }
 
     private val log = logger()
+}
+
+inline fun <reified T : Enum<*>> enumValueOrNull(name: String?): T? {
+    if (name == null)
+        return null
+    return T::class.java.enumConstants.firstOrNull { it.name == name }
+}
+
+inline fun <reified T : Enum<*>> enumValueOr(name: String?, default: T): T {
+    return enumValueOrNull<T>(name) ?: default
 }
