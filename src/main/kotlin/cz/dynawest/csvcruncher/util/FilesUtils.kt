@@ -15,12 +15,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.sql.ResultSet
-import java.sql.ResultSetMetaData
 import java.sql.SQLException
 import java.sql.Types
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 import javax.json.Json
@@ -32,7 +30,7 @@ import javax.json.JsonObjectBuilder
 //@Suppress("NAME_SHADOWING")
 object FilesUtils {
     private const val CONCAT_WORK_SUBDIR_NAME = "concat"
-    private val log = org.slf4j.LoggerFactory.getLogger(FileUtils::class.java)
+    private val log = logger()
 
     /**
      * Concatenates given files into a file in the resultPath, named "CsvCruncherConcat.csv".
@@ -120,28 +118,7 @@ object FilesUtils {
                         val writer = Json.createWriter(outW)
                         writer.writeObject(jsonObject)
 
-
-                        /*// Hand-made
-                outW.append("{\"");
-                // Columns
-                for (int colIndex = 1; colIndex <= metaData.getColumnCount(); colIndex++) {
-                    // Key
-                    outW.append(org.json.simple.JSONObject.escape(metaData.getColumnLabel(colIndex) ));
-                    outW.append("\":");
-                    // TODO
-                    String val = formatValueForJson(resultSet, colIndex, colsAreNumbers);
-                    if (null == val) {
-                        outW.append("null");
-                        continue;
-                    }
-                    if (!colsAreNumbers[colIndex])
-                        outW.append('"');
-                    outW.append(val);
-                    if (!colsAreNumbers[colIndex])
-                        outW.append('"');
-                }
-                outW.append("\"}");
-                / **/outW.append(if (printAsArray) ",\n" else "\n")
+                        outW.append(if (printAsArray) ",\n" else "\n")
                     }
                     if (printAsArray) outW.append("]\n")
                 }
@@ -149,17 +126,6 @@ object FilesUtils {
         } catch (ex: Exception) {
             throw CsvCruncherException("Failed browsing the final query results: " + ex.message, ex)
         }
-    }
-
-    @Throws(SQLException::class)
-    private fun cacheWhichColumnsNeedJsonQuotes(metaData: ResultSetMetaData): BooleanArray {
-        val colsAreNumbers = BooleanArray(metaData.columnCount + 1)
-        var colType: Int
-        for (colIndex in 1..metaData.columnCount) {
-            colType = metaData.getColumnType(colIndex)
-            colsAreNumbers[colIndex] = colType == Types.TINYINT || colType == Types.SMALLINT || colType == Types.INTEGER || colType == Types.BIGINT || colType == Types.DECIMAL || colType == Types.NUMERIC || colType == Types.BIT || colType == Types.ROWID || colType == Types.DOUBLE || colType == Types.FLOAT || colType == Types.BOOLEAN
-        }
-        return colsAreNumbers
     }
 
     /**
@@ -268,8 +234,10 @@ object FilesUtils {
         throw IllegalStateException("Did we miss some CombineInputFiles choice?")
     }
 
+    /** For each path, creates an entry in a map from that path to a singleton list of that path. */
     private fun mapOfIdentityToSingletonList(inputPaths: List<Path>): Map<Path?, List<Path>> {
-        return inputPaths.stream().collect(Collectors.toMap(Function { x: Path? -> x }, Function<Path, List<Path>> { o: Path? -> listOf(o!!) }))
+        return inputPaths.stream().collect(Collectors.toMap({ x -> x }, { o: Path? -> listOf(o!!) }))
+        //return inputPaths.associate { it to listOf(it) }
     }
 
     private fun logFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, @Suppress("SameParameterValue") level: Level, label: String) {
@@ -448,7 +416,7 @@ object FilesUtils {
             val concatenatedFilePath = tmpConcatDir.resolve(concatFileName)
             usedConcatFilePaths.add(concatenatedFilePath)
             log.debug("Into dest file: $concatenatedFilePath\n   Will combine these files: "
-                + fileGroup.value.stream().map { path: Path -> "\n|\t* $path" }.collect(Collectors.joining()))
+                + fileGroup.value.map { path -> "\n|\t* $path" }.joinToString())
 
             // TODO: Optionally this could be named better:
             //       1) Find common deepest ancestor dir.
@@ -483,7 +451,7 @@ object FilesUtils {
         } else {
             val pathStr = StringUtils.appendIfMissing(originPath.toString(), Cruncher.FILENAME_SUFFIX_CSV)
             originPath = Paths.get(pathStr)
-            val concatFilePath = test_getNonUsedName(originPath, usedConcatFilePaths)
+            val concatFilePath = getNonUsedName(originPath, usedConcatFilePaths)
             usedConcatFilePaths.add(concatFilePath)
             concatFilePath.fileName.toString()
         }
@@ -496,7 +464,7 @@ object FilesUtils {
      * It does NOT add the used path to the usedPaths set.
      */
     @JvmStatic
-    fun test_getNonUsedName(path: Path, usedPaths: MutableSet<Path>): Path {
+    fun getNonUsedName(path: Path, usedPaths: MutableSet<Path>): Path {
         @Suppress("NAME_SHADOWING")
         var path = path
         if (!usedPaths.contains(path)) return path

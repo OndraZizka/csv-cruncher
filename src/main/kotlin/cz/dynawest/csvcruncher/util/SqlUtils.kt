@@ -1,6 +1,7 @@
 package cz.dynawest.csvcruncher.util
 
 import java.sql.ResultSet
+import java.sql.ResultSetMetaData
 import java.sql.SQLException
 import java.sql.Types
 
@@ -34,6 +35,21 @@ object SqlUtils {
         }
         return if (resultSet.wasNull()) null else value
     }
+
+    
+    @Throws(SQLException::class)
+    private fun cacheWhichColumnsNeedJsonQuotes(metaData: ResultSetMetaData): BooleanArray {
+        val colsAreNumbers = BooleanArray(metaData.columnCount + 1)
+
+        for (colIndex in 1..metaData.columnCount) {
+            colsAreNumbers[colIndex] = when (metaData.getColumnType(colIndex)) {
+                Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT, Types.DECIMAL, Types.NUMERIC, Types.BIT, Types.ROWID, Types.DOUBLE, Types.FLOAT, Types.BOOLEAN -> true
+                else -> false
+            }
+        }
+        return colsAreNumbers
+    }
+
 
     private val log = logger()
 }

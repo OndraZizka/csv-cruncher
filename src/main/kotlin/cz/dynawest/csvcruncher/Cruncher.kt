@@ -14,7 +14,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.sql.*
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 class Cruncher(private val options: Options2) {
     private var jdbcConn: Connection? = null
@@ -82,7 +81,7 @@ class Cruncher(private val options: Options2) {
                 inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options)
                 log.info(" --- Combined input files: --- " + inputSubparts.map { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" }.joinToString())
             } else {
-                inputSubparts = inputPaths.stream().map { path: Path -> CruncherInputSubpart.trivial(path) }.collect(Collectors.toList())
+                inputSubparts = inputPaths.map { path: Path -> CruncherInputSubpart.trivial(path) } .toList()
             }
             if (inputSubparts.isEmpty()) return
             FilesUtils.validateInputFiles(inputSubparts)
@@ -91,7 +90,7 @@ class Cruncher(private val options: Options2) {
             for (inputSubpart in inputSubparts) {
                 val csvInFile = resolvePathToUserDirIfRelative(inputSubpart.combinedFile)
                 log.info(" * CSV input: $csvInFile")
-                val tableName: String = HsqlDbHelper.Companion.normalizeFileNameForTableName(csvInFile)
+                val tableName: String = HsqlDbHelper.normalizeFileNameForTableName(csvInFile)
                 val previousIfAny = tablesToFiles.put(tableName, csvInFile)
                 require(previousIfAny == null) { "File names normalized to table names collide: $previousIfAny, $csvInFile" }
                 val colNames: List<String> = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile)
@@ -121,7 +120,7 @@ class Cruncher(private val options: Options2) {
                     val usedOutputFiles: MutableSet<Path> = HashSet()
                     for (inputSubpart in inputSubparts) {
                         var outputFile = export.path!!.resolve(inputSubpart.combinedFile.fileName)
-                        outputFile = FilesUtils.test_getNonUsedName(outputFile, usedOutputFiles)
+                        outputFile = FilesUtils.getNonUsedName(outputFile, usedOutputFiles)
                         val output = CruncherOutputPart(outputFile, inputSubpart.tableName)
                         outputs.add(output)
                     }
@@ -206,7 +205,7 @@ class Cruncher(private val options: Options2) {
         dbHelper!!.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
 
         //dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
-        val outputTablesNames = outputs.stream().map { x: CruncherOutputPart -> x.deriveOutputTableName() }.collect(Collectors.toSet())
+        val outputTablesNames = outputs.map { outputPart -> outputPart.deriveOutputTableName() }.toSet()
         dbHelper!!.detachTables(outputTablesNames, "Could not delete the output table: ")
     }
 

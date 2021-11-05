@@ -1,8 +1,6 @@
 package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*
-import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
-import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.util.FilesUtils.combineInputFiles
 import cz.dynawest.csvcruncher.util.FilesUtils.deriveNameForCombinedFile
@@ -11,7 +9,7 @@ import cz.dynawest.csvcruncher.util.FilesUtils.expandFilterSortInputFilesGroups
 import cz.dynawest.csvcruncher.util.FilesUtils.filterFileGroups
 import cz.dynawest.csvcruncher.util.FilesUtils.filterPaths
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
-import cz.dynawest.csvcruncher.util.FilesUtils.test_getNonUsedName
+import cz.dynawest.csvcruncher.util.FilesUtils.getNonUsedName
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -97,11 +95,11 @@ class FilesUtilsTest {
             val path_2 = Paths.get("some/path_2.csv")
             val path2 = Paths.get("some/path2.csv")
             val path3 = Paths.get("some/path3.csv")
-            nonUsed = test_getNonUsedName(path, mutableSetOf<Path>())
+            nonUsed = getNonUsedName(path, mutableSetOf<Path>())
             assertEquals(path, nonUsed)
-            nonUsed = test_getNonUsedName(path, HashSet(setOf(clonePath(path))))
+            nonUsed = getNonUsedName(path, HashSet(setOf(clonePath(path))))
             assertEquals(path_1, nonUsed)
-            nonUsed = test_getNonUsedName(path, HashSet(Arrays.asList(path, path_1)))
+            nonUsed = getNonUsedName(path, HashSet(Arrays.asList(path, path_1)))
             assertEquals(path_2, nonUsed)
         }
         run {
@@ -110,11 +108,11 @@ class FilesUtilsTest {
             val path_2 = Paths.get("some/path_2")
             val path2 = Paths.get("some/path2")
             val path3 = Paths.get("some/path3")
-            nonUsed = test_getNonUsedName(path, mutableSetOf<Path>())
+            nonUsed = getNonUsedName(path, mutableSetOf<Path>())
             assertEquals(path, nonUsed)
-            nonUsed = test_getNonUsedName(path, HashSet(setOf(clonePath(path))))
+            nonUsed = getNonUsedName(path, HashSet(setOf(clonePath(path))))
             assertEquals(path_1, nonUsed)
-            nonUsed = test_getNonUsedName(path, HashSet(Arrays.asList(clonePath(path), path_1)))
+            nonUsed = getNonUsedName(path, HashSet(Arrays.asList(clonePath(path), path_1)))
             assertEquals(path_2, nonUsed)
         }
     }
