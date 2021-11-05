@@ -12,6 +12,7 @@ class ImportArgument {
     var path: Path? = null
     var alias: String? = null
     var format: Format = Format.CSV
+    var itemsPathInTree: String = "/"
 
     // Overrides for the defaults. Not implemented yet.
     var includePathsRegex: Pattern? = null

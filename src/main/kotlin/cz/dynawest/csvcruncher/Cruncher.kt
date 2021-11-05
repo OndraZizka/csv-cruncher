@@ -64,10 +64,11 @@ class Cruncher(private val options: Options2) {
             inputPaths = FilesUtils.sortInputPaths(inputPaths, options.sortInputPaths)
             log.debug(" --- Sorted input paths: --- " + inputPaths.map { "\n * $it" }.joinToString())
 
-            // TODO: Convert the .json files to .csv files.
-            inputPaths.map { inputPath ->
-                if (inputPath.endsWith(".json"))
-                    convertJsonToCsv(inputPath)
+            // Convert the .json files to .csv files.
+            inputPaths = inputPaths.map { inputPath ->
+                if (inputPath.fileName.toString().endsWith(".json"))
+                    // TODO: Needs to pass the -itemsAt.
+                    convertJsonToCsv(inputPath, "/")
                 else inputPath
             }
 
@@ -196,7 +197,7 @@ class Cruncher(private val options: Options2) {
         }
     }
 
-    private fun convertJsonToCsv(inputPath: Path): Path {
+    private fun convertJsonToCsv(inputPath: Path, itemsAt: String): Path {
         return JsonFileFlattener().convert(inputPath)
     }
 

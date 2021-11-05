@@ -1,10 +1,6 @@
 package cz.dynawest.csvcruncher.app
 
-import cz.dynawest.csvcruncher.CsvCruncherException
-import cz.dynawest.csvcruncher.ExportArgument
-import cz.dynawest.csvcruncher.Format
-import cz.dynawest.csvcruncher.ImportArgument
-import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.*
 import cz.dynawest.csvcruncher.app.Options.*
 import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
@@ -85,6 +81,14 @@ object OptionsParser {
                     }
                 }
             }
+
+            else if ("-itemsAt" == arg) {
+                when (next) {
+                    OptionsCurrentContext.IN -> currentImport.itemsPathInTree = args.getOrNull(++argIndex) ?: throw CrucherConfigException("Missing value after --itemsAt; should be a path to the array of entries in the source file.")
+                    else -> throw CsvCruncherException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
+                }
+            }
+
 
             // JSON output
             else if (arg.startsWith("--" + JsonExportFormat.PARAM_NAME)) {
