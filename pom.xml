@@ -235,10 +235,10 @@
                             <commandlineArgs>
                                 ${testRunCmd}
                                 --json --combineInputs --rowNumbers
-                                -sql 'SELECT * FROM session_telephony_pins'
                                 --exclude=.*/LOAD.*\.csv
                                 -in src/test/data/sampleMultiFilesPerDir/session_telephony_pins/
                                 -out target/results/session_telephony_pins.csv
+                                -sql 'SELECT * FROM session_telephony_pins'
                             </commandlineArgs>
                             <!-- Suppress output. This will fail because the input files don't match. -->
                             <outputFile>${project.build.outputDirectory}/testOutput</outputFile>
