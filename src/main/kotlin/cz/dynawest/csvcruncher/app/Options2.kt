@@ -111,7 +111,7 @@ class Options2 {
                 ?.let {
                     val msg = "--queryPerInputSubpart is enabled, but the SQL is not generic (does not use ${Cruncher.SQL_TABLE_PLACEHOLDER})," +
                         " which doesn't make sense:" + it.map { "\n  * ${it.alias} ${it.path}" }
-                    throw IllegalArgumentException(msg)
+                    throw CrucherConfigException(msg)
                 }
         }
 
@@ -122,7 +122,7 @@ class Options2 {
                 ?.let {
                     val msg =
                         "If using ${COMBINE_PER_INPUT_SUBDIR.optionName}=${COMBINE_PER_INPUT_SUBDIR.optionValue}, all inputs must be directories; these are files:" + it.map {"\n  * ${it.alias} ${it.path}"}
-                    throw IllegalArgumentException(msg)
+                    throw CrucherConfigException(msg)
                 }
         }
 

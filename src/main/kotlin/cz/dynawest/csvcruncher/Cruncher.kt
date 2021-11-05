@@ -47,7 +47,7 @@ class Cruncher(private val options: Options2) {
     fun crunch() {
         try { options.validateAndApplyDefaults() }
         catch (ex: Exception) {
-            throw CsvCruncherException("ERROR: Invalid options: ${ex.message}")
+            throw CrucherConfigException("ERROR: Invalid options: ${ex.message}")
         }
 
         val addCounterColumn = options.initialRowNumber != null
