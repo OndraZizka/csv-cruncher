@@ -77,23 +77,23 @@ class Options {
     }
 
     override fun toString(): String {
-        return """    dbPath: ${dbPath}
-    inputPaths: ${inputPaths}
-    includePathsRegex: ${includePathsRegex}
-    excludePathsRegex: ${excludePathsRegex}
-    outputPathCsv: ${outputPathCsv}
-    queryPerInputSubpart: ${queryPerInputSubpart}
-    overwrite: ${overwrite}
-    sql: ${sql}
-    ignoreLineRegex: ${ignoreLineRegex}
-    ignoreFirstLines: ${ignoreFirstLines}
-    sortInputPaths: ${sortInputPaths}
-    sortInputFileGroups: ${sortInputFileGroups}
-    combineInputFiles: ${combineInputFiles}
-    combineDirs: ${combineDirs}
-    initialRowNumber: ${initialRowNumber}
-    jsonExportFormat: ${jsonExportFormat}
-    skipNonReadable: ${skipNonReadable}"""
+        return """  |    dbPath: ${dbPath}
+                    |    inputPaths: ${inputPaths}
+                    |    includePathsRegex: ${includePathsRegex}
+                    |    excludePathsRegex: ${excludePathsRegex}
+                    |    outputPathCsv: ${outputPathCsv}
+                    |    queryPerInputSubpart: ${queryPerInputSubpart}
+                    |    overwrite: ${overwrite}
+                    |    sql: ${sql}
+                    |    ignoreLineRegex: ${ignoreLineRegex}
+                    |    ignoreFirstLines: ${ignoreFirstLines}
+                    |    sortInputPaths: ${sortInputPaths}
+                    |    sortInputFileGroups: ${sortInputFileGroups}
+                    |    combineInputFiles: ${combineInputFiles}
+                    |    combineDirs: ${combineDirs}
+                    |    initialRowNumber: ${initialRowNumber}
+                    |    jsonExportFormat: ${jsonExportFormat}
+                    |    skipNonReadable: ${skipNonReadable}""".trimMargin()
     }
 
     val mainOutputDir: Path

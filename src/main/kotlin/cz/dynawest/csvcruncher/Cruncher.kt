@@ -44,9 +44,12 @@ class Cruncher(private val options: Options2) {
     /**
      * Performs the whole process.
      */
-    @Throws(Exception::class)
     fun crunch() {
-        options.validateAndApplyDefaults()
+        try { options.validateAndApplyDefaults() }
+        catch (ex: Exception) {
+            throw CsvCruncherException("ERROR: Invalid options: ${ex.message}")
+        }
+
         val addCounterColumn = options.initialRowNumber != null
         val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE
         val printAsArray = options.jsonExportFormat == JsonExportFormat.ARRAY

@@ -1,11 +1,11 @@
 package cz.dynawest.csvcruncher.app
 
 import cz.dynawest.csvcruncher.CsvCruncherException
-import cz.dynawest.csvcruncher.app.Options.*
 import cz.dynawest.csvcruncher.ExportArgument
 import cz.dynawest.csvcruncher.Format
 import cz.dynawest.csvcruncher.ImportArgument
 import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.Options.*
 import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
@@ -34,8 +34,18 @@ object OptionsParser {
                 currentImport = options.newImportArgument()
             }
             else if ("-out" == arg) {
-                next = OptionsCurrentContext.OUT
-                currentExport = options.newExportArgument()
+                when (next) {
+                    OptionsCurrentContext.OUT -> {
+                        // If there was a -sql before -out, then just set it's path.
+                        if (currentExport.path != null)
+                            currentExport = options.newExportArgument()
+                    }
+                    else -> {
+                        next = OptionsCurrentContext.OUT
+                        currentExport = options.newExportArgument()
+                    }
+                }
+
             }
             else if ("-all" == arg) {
                 next = OptionsCurrentContext.GLOBAL
@@ -45,12 +55,14 @@ object OptionsParser {
                     OptionsCurrentContext.IN -> currentImport.path = Path.of(arg)
                     OptionsCurrentContext.OUT -> currentExport.path = Path.of(arg)
                     OptionsCurrentContext.DBPATH -> options.dbPath = arg
+                    else -> throw CsvCruncherException("Not sure what to do with the argument at this place: $arg.")
                 }
             }
             else if ("-as" == arg) {
                 when (next) {
                     OptionsCurrentContext.IN -> currentImport.alias = args.getOrNull(++argIndex)
                     OptionsCurrentContext.OUT -> currentExport.alias = args.getOrNull(++argIndex)
+                    else -> throw CsvCruncherException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
                 }
             }
             else if ("-format" == arg) {
@@ -58,16 +70,20 @@ object OptionsParser {
                 when (next) {
                     OptionsCurrentContext.IN -> currentImport.format = format
                     OptionsCurrentContext.OUT -> currentExport.formats.add(format)
+                    else -> throw CsvCruncherException("-format may only come as part of an import or export, i.e. after `-in` or `-out`.")
                 }
             }
             else if ("-sql" == arg) {
                 when (next) {
-                    OptionsCurrentContext.IN -> {
+                    OptionsCurrentContext.OUT -> currentExport.sqlQuery = args.getOrNull(++argIndex)
+                    else -> {
+                        //throw CsvCruncherException("`-sql` must come as part of some export, i.e. defined after `-out`.")
+                        // TBD: Could support it ad-hoc, but then the -out <path> would have to set the path of the current export, rather than creating a new one.
                         next = OptionsCurrentContext.OUT
                         currentExport = options.newExportArgument()
+                        currentExport.sqlQuery = args.getOrNull(++argIndex)
                     }
                 }
-                currentExport.sqlQuery = arg
             }
 
             // JSON output

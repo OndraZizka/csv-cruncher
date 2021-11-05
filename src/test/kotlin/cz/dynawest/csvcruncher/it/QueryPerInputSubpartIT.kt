@@ -13,8 +13,8 @@ import java.util.*
  */
 class QueryPerInputSubpartIT {
     var inPath = Paths.get("src/test/data/sample-queryPerInputSubpart/oauth_consumer")
+
     @Test
-    @Throws(Exception::class)
     fun queryPerInputSubpart() {
         val outputDir = Paths.get("target/testResults/queryPerInputSubpart.csv")
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +

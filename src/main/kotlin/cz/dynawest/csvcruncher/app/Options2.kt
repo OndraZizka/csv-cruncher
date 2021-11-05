@@ -23,6 +23,10 @@ class ImportArgument {
     var sortInputFileGroups: Options.SortInputPaths? = null
     var combineInputFiles: Options.CombineInputFiles? = null
     var jsonExportFormat: Options.JsonExportFormat? = null
+
+    override fun toString(): String {
+        return "($alias) $format $path initRowNum: $initialRowNumber"
+    }
 }
 
 
@@ -31,6 +35,10 @@ class ExportArgument {
     var path: Path? = null
     var alias: String? = null
     val formats: MutableSet<Format> = mutableSetOf(Format.CSV)
+
+    override fun toString(): String {
+        return "($alias) $formats $sqlQuery -> $path"
+    }
 }
 
 enum class Format {
@@ -71,7 +79,7 @@ class Options2 {
     var jsonExportFormat = Options.JsonExportFormat.NONE
 
     val isFilled: Boolean
-        get() = importArguments.isNotEmpty() != null && exportArguments.isNotEmpty()
+        get() = importArguments.isNotEmpty() && exportArguments.isNotEmpty()
 
     fun newImportArgument() = ImportArgument().also { importArguments.add(it) }
     fun newExportArgument() = ExportArgument().also { exportArguments.add(it) }
@@ -118,6 +126,25 @@ class Options2 {
                 }
         }
 
+    }
+
+    override fun toString(): String {
+        return """  |    dbPath: ${dbPath}
+                    |    imports: ${importArguments.map { "\n|      * $it" }.joinToString() }
+                    |    includePathsRegex: ${includePathsRegex}
+                    |    excludePathsRegex: ${excludePathsRegex}
+                    |    exports: ${exportArguments.map { "\n|      * $it" }.joinToString() }
+                    |    queryPerInputSubpart: ${queryPerInputSubpart}
+                    |    overwrite: ${overwrite}
+                    |    ignoreLineRegex: ${ignoreLineRegex}
+                    |    ignoreFirstLines: ${ignoreFirstLines}
+                    |    sortInputPaths: ${sortInputPaths}
+                    |    sortInputFileGroups: ${sortInputFileGroups}
+                    |    combineInputFiles: ${combineInputFiles}
+                    |    combineDirs: ${combineDirs}
+                    |    initialRowNumber: ${initialRowNumber}
+                    |    jsonExportFormat: ${jsonExportFormat}
+                    |    skipNonReadable: ${skipNonReadable}""".trimMargin()
     }
 
     companion object { private val log = logger() }
