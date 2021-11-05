@@ -7,7 +7,9 @@ class CsvExporter(
     val outputStream: OutputStream, // TBD: Rather have the file path and handle opening here?
     val columnsInfo: MutableMap<String, PropertyInfo>,
     val columnSeparator: String = ","
-) : EntryProcessor {
+)
+    : EntryProcessor
+{
     override fun beforeEntries() {
         val writer = outputStream.writer()
         writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}\n")
@@ -16,7 +18,7 @@ class CsvExporter(
         writer.write(header + "\n")
     }
     override fun processEntry(entry: FlattenedEntrySequence) {
-        val entryPropsMap: Map<String, MyProperty> = entry.flattenedProperties.associateBy { it.name }
+        val entryPropsMap: Map<String, CrunchProperty> = entry.flattenedProperties.associateBy { it.name }
         val line = columnsInfo.map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(
             columnSeparator
         )

@@ -1,6 +1,5 @@
 package cz.dynawest.csvcruncher.converters
 
-import java.io.Serializable
 import java.nio.file.Path
 
 /**
@@ -15,20 +14,21 @@ interface FileTabularizer {
 }
 
 data class FlattenedEntrySequence(
-    val flattenedProperties: Sequence<MyProperty>
+    val flattenedProperties: Sequence<CrunchProperty>
 )
 
+/**
+ * When the Tabularizer is ready to process the entries, it calls this interface to process each parsed entry.
+ */
 interface EntryProcessor {
     fun processEntry(entry: FlattenedEntrySequence)
     fun beforeEntries() {}
     fun afterEntries() {}
 }
 
-
-interface KeyValueWriter {
-    fun writeKeyValue(keyValues: Map<String, Serializable>)
-}
-
+/**
+ * Information about a "column" - how many times that property had which type, and the maximum serialized length.
+ */
 data class PropertyInfo(
     val name: String
 ) {

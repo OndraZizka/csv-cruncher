@@ -93,20 +93,20 @@ class JsonFileFlattener : FileTabularizer {
     /** This deals with individual objects to be flattened into rows. */
     fun readObjectAndPassKeyValues(jsonParser: JsonParser, entryProcessor: EntryProcessor) {
         val node: JsonNode = jsonParser.readValueAsTree()
-        val flatEntry = flattenNode(node, FlatteningContext())
+        val flatEntry = flattenNode(node, TreeFlatteningContext())
         entryProcessor.processEntry(flatEntry)
     }
 
-    private fun flattenNode(node: JsonNode, flatteningContext: FlatteningContext): FlattenedEntrySequence {
-        val fieldsFlattened: Sequence<MyProperty> = node.fields().asSequence().flatMap {
+    private fun flattenNode(node: JsonNode, flatteningContext: TreeFlatteningContext): FlattenedEntrySequence {
+        val fieldsFlattened: Sequence<CrunchProperty> = node.fields().asSequence().flatMap {
                 (fieldName, value) ->
             val fullPropertyName = flatteningContext.currentPrefix + fieldName
             when (value.nodeType) {
-                JsonNodeType.STRING -> sequenceOf( MyProperty.String(fullPropertyName, value.textValue()) )
-                JsonNodeType.NUMBER -> sequenceOf( MyProperty.Number(fullPropertyName, value.numberValue()) )
-                JsonNodeType.BOOLEAN -> sequenceOf( MyProperty.Boolean(fullPropertyName, value.booleanValue()) )
-                JsonNodeType.NULL -> sequenceOf( MyProperty.Null(fullPropertyName) )
-                JsonNodeType.ARRAY -> sequenceOf( MyProperty.Array(fullPropertyName, listOf()) )
+                JsonNodeType.STRING -> sequenceOf( CrunchProperty.String(fullPropertyName, value.textValue()) )
+                JsonNodeType.NUMBER -> sequenceOf( CrunchProperty.Number(fullPropertyName, value.numberValue()) )
+                JsonNodeType.BOOLEAN -> sequenceOf( CrunchProperty.Boolean(fullPropertyName, value.booleanValue()) )
+                JsonNodeType.NULL -> sequenceOf( CrunchProperty.Null(fullPropertyName) )
+                JsonNodeType.ARRAY -> sequenceOf( CrunchProperty.Array(fullPropertyName, listOf()) )
                 JsonNodeType.OBJECT -> {
                     val flattenedNode: FlattenedEntrySequence = flattenNode(value, flatteningContext.withPrefixAddition("${fieldName}."))
 
@@ -115,26 +115,18 @@ class JsonFileFlattener : FileTabularizer {
                 JsonNodeType.BINARY -> throw UnsupportedOperationException("Binary JSON nodes?")
                 JsonNodeType.MISSING -> throw UnsupportedOperationException("Missing JSON nodes?")
                 JsonNodeType.POJO -> throw UnsupportedOperationException("POJO JSON nodes?")
-                else -> sequenceOf( MyProperty.Null(fullPropertyName) )
+                else -> sequenceOf( CrunchProperty.Null(fullPropertyName) )
             }
         }
         return FlattenedEntrySequence(fieldsFlattened)
     }
 }
 
-sealed class MyProperty (open val name: kotlin.String) {
-    abstract fun toCsvString(): kotlin.String
 
-    data class Number(override val name: kotlin.String, val value: kotlin.Number): MyProperty(name) { override fun toCsvString() = value.toString() }
-    data class String (override val name: kotlin.String, val value: kotlin.String): MyProperty(name) { override fun toCsvString() = value.toString() }
-    data class Boolean (override val name: kotlin.String, val value: kotlin.Boolean): MyProperty(name) { override fun toCsvString() = value.toString() }
-    data class Null (override val name: kotlin.String): MyProperty(name) { override fun toCsvString() = "NULL" }
-    data class Array (override val name: kotlin.String, val items: List<kotlin.String>): MyProperty(name) { override fun toCsvString() = "[...]" }
-    data class Object (override val name: kotlin.String, val items: Map<kotlin.String, kotlin.String>): MyProperty(name) { override fun toCsvString() = "{...}" }
-}
-
-
-data class FlatteningContext (
+/**
+ * This is done immutable because of how the object is passed around between lambdas.
+ */
+data class TreeFlatteningContext (
     val currentPrefix: String = ""
 ) {
     fun withPrefixAddition(prefixAddition: String) = this.copy(currentPrefix = currentPrefix + prefixAddition)
