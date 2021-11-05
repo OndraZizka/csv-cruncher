@@ -6,7 +6,7 @@ import cz.dynawest.csvcruncher.Format
 import cz.dynawest.csvcruncher.ImportArgument
 import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.app.Options.*
-import cz.dynawest.csvcruncher.util.Utils
+import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
 import java.nio.file.Path
@@ -218,13 +218,11 @@ object OptionsParser {
                 next = OptionsCurrentContext.DBPATH
             }
             else if ("-v" == arg || "--version" == arg) {
-                val version = Utils.version
-                println(" CSV Cruncher version $version")
+                println(" CSV Cruncher version ${VersionUtils.version}")
                 return null
             }
             else if ("-h" == arg || "--help" == arg) {
-                val version = Utils.version
-                println(" CSV Cruncher version $version")
+                println(" CSV Cruncher version ${VersionUtils.version}")
                 App.printUsage(System.out)
                 return null
             }
