@@ -43,7 +43,6 @@ class Options {
     var combineDirs = CombineDirectories.COMBINE_PER_EACH_DIR
     var jsonExportFormat = JsonExportFormat.NONE
 
-    // && this.sql != null;
     val isFilled: Boolean
         get() = inputPaths != null && outputPathCsv != null
 
