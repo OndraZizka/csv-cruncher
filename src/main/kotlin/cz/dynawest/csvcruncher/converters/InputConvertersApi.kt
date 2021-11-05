@@ -3,15 +3,20 @@ package cz.dynawest.csvcruncher.converters
 import java.io.Serializable
 import java.nio.file.Path
 
-interface FileToTabularFileConverter {
+/**
+ * The implementations of this interface:
+ *  - parse the file at the given path,
+ *  - parse it for data entries,
+ *  - convert them into table-like data structure - i.e. rows with named columns,
+ *  - stores this structure into another file and return the path to it.
+ */
+interface FileTabularizer {
     fun convert(inputPath: Path, mainArrayLocation: String = ""): Path
 }
 
 data class FlattenedEntrySequence(
     val flattenedProperties: Sequence<MyProperty>
-) {
-    fun consumeToString() = flattenedProperties.joinToString(", ")
-}
+)
 
 interface EntryProcessor {
     fun processEntry(entry: FlattenedEntrySequence)

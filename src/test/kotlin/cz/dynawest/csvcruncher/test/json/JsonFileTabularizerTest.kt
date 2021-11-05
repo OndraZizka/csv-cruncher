@@ -6,7 +6,7 @@ import cz.dynawest.csvcruncher.util.logger
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
-class JsonFileToTabularFileConverterTest {
+class JsonFileTabularizerTest {
 
     @Test
     fun testConvertJson_01_arrayAtRoot_sameProperties() {

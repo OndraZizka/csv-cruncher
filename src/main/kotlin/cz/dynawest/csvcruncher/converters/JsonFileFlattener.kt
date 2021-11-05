@@ -14,7 +14,7 @@ import kotlin.io.path.name
 import kotlin.io.path.outputStream
 
 
-class JsonFileFlattener : FileToTabularFileConverter {
+class JsonFileFlattener : FileTabularizer {
 
     override fun convert(inputPath: Path, mainArrayLocation: String): Path {
 
