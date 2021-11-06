@@ -75,14 +75,16 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
 
         // Columns
         for (columnDef in columnsNamesAndTypes.entries) {
-            val columnName = escapeSql(columnDef.key)
+            sbCsvHeader.append(columnDef.key).append(", ")
+
+            val columnQuotedName = quote(columnDef.key)
+
             var columnType = columnDef.value
             columnType =
                 if (columnType == null || "VARCHAR" == columnType.uppercase())
                     "VARCHAR($MAX_STRING_COLUMN_LENGTH)"
                 else escapeSql(columnType)
-            sbCsvHeader.append(columnName).append(", ")
-            sbSql.append(columnName).append(" ").append(columnType).append(", ")
+            sbSql.append(columnQuotedName).append(" ").append(columnType).append(", ")
         }
         sbCsvHeader.delete(sbCsvHeader.length - 2, sbCsvHeader.length)
         sbSql.delete(sbSql.length - 2, sbSql.length)
@@ -351,5 +353,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         fun normalizeFileNameForTableName(fileName: File): String {
             return fileName.name.replaceFirst(".csv$".toRegex(), "").replace("[^a-zA-Z0-9_]".toRegex(), "_")
         }
+
+        fun quote(identifier: String) = "\"${identifier.replace('"', '\'')}\""
     }
 }
