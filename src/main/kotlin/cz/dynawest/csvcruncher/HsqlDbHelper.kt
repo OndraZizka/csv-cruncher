@@ -4,6 +4,8 @@ import cz.dynawest.csvcruncher.util.DbUtils.analyzeWhatWasNotFound
 import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
 import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
+import cz.dynawest.csvcruncher.util.logger
+import jdk.internal.org.jline.utils.Colors.s
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
@@ -12,10 +14,8 @@ import java.nio.file.Files
 import java.sql.*
 
 @Suppress("NAME_SHADOWING")
-class HsqlDbHelper(private val jdbcConn: Connection?) {
+class HsqlDbHelper(private val jdbcConn: Connection) {
 
-    private val log = org.slf4j.LoggerFactory.getLogger(HsqlDbHelper::class.java)
-    
     @Throws(SQLException::class)
     fun createTableForInputFile(tableName: String, csvFileToBind: File, colNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
         createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true, overwrite)
@@ -122,7 +122,8 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
     fun executeDbCommand(sql: String, errorMsg: String): Int {
         var errorMsg = errorMsg
         try {
-            jdbcConn!!.createStatement().use { stmt -> return stmt.executeUpdate(sql) }
+            log.info("Executing SQL: $sql")
+            jdbcConn.createStatement().use { stmt -> return stmt.executeUpdate(sql) }
         } catch (ex: Exception) {
             var addToMsg = ""
             if (true || (ex.message?.contains("for cast") ?: false)) {
@@ -132,9 +133,9 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                     |${this.formatListOfAvailableTables(true)}""".trimMargin()
             }
             if (ex.message!!.contains("cannot be converted to target type")) {
-                errorMsg = StringUtils.defaultString(errorMsg) + " Looks like the data in the input files do not match."
+                errorMsg = "$errorMsg Looks like the data in the input files do not match."
             }
-            if (StringUtils.isBlank(errorMsg)) errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL."
+            if (errorMsg.isBlank()) errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL."
             throw CsvCruncherException("""$errorMsg
                 |  SQL: $sql
                 |  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg""".trimMargin()
@@ -153,7 +154,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                 " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
                 " WHERE t.table_schema = " + schema
         try {
-            jdbcConn!!.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
+            jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
                 val rs = st.executeQuery(sqlTablesMetadata)
                 tables@ while (rs.next()) {
                     val tableName = rs.getString("T")
@@ -208,7 +209,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
     fun extractColumnsInfoFrom1LineSelect(sql: String): Map<String, String> {
         val statement: PreparedStatement
         statement = try {
-            jdbcConn!!.prepareStatement("$sql LIMIT 1")
+            jdbcConn.prepareStatement("$sql LIMIT 1")
         } catch (ex: SQLSyntaxErrorException) {
             if (ex.message!!.contains("object not found:")) {
                 throw throwHintForObjectNotFound(ex)
@@ -216,11 +217,13 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
             throw CsvCruncherException("""
                 |    Seems your SQL contains errors:
                 |    ${ex.message}
+                |    $sql
                 |    """.trimMargin(), ex)
         } catch (ex: SQLException) {
             throw CsvCruncherException("""
                 |    Failed executing the SQL:
                 |    ${ex.message}
+                |    $sql
                 |    """.trimMargin(), ex)
         }
         val rs = statement.executeQuery()
@@ -276,13 +279,13 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                 //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
                 log.trace("Column change attempt SQL: $sqlCol")
                 try {
-                    jdbcConn!!.createStatement().use { st ->
+                    jdbcConn.createStatement().use { st ->
                         st.execute(sqlCol)
                         log.trace("Column $tableName.$colName fits to $sqlType")
                         columnsFitIntoType.put(colName, sqlType)
                     }
                 } catch (ex: SQLException) {
-                    // LOG.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                    // log.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
                 }
             }
         }
@@ -295,7 +298,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
                 "SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('$tableName') AND LOWER(column_name) = LOWER('$colName')"
             log.trace("Changing the column {} to {}", colName, sqlType)
             try {
-                jdbcConn!!.createStatement().use { st ->
+                jdbcConn.createStatement().use { st ->
                     st.execute(sqlAlter)
                     log.debug(String.format("Column %s.%-20s converted to %-14s %s", tableName, colName, sqlType, sqlAlter))
                     log.trace("Checking col type: $sqlCheck")
@@ -333,7 +336,7 @@ class HsqlDbHelper(private val jdbcConn: Connection?) {
     }
 
     companion object {
-        private val log = org.slf4j.LoggerFactory.getLogger(FileUtils::class.java)
+        private val log = logger()
         const val MAX_STRING_COLUMN_LENGTH = 4092
 
         /**

@@ -16,8 +16,8 @@ import java.sql.*
 import java.util.regex.Pattern
 
 class Cruncher(private val options: Options2) {
-    private var jdbcConn: Connection? = null
-    private var dbHelper: HsqlDbHelper? = null
+    private lateinit var jdbcConn: Connection
+    private lateinit var dbHelper: HsqlDbHelper
     private val log = logger()
 
     private fun init() {
