@@ -101,7 +101,7 @@ class Cruncher(private val options: Options2) {
                 require(previousIfAny == null) { "File names normalized to table names collide: $previousIfAny, $csvInFile" }
                 val colNames: List<String> = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile)
                 // Create a table and bind the CSV to it.
-                dbHelper!!.createTableForInputFile(tableName, csvInFile, colNames, true, options.overwrite)
+                dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, options.overwrite)
                 inputSubpart.tableName = tableName
             }
 
@@ -153,13 +153,13 @@ class Cruncher(private val options: Options2) {
                     dirToCreate.mkdirs()
 
                     // Get the columns info: Perform the SQL, LIMIT 1.
-                    val columnsDef: Map<String, String> = dbHelper!!.extractColumnsInfoFrom1LineSelect(sql)
+                    val columnsDef: Map<String, String> = dbHelper.extractColumnsInfoFrom1LineSelect(sql)
                     output.columnNamesAndTypes = columnsDef
 
 
                     // Write the result into a CSV
                     log.info(" * CSV output: $csvOutFile")
-                    dbHelper!!.createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
+                    dbHelper.createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
 
                     // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
                     //String selectSql = this.options.sql.replace("@counter", value);
@@ -172,7 +172,7 @@ class Cruncher(private val options: Options2) {
 
 
                     @Suppress("UNUSED_VARIABLE")
-                    val rowsAffected = dbHelper!!.executeDbCommand(userSql, "Error executing user SQL: ")
+                    val rowsAffected = dbHelper.executeDbCommand(userSql, "Error executing user SQL: ")
 
 
                     // Now let's convert it to JSON if necessary.
@@ -182,7 +182,7 @@ class Cruncher(private val options: Options2) {
                         pathStr = StringUtils.appendIfMissing(pathStr, ".json")
                         val destJsonFile = Paths.get(pathStr)
                         log.info(" * JSON output: $destJsonFile")
-                        jdbcConn!!.createStatement().use { statement2 ->
+                        jdbcConn.createStatement().use { statement2 ->
                             FilesUtils.convertResultToJson(
                                     statement2.executeQuery("SELECT * FROM $outputTableName"),
                                     destJsonFile,
@@ -198,8 +198,8 @@ class Cruncher(private val options: Options2) {
         } finally {
             log.debug(" *** SHUTDOWN CLEANUP SEQUENCE ***")
             cleanUpInputOutputTables(tablesToFiles, outputs)
-            dbHelper!!.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ")
-            jdbcConn!!.close()
+            dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ")
+            jdbcConn.close()
             log.debug(" *** END SHUTDOWN CLEANUP SEQUENCE ***")
         }
     }
@@ -210,11 +210,11 @@ class Cruncher(private val options: Options2) {
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String?, File>, outputs: List<CruncherOutputPart>) {
         // TODO: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
-        dbHelper!!.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
+        dbHelper.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
 
         //dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
         val outputTablesNames = outputs.map { outputPart -> outputPart.deriveOutputTableName() }.toSet()
-        dbHelper!!.detachTables(outputTablesNames, "Could not delete the output table: ")
+        dbHelper.detachTables(outputTablesNames, "Could not delete the output table: ")
     }
 
     // A timestamp at the beginning:
@@ -258,9 +258,9 @@ class Cruncher(private val options: Options2) {
 
             // Or using a sequence?
             sql = "CREATE SEQUENCE IF NOT EXISTS crunchCounter AS BIGINT NO CYCLE" // MINVALUE 1 STARTS WITH <number>
-            dbHelper!!.executeDbCommand(sql, "Failed creating the counter sequence: ")
+            dbHelper.executeDbCommand(sql, "Failed creating the counter sequence: ")
             sql = "ALTER SEQUENCE crunchCounter RESTART WITH $initialNumber"
-            dbHelper!!.executeDbCommand(sql, "Failed altering the counter sequence: ")
+            dbHelper.executeDbCommand(sql, "Failed altering the counter sequence: ")
 
             // ... referencing it explicitely?
             //ddl = "crunchCounter BIGINT PRIMARY KEY, ";
