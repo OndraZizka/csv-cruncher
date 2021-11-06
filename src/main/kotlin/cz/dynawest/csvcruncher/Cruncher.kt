@@ -117,12 +117,14 @@ class Cruncher(private val options: Options2) {
                 outputs = mutableListOf()
 
                 // SQL can be executed:
-                // * for all tables, and generate a single result; if some table has changed, it would fail.
+                // A) Once over all tables, and generate a single result.
                 if (!options.queryPerInputSubpart) {
                     val csvOutFile = resolvePathToUserDirIfRelative(export.path!!)
                     val output = CruncherOutputPart(csvOutFile.toPath(), null)
                     outputs.add(output)
-                } else {
+                }
+                // B) With each table, with a generic SQL query (using "$table"), and generate one result per table.
+                else {
                     val usedOutputFiles: MutableSet<Path> = HashSet()
                     for (inputSubpart in inputSubparts) {
                         var outputFile = export.path!!.resolve(inputSubpart.combinedFile.fileName)
