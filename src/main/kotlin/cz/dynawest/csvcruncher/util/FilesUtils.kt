@@ -503,31 +503,35 @@ object FilesUtils {
         val mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("")
         val cols = ArrayList<String>()
         val lineIterator = FileUtils.lineIterator(file)
-        return if (!lineIterator.hasNext()) {
-            throw IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.path)
-        } else {
-            /*  I could employ CSVReader if needed.
-                CSVReader csvReader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                String[] header = csvReader.readNext();
-                csvReader.close();
-             */
-            var line: String? = lineIterator.nextLine().trim { it <= ' ' }
-            line = StringUtils.stripStart(line, "#")
 
-            val colNames = StringUtils.splitPreserveAllTokens(line, ",;")
-            for (colName in Arrays.asList(*colNames)) {
-                @Suppress("NAME_SHADOWING")
-                val colName = colName.trim { it <= ' ' }
-                check(!colName.isEmpty()) {
-                    "Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line"
-                }
-                check(mat.reset(colName).matches()) {
-                    "Colname '$colName' must be valid SQL identifier, i.e. must match /${Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern()}/i in: ${file.path}"
-                }
-                cols.add(colName)
+        // Skip comment lines, starting with ##
+        var line: String?
+        do {
+            if (!lineIterator.hasNext())
+                throw IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.path)
+            line = lineIterator.nextLine().trim { it <= ' ' }
+        } while (line!!.startsWith("##"))
+
+        /*  I could employ CSVReader if needed.
+            CSVReader csvReader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            String[] header = csvReader.readNext();
+            csvReader.close();
+         */
+        line = StringUtils.stripStart(line, "#")
+
+        val colNames = StringUtils.splitPreserveAllTokens(line, ",;")
+        for (colName in Arrays.asList(*colNames)) {
+            @Suppress("NAME_SHADOWING")
+            val colName = colName.trim { it <= ' ' }
+            check(!colName.isEmpty()) {
+                "Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line"
             }
-            cols
+            check(mat.reset(colName).matches()) {
+                "Colname '$colName' must be valid SQL identifier, i.e. must match /${Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern()}/i in: ${file.path}"
+            }
+            cols.add(colName)
         }
+        return cols
     }
 
     /**

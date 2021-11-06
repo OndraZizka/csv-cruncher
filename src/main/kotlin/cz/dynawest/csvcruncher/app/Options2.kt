@@ -26,7 +26,7 @@ class ImportArgument {
     var jsonExportFormat: Options.JsonExportFormat? = null
 
     override fun toString(): String {
-        return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path "
+        return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path ${itemsPathInTree}"
     }
 }
 

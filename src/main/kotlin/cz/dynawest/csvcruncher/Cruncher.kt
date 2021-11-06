@@ -203,7 +203,7 @@ class Cruncher(private val options: Options2) {
     }
 
     private fun convertJsonToCsv(inputPath: Path, itemsAt: String): Path {
-        return JsonFileFlattener().convert(inputPath)
+        return JsonFileFlattener().convert(inputPath, itemsAt)
     }
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String?, File>, outputs: List<CruncherOutputPart>) {

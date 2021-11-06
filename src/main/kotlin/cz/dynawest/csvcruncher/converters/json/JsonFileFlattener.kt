@@ -23,15 +23,15 @@ class JsonFileFlattener : FileTabularizer {
         // 1st pass - Identify the columns
         val propertiesMetadataCollector = TabularPropertiesMetadataCollector()
         visitEntries(inputPath, mainArrayPath, propertiesMetadataCollector)
+        // TBD: Cancel on too many JSON map keys
 
-        // Cancel on too many JSON map keys
-        // Optionally covert array properties?
-
-        // 2nd pass - Export to CSV
+        // 2nd pass - Export. The exporter should be a member or a parameter.
         val outputPath = deriveOutputPath(inputPath)
         outputPath.outputStream().use { outputStream ->
             val csvExporter = CsvExporter(outputStream, propertiesMetadataCollector.propertiesSoFar)
+            csvExporter.beforeEntries()
             visitEntries(inputPath, mainArrayPath, csvExporter)
+            csvExporter.afterEntries()
         }
         return outputPath
     }
