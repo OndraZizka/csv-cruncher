@@ -96,12 +96,14 @@ class Cruncher(private val options: Options2) {
             for (inputSubpart in inputSubparts) {
                 val csvInFile = resolvePathToUserDirIfRelative(inputSubpart.combinedFile)
                 log.info(" * CSV input: $csvInFile")
+
                 val tableName: String = HsqlDbHelper.normalizeFileNameForTableName(csvInFile)
                 val previousIfAny = tablesToFiles.put(tableName, csvInFile)
                 require(previousIfAny == null) { "File names normalized to table names collide: $previousIfAny, $csvInFile" }
+
                 val colNames: List<String> = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile)
                 // Create a table and bind the CSV to it.
-                dbHelper.createTableForInputFile(tableName, csvInFile, colNames, true, options.overwrite)
+                dbHelper.createTableFromInputFile(tableName, csvInFile, colNames, true, options.overwrite)
                 inputSubpart.tableName = tableName
             }
 

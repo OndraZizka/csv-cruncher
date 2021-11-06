@@ -5,8 +5,6 @@ import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
 import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
-import jdk.internal.org.jline.utils.Colors.s
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import java.io.IOException
@@ -17,14 +15,14 @@ import java.sql.*
 class HsqlDbHelper(private val jdbcConn: Connection) {
 
     @Throws(SQLException::class)
-    fun createTableForInputFile(tableName: String, csvFileToBind: File, colNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
-        createTableAndBindCsv(tableName, csvFileToBind, colNames, ignoreFirst, "", true, overwrite)
+    fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
+        createTableAndBindCsv(tableName, csvFileToBind, columnNames, ignoreFirst, "", true, overwrite)
     }
 
     @Throws(SQLException::class)
     private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
-        val columnsDef = listToMapKeysWithNullValues(columnsNames)
-        createTableAndBindCsv(tableName, csvFileToBind, columnsDef, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
+        val columnsNamesAndTypes = listToMapKeysWithNullValues(columnsNames)
+        createTableAndBindCsv(tableName, csvFileToBind, columnsNamesAndTypes, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
 
         // Try to convert columns types to numbers, where applicable.
         if (isInputTable) {
@@ -33,11 +31,11 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
     }
 
     /**
-     * Creates the input or output table, with the right column names, and binds the file.<br></br>
-     * For output tables, the file is optionally overwritten if exists.<br></br>
-     * A header with columns names is added to the output table.<br></br>
+     * Creates the input or output table, with the right column names, and binds the file.
+     * For output tables, the file is optionally overwritten if exists.
+     * A header with columns names is added to the output table.
      * Input tables columns are optimized after binding the file by attempting to reduce the column type.
-     * (The output table has to be optimized later.)<br></br>
+     * (The output table has to be optimized later.)
      */
     @Throws(SQLException::class)
     fun createTableAndBindCsv(tableName: String?, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
