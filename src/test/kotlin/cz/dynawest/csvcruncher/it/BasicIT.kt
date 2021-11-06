@@ -23,7 +23,7 @@ class BasicIT {
         var inPath = Paths.get("src/test/data/json/redditAll.json")
         val outputPath = Paths.get("target/results/redditAll.csv")
         val command =
-            """-in | $inPath  | -out | $outputPath | -sql |
+            """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql |
                  SELECT * FROM redditAll """
         CsvCruncherTestUtils.runCruncherWithArguments(command)
     }

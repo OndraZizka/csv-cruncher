@@ -3,6 +3,7 @@ package cz.dynawest.csvcruncher.util
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
+import cz.dynawest.csvcruncher.ImportArgument
 import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.Options.*
@@ -77,10 +78,18 @@ object FilesUtils {
     }
 
     @JvmStatic
-    fun sortInputPaths(inputPaths: List<Path>?, sortMethod: SortInputPaths?): List<Path> {
+    fun sortImports(importArguments: List<ImportArgument>, sortMethod: SortInputPaths?): List<ImportArgument> {
         @Suppress("NAME_SHADOWING")
-        var inputPaths = inputPaths
-        return when (sortMethod) {
+        var inputPaths = importArguments.map { it.path!! }
+
+        inputPaths = sortInputPaths(inputPaths, sortMethod)
+        // Poor man's sorting :) Improve later
+        return inputPaths.map { inputPath -> importArguments.find { it.path == inputPath }!! } .toList()
+    }
+
+    private fun sortInputPaths(inputPaths_: List<Path>, sortMethod: SortInputPaths?): List<Path> {
+        var inputPaths = inputPaths_
+        inputPaths = when (sortMethod) {
             SortInputPaths.PARAMS_ORDER -> Collections.unmodifiableList(inputPaths)
             SortInputPaths.ALPHA -> {
                 inputPaths = ArrayList(inputPaths)
@@ -88,8 +97,9 @@ object FilesUtils {
                 inputPaths
             }
             SortInputPaths.TIME -> throw UnsupportedOperationException("Sorting by time not implemented yet.")
-            else -> throw UnsupportedOperationException("Unkown sorting method.")
+            else -> throw UnsupportedOperationException("Unknown sorting method.")
         }
+        return inputPaths
     }
 
     /**

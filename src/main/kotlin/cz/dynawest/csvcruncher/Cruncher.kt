@@ -60,29 +60,34 @@ class Cruncher(private val options: Options2) {
         if (addCounterColumn) counterColumn.setDdlAndVal()
         try {
             // Sort the input paths.
-            var inputPaths = options.importArguments.map { it.path }.filterNotNull()
-            inputPaths = FilesUtils.sortInputPaths(inputPaths, options.sortInputPaths)
-            log.debug(" --- Sorted input paths: --- " + inputPaths.map { "\n * $it" }.joinToString())
+            //var inputPaths =
+            var importArguments = options.importArguments.filter { it.path != null }
+            importArguments = FilesUtils.sortImports(importArguments, options.sortInputPaths)
+            log.debug(" --- Sorted imports: --- " + importArguments.map { "\n * $it" }.joinToString())
 
             // Convert the .json files to .csv files.
-            inputPaths = inputPaths.map { inputPath ->
-                if (inputPath.fileName.toString().endsWith(".json"))
+            importArguments = importArguments.map { import ->
+                if (!import.path!!.fileName.toString().endsWith(".json")) {
+                    import
+                }
+                else {
                     // TODO: Needs to pass the -itemsAt.
-                    convertJsonToCsv(inputPath, "/")
-                else inputPath
+                    val convertedFilePath = convertJsonToCsv(import.path!!, import.itemsPathInTree)
+                    import.apply { path = convertedFilePath }
+                }
             }
 
             val inputSubparts: List<CruncherInputSubpart>
 
             // Combine files. Should we concat the files or UNION the tables?
             if (options.combineInputFiles != CombineInputFiles.NONE) {
-                val inputFileGroups: Map<Path?, List<Path>> = FilesUtils.expandFilterSortInputFilesGroups(inputPaths, options)
+                val inputFileGroups: Map<Path?, List<Path>> = FilesUtils.expandFilterSortInputFilesGroups(importArguments.map { it.path!! }, options)
 
                 ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
                 inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options)
                 log.info(" --- Combined input files: --- " + inputSubparts.map { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" }.joinToString())
             } else {
-                inputSubparts = inputPaths.map { path: Path -> CruncherInputSubpart.trivial(path) } .toList()
+                inputSubparts = importArguments.map { import -> CruncherInputSubpart.trivial(import.path!!) } .toList()
             }
             if (inputSubparts.isEmpty()) return
             FilesUtils.validateInputFiles(inputSubparts)
