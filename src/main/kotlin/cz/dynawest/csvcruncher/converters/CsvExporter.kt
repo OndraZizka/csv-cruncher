@@ -13,7 +13,7 @@ class CsvExporter(
 {
     override fun beforeEntries() {
         val writer = outputStream.writer()
-        writer.write("## Coverted by CsvCruncher on ${LocalDateTime.now()}\n")
+        writer.write("### Converted by CsvCruncher on ${LocalDateTime.now()}\n")
 
         val header = columnsInfo.map { it.value.name }.joinToString(separator = "$columnSeparator ")
         log.debug("CSV header: $header")

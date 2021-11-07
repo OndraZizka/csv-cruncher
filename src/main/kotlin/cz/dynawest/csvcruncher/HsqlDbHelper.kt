@@ -6,6 +6,8 @@ import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
+import org.hsqldb.SqlInvariants.INFORMATION_SCHEMA
+import org.hsqldb.Tokens.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -147,15 +149,14 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
      * Prepares a list of tables in the given JDBC connections, in the PUBLIC schema.
      */
     fun formatListOfAvailableTables(withColumns: Boolean): String {
-        val schema = "'PUBLIC'"
-        val sb = StringBuilder()
-        val sqlTablesMetadata = "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct" +
-                " FROM INFORMATION_SCHEMA.TABLES AS t " +
-                " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c " +
-                " WHERE t.table_schema = " + schema
+        val schema = "PUBLIC"
+        val sqlTablesMetadata = "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct FROM INFORMATION_SCHEMA.TABLES AS t" +
+            " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c  WHERE t.table_schema = '$schema'"
+
         try {
             jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
                 val rs = st.executeQuery(sqlTablesMetadata)
+                val sb = StringBuilder()
                 tables@ while (rs.next()) {
                     val tableName = rs.getString("T")
                     sb.append(" * ").append(tableName).append('\n')
@@ -332,6 +333,42 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
             } catch (ex: Exception) {
                 log.error(msgOnError + ex.message)
             }
+        }
+    }
+
+    /**
+     * Because of HSQLDB's rules of column names normalization, the column names need to be quoted in queries (or be all uppercased).
+     * To relieve the user from quoting everything, this method does it.
+     */
+    fun quoteColumnNamesInQuery(sqlQuery: String): String {
+        var sqlQuery = sqlQuery
+        val columnNames = queryAllColumnNames().sortedByDescending { it.length }
+
+        for (name in columnNames) {
+            //sqlQuery = sqlQuery.replace(name, "\"$name\"")
+            val escapedName = Regex.escape(name)
+            sqlQuery = sqlQuery.replace("""(?i)(?<!")\\b$escapedName\\b(?!")""".toRegex(), Regex.escapeReplacement("\"$name\""))
+        }
+        // TBD: How to prevent replacing bc in  "SELECT a.bc.d, bc FROM ..." ?
+        return sqlQuery
+    }
+
+    fun queryAllColumnNames(): List<String> {
+        val schema = "PUBLIC"
+        val sqlTablesMetadata = """SELECT c.column_name AS "colName" FROM INFORMATION_SCHEMA.TABLES AS t
+             NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c  WHERE t.table_schema = '$schema'"""
+
+        try {
+            val columnNames = mutableListOf<String>()
+            jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
+                val resultSet = st.executeQuery(sqlTablesMetadata)
+                while (resultSet.next()) {
+                    columnNames.add(resultSet.getString("C"))
+                }
+            }
+            return columnNames
+        } catch (ex: SQLException) {
+            throw CsvCruncherException("Couldn't list all columns: ${ex.message}", ex)
         }
     }
 

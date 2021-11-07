@@ -500,7 +500,6 @@ object FilesUtils {
     @JvmStatic
     @Throws(IOException::class)
     fun parseColumnsFromFirstCsvLine(file: File): List<String> {
-        val mat = Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher("")
         val cols = ArrayList<String>()
         val lineIterator = FileUtils.lineIterator(file)
 
@@ -510,7 +509,7 @@ object FilesUtils {
             if (!lineIterator.hasNext())
                 throw IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.path)
             line = lineIterator.nextLine().trim { it <= ' ' }
-        } while (line!!.startsWith("##"))
+        } while (line!!.startsWith(CSV_COMMENT_PREFIX))
 
         /*  I could employ CSVReader if needed.
             CSVReader csvReader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -526,9 +525,10 @@ object FilesUtils {
             check(!colName.isEmpty()) {
                 "Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line"
             }
-            check(mat.reset(colName).matches()) {
+            /* Removed for #17 and #39.
+            check(Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher(colName).matches()) {
                 "Colname '$colName' must be valid SQL identifier, i.e. must match /${Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern()}/i in: ${file.path}"
-            }
+            }*/
             cols.add(colName)
         }
         return cols
@@ -565,4 +565,6 @@ object FilesUtils {
          */
         val splittedGroupsInfo: Map<Path?, List<Path>> = LinkedHashMap(),
     )
+
+    val CSV_COMMENT_PREFIX = "###"
 }

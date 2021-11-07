@@ -113,9 +113,11 @@ class Cruncher(private val options: Options2) {
             if (options.exportArguments.size > 1)
                 throw UnsupportedOperationException("Currently, only 1 export is supported.")
 
+
             for (export in options.exportArguments) {
 
-                val genericSql = StringUtils.defaultString(export.sqlQuery, DEFAULT_SQL)
+                val genericSql = dbHelper.quoteColumnNamesInQuery(export.sqlQuery ?: DEFAULT_SQL)
+
                 outputs = mutableListOf()
 
                 // SQL can be executed:
