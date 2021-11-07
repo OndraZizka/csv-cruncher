@@ -36,7 +36,7 @@ The SQL operations can be quite powerful – just consider what everything you h
 
 On top of that, CSV Cruncher can:
  * Convert CSV to JSON
- * Convert JSON to CSV
+ * Convert JSON to CSV **without any schema**
  * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
  * Deal with CSV structure changes between files (useful e.g. for database logs)
  * Filter the CSV lines using regular expressions
@@ -69,7 +69,7 @@ What's new
 Download
 =====
 Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases). Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
-Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:1.31.0`
+Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:2.1.0`
 
 Usage
 =====
@@ -223,17 +223,18 @@ Project status
 
 I develop this project ocassionally, when I need it. Which has been surprisingly often in the last 10 years,
 for various reasons:
- * It's faster than importing to a real DB server,
- * It's the only tool I have found which can convert any generic JSON to tabular data without any prior metadata,
- * NoSQL databases do not support joins so exporting parts of them to JSON and querying using CsvCruncher is often my only OLAP option,
- * Lack of other lightweight ETL tools,
+ * It's faster than importing to a real DB server.
+ * It's the only tool I have found which can convert any generic JSON to tabular data without any prior metadata.
+ * NoSQL databases do not support joins so exporting parts of them to JSON and querying using CsvCruncher is often my only OLAP option.
+ * Lack of other lightweight ETL tools.
 
 That, however, makes it susceptible to being developed in isolated streaks, and lack on features I do not need.  
-I try to avoid bugs with covering the promised features with tests but it's far from complete coverage.
+I try to avoid bugs by covering the promised features with tests but it's far from complete coverage.
 
 Where can you help (as a developer)?
 --------------
- * Add some test cases, especially failing ones - simply provide your data and the command you use. Ideally make a PR with test using them.
+ * Add some test cases, especially failing ones - simply provide your data and the command you use. 
+   * Ideally make a PR with test using them.
  * Add support for additional import / export formats (Excel, ODT, YAML, ...)
  * Add support for more per-import / per-export options.
  * Improve the documentation (which currently consists of this README)
