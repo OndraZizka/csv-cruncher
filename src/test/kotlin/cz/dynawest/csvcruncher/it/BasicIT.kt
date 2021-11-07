@@ -29,12 +29,10 @@ class BasicIT {
     }
 
     @Test
-    fun realData_redditAll() {
+    fun realData_json_redditAll() {
         var inPath = Paths.get("src/test/data/json/redditAll.json")
         val outputPath = Paths.get("target/results/redditAll.csv")
-        val command =
-            """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql |
-                 SELECT * FROM redditAll """
+        val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
     }
 }
