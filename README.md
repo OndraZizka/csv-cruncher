@@ -71,6 +71,10 @@ Download
 Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases). Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
 Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:2.1.0`
 
+After downloading, find the script `crunch` which calls Java;   
+if you run `java -jar csv-cruncher-single.jar` directly, do not add `crunch` (see issue #33).  
+You might need to make the `crunch` script executable depending on your OS (until issue #) 
+
 Usage
 =====
 
@@ -79,7 +83,7 @@ Each import config starts with `-in`, each export with `-out`.
 Both need a filesystem path to read from, resp. write to, and have further options.
 Some import options may also be taken from defaults, which are configured after `-all`.
 
-    crunch [<global options...>]
+    ./crunch [<global options...>]
        -in <file.csv> [-as <alias>] [--format=JSON|CSV] [other options...]
        -in <file.json> [-as ...] [-itemsAt /path/in/json/tree]  [other options...]
        -out <resultFile.csv> [-sql <SQL query>] [--format=JSON|CSV] [other options...]
@@ -161,13 +165,13 @@ Usage example
 
 Simple SQL SELECT on a single CSV file, producing CSV and JSON:
 
-    crunch -in myInput.csv -out output.csv
+    ./crunch -in myInput.csv -out output.csv
         -sql "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
         --json
 
 With input files searched in a directory and concatenated into one table:
 
-    crunch
+    ./crunch
         -in src/test/data/sampleMultiFilesPerDir/apollo_session/
         -out target/results/result.csv
         --json=entries
