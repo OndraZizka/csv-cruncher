@@ -31,7 +31,7 @@ object CsvCruncherTestUtils {
         val arguments = command
                 .splitToSequence("|")
                 .map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { x: String -> !x.isEmpty() }
+                .filter { x: String -> x.isNotBlank() }
                 .toList().toTypedArray()
         App.mainNoExit(arguments)
     }

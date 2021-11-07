@@ -38,7 +38,7 @@ class ExportArgument {
     val formats: MutableSet<Format> = mutableSetOf(Format.CSV)
 
     override fun toString(): String {
-        return "(${alias?:"no alias"}) $formats \"$sqlQuery\" -> $path"
+        return "(${alias?:"no alias"}) $formats -> $path\n\t\t\"$sqlQuery\""
     }
 }
 

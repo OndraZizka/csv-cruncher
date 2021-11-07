@@ -125,7 +125,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
 
         var errorMsg = errorMsg
         try {
-            log.info("Executing SQL: $sql")
+            log.debug("Executing SQL: $sql")
             jdbcConn.createStatement().use { stmt -> return stmt.executeUpdate(sql) }
         } catch (ex: Exception) {
             var addToMsg = ""
