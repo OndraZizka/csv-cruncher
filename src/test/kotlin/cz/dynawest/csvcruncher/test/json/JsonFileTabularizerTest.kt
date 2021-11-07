@@ -1,14 +1,11 @@
 package cz.dynawest.csvcruncher.test.json
 
-import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.converters.CrunchProperty
 import cz.dynawest.csvcruncher.test.json.JsonTestUtils.prepareEntriesFromFile
 import cz.dynawest.csvcruncher.util.logger
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
-import java.nio.file.Paths
-import java.util.function.Consumer
 
 class JsonFileTabularizerTest {
 

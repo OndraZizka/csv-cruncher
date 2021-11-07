@@ -24,10 +24,10 @@ class HsqlDbHelperTest {
 
     @Test
     fun test_quoteColumnNames_aaaa() {
-        val sql = "SELECT a.a, a+a, aa, aaa, aa.aa, (a<aa), a, a_a-a_a, \"a.a\" FROM table1"
+        val sql = "SELECT a.a, a+\"a\", a+a, aa+aa, aa, aaa, aa.aa, (a<aa), a, a_a-a_a, \"a.a\" FROM table1"
         val sqlReplaced = quoteColumnNamesInQuery(sql, "a.a,a+a,aa,aaa,aa.aa,a,a_a".split(","))
 
-        assertThat(sqlReplaced).isEqualTo("""SELECT "a.a", "a"+"a", "aa", "aaa", "aa.aa", ("a"<"aa"), "a", "a_a"-"a_a", "a.a" FROM table1""")
+        assertThat(sqlReplaced).isEqualTo("""SELECT "a.a", "a"+"a", "a+a", "aa"+"aa", "aa", "aaa", "aa.aa", ("a"<"aa"), "a", "a_a"-"a_a", "a.a" FROM table1""")
     }
 
 }

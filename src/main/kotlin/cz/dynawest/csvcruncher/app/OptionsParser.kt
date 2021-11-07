@@ -5,6 +5,7 @@ import cz.dynawest.csvcruncher.app.Options.*
 import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.regex.Pattern
 
@@ -51,6 +52,7 @@ object OptionsParser {
                     OptionsCurrentContext.IN -> currentImport.path = Path.of(arg)
                     OptionsCurrentContext.OUT -> currentExport.path = Path.of(arg)
                     OptionsCurrentContext.DBPATH -> options.dbPath = arg
+                    OptionsCurrentContext.INIT_SQL -> options.initSqlArguments.add(InitSqlArgument(tryParsePath(arg)))
                     else -> throw CsvCruncherException("Not sure what to do with the argument at this place: $arg.")
                 }
             }
@@ -221,6 +223,9 @@ object OptionsParser {
             else if ("-db" == arg) {
                 next = OptionsCurrentContext.DBPATH
             }
+            else if ("-initSql" == arg) {
+                next = OptionsCurrentContext.INIT_SQL
+            }
             else if ("-v" == arg || "--version" == arg) {
                 println(" CSV Cruncher version ${VersionUtils.version}")
                 return null
@@ -251,6 +256,14 @@ object OptionsParser {
             options
         }
     }
+
+    private fun tryParsePath(arg: String) =
+        try {
+            Path.of(arg)
+        }
+        catch (ex: InvalidPathException) {
+            throw CrucherConfigException("Unparsable path to an init SQL script '$arg': ${ex.message}")
+        }
 
     /** HSQLDB bug, see https://stackoverflow.com/questions/52708378/hsqldb-insert-into-select-null-from-leads-to-duplicate-column-name */
     private fun preventHsqldbBug(options: Options2) {
@@ -298,7 +311,7 @@ object OptionsParser {
     }
 
     enum class OptionsCurrentContext {
-        GLOBAL, IN, OUT, SQL, DBPATH
+        GLOBAL, IN, OUT, SQL, DBPATH, INIT_SQL
     }
 
     private val log = logger()

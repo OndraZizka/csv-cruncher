@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.sql.*
 
 @Suppress("NAME_SHADOWING")
@@ -90,7 +91,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         sbSql.delete(sbSql.length - 2, sbSql.length)
         sbSql.append(" )")
         log.debug("Table DDL SQL: $sbSql")
-        executeDbCommand(sbSql.toString(), "Failed to CREATE TEXT TABLE: ")
+        executeSql(sbSql.toString(), "Failed to CREATE TEXT TABLE: ")
 
 
         // Bind the table to the CSV file.
@@ -102,13 +103,13 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
         var sql = "SET TABLE $tableName SOURCE '$csvPath;$csvSettings' $DESC"
         log.debug("CSV import SQL: $sql")
-        executeDbCommand(sql, "Failed to import CSV: ")
+        executeSql(sql, "Failed to import CSV: ")
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
             sql = "SET TABLE $tableName SOURCE HEADER '$sbCsvHeader'"
             log.debug("CSV source header SQL: $sql")
-            executeDbCommand(sql, "Failed to set CSV header: ")
+            executeSql(sql, "Failed to set CSV header: ")
         }
     }
 
@@ -119,7 +120,9 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
      *
      * @return the number of affected rows.
      */
-    fun executeDbCommand(sql: String, errorMsg: String): Int {
+    fun executeSql(sql: String, errorMsg: String): Int {
+        if (sql.isBlank()) throw CsvCruncherException("$errorMsg: SQL is an empty string.")
+
         var errorMsg = errorMsg
         try {
             log.info("Executing SQL: $sql")
@@ -239,10 +242,10 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
     fun detachTable(tableName: String?, drop: Boolean) {
         log.debug("Detaching${if (drop) " and dropping" else ""} table: $tableName")
         var sql = "SET TABLE " + escapeSql(tableName!!) + " SOURCE OFF"
-        executeDbCommand(sql, "Failed to detach/attach the table: ")
+        executeSql(sql, "Failed to detach/attach the table: ")
         if (drop) {
             sql = "DROP TABLE " + escapeSql(tableName)
-            executeDbCommand(sql, "Failed to DROP TABLE: ")
+            executeSql(sql, "Failed to DROP TABLE: ")
         }
     }
 
@@ -250,7 +253,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
     fun attachTable(tableName: String) {
         log.debug("Ataching table: $tableName")
         val sql = "SET TABLE " + escapeSql(tableName) + " SOURCE ON"
-        executeDbCommand(sql, "Failed to attach the table: ")
+        executeSql(sql, "Failed to attach the table: ")
     }
 
     /**
@@ -350,6 +353,17 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
             return columnNames
         } catch (ex: SQLException) {
             throw CsvCruncherException("Couldn't list all columns: ${ex.message}", ex)
+        }
+    }
+
+    fun executeSqlScript(path: Path, errorMsg: String) {
+        if (!path.toFile().exists()) throw CsvCruncherException("$errorMsg: Does not exist: $path")
+        if (!path.toFile().isFile()) throw CsvCruncherException("$errorMsg: Is not a file: $path")
+
+        for (line in path.toFile().readLines().asSequence().map { it.trim().removeSuffix(";") }) {
+            if (line.isBlank()) continue
+            if (line.startsWith("--")) continue
+            executeSql(line, errorMsg)
         }
     }
 

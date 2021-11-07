@@ -42,6 +42,10 @@ class ExportArgument {
     }
 }
 
+data class InitSqlArgument (
+    var path: Path
+)
+
 enum class Format {
     CSV,
     JSON
@@ -49,6 +53,7 @@ enum class Format {
 
 class Options2 {
 
+    val initSqlArguments = mutableListOf<InitSqlArgument>()
     val importArguments = mutableListOf<ImportArgument>()
     val exportArguments = mutableListOf<ExportArgument>()
 
@@ -132,6 +137,7 @@ class Options2 {
     override fun toString(): String {
         return """  |    imports: ${importArguments.map { "\n|      * $it" }.joinToString() }
                     |    exports: ${exportArguments.map { "\n|      * $it" }.joinToString() }
+                    |    initSql: ${initSqlArguments.map { "\n|      * $it" }.joinToString() }
                     |    dbPath: ${dbPath}
                     |    includePathsRegex: ${includePathsRegex}
                     |    excludePathsRegex: ${excludePathsRegex}

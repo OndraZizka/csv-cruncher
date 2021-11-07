@@ -9,12 +9,22 @@ class BasicIT {
     @Test
     fun singleImportSingleExport() {
         var inPath = Paths.get("src/test/data/eapBuilds.csv")
-        val outputDir = Paths.get("target/results/queryPerInputSubpart.csv")
+        val outputFile = Paths.get("target/results/queryPerInputSubpart.csv")
         val command =
-            """--json=entries | --rowNumbers | -in  | $inPath | -out | $outputDir | -sql |
+            """--json=entries | --rowNumbers | -in  | $inPath | -out | $outputFile | -sql |
                  SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
                  CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
                  FROM eapBuilds ORDER BY deployDur"""
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+    }
+
+    @Test
+    fun test_initSqlScript() {
+        var inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val outputFile = Paths.get("target/results/test_initSqlScript.csv")
+        val initSqlFile = Paths.get("src/test/data/init.sql")
+        val command =
+            """-initSql | $initSqlFile | -in | $inPath | -out | $outputFile | -sql | SELECT jobName FROM eapBuilds LIMIT 1"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
     }
 

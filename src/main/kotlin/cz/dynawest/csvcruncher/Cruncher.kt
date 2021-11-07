@@ -59,6 +59,8 @@ class Cruncher(private val options: Options2) {
         val counterColumn = CounterColumn()
         if (addCounterColumn) counterColumn.setDdlAndVal()
         try {
+            for (script in options.initSqlArguments) dbHelper.executeSqlScript(script.path, "Error executing init SQL script")
+
             // Sort the input paths.
             //var inputPaths =
             var importArguments = options.importArguments.filter { it.path != null }
@@ -176,7 +178,7 @@ class Cruncher(private val options: Options2) {
 
 
                     @Suppress("UNUSED_VARIABLE")
-                    val rowsAffected = dbHelper.executeDbCommand(userSql, "Error executing user SQL: ")
+                    val rowsAffected = dbHelper.executeSql(userSql, "Error executing user SQL: ")
 
 
                     // Now let's convert it to JSON if necessary.
@@ -202,7 +204,7 @@ class Cruncher(private val options: Options2) {
         } finally {
             log.debug(" *** SHUTDOWN CLEANUP SEQUENCE ***")
             cleanUpInputOutputTables(tablesToFiles, outputs)
-            dbHelper.executeDbCommand("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ")
+            dbHelper.executeSql("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ")
             jdbcConn.close()
             log.debug(" *** END SHUTDOWN CLEANUP SEQUENCE ***")
         }
@@ -262,9 +264,9 @@ class Cruncher(private val options: Options2) {
 
             // Or using a sequence?
             sql = "CREATE SEQUENCE IF NOT EXISTS crunchCounter AS BIGINT NO CYCLE" // MINVALUE 1 STARTS WITH <number>
-            dbHelper.executeDbCommand(sql, "Failed creating the counter sequence: ")
+            dbHelper.executeSql(sql, "Failed creating the counter sequence: ")
             sql = "ALTER SEQUENCE crunchCounter RESTART WITH $initialNumber"
-            dbHelper.executeDbCommand(sql, "Failed altering the counter sequence: ")
+            dbHelper.executeSql(sql, "Failed altering the counter sequence: ")
 
             // ... referencing it explicitely?
             //ddl = "crunchCounter BIGINT PRIMARY KEY, ";
