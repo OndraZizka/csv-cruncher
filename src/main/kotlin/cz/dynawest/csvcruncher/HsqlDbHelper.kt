@@ -6,8 +6,6 @@ import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
-import org.hsqldb.SqlInvariants.INFORMATION_SCHEMA
-import org.hsqldb.Tokens.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -336,23 +334,6 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         }
     }
 
-    /**
-     * Because of HSQLDB's rules of column names normalization, the column names need to be quoted in queries (or be all uppercased).
-     * To relieve the user from quoting everything, this method does it.
-     */
-    fun quoteColumnNamesInQuery(sqlQuery: String): String {
-        var sqlQuery = sqlQuery
-        val columnNames = queryAllColumnNames().sortedByDescending { it.length }
-
-        for (name in columnNames) {
-            //sqlQuery = sqlQuery.replace(name, "\"$name\"")
-            val escapedName = Regex.escape(name)
-            sqlQuery = sqlQuery.replace("""(?i)(?<!")\\b$escapedName\\b(?!")""".toRegex(), Regex.escapeReplacement("\"$name\""))
-        }
-        // TBD: How to prevent replacing bc in  "SELECT a.bc.d, bc FROM ..." ?
-        return sqlQuery
-    }
-
     fun queryAllColumnNames(): List<String> {
         val schema = "PUBLIC"
         val sqlTablesMetadata = """SELECT c.column_name AS "colName" FROM INFORMATION_SCHEMA.TABLES AS t
@@ -363,7 +344,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
             jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
                 val resultSet = st.executeQuery(sqlTablesMetadata)
                 while (resultSet.next()) {
-                    columnNames.add(resultSet.getString("C"))
+                    columnNames.add(resultSet.getString("colName"))
                 }
             }
             return columnNames
@@ -392,5 +373,30 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         }
 
         fun quote(identifier: String) = "\"${identifier.replace('"', '\'')}\""
+
+
+        /**
+         * Because of HSQLDB's rules of column names normalization, the column names need to be quoted in queries (or be all uppercased).
+         * To relieve the user from quoting everything, this method does it.
+         * Although, the current impl is potentially brittle.
+         */
+        fun quoteColumnNamesInQuery(sqlQuery: String, columnNames: List<String>): String {
+            var sqlQuery = sqlQuery
+            val columnNames = columnNames.sortedByDescending { it.length }
+            val substitutes = mutableMapOf<String, String>()
+
+            for (name in columnNames.withIndex()) {
+                val substitute = "{.${name.index}}"
+                substitutes.put(substitute, "\"${name.value}\"")
+                val escapedName = Regex.escape(name.value)
+                sqlQuery = sqlQuery.replace("""(?i)\b(?<!")$escapedName(?!")\b""".toRegex(), Regex.escapeReplacement(substitute))
+            }
+            for (i in columnNames.indices) {
+                val substitute = "{.${i}}"
+                sqlQuery = sqlQuery.replace(substitute, substitutes.get(substitute)!!)
+            }
+
+            return sqlQuery
+        }
     }
 }

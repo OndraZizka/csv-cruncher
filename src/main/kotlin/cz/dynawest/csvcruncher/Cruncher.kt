@@ -116,7 +116,7 @@ class Cruncher(private val options: Options2) {
 
             for (export in options.exportArguments) {
 
-                val genericSql = dbHelper.quoteColumnNamesInQuery(export.sqlQuery ?: DEFAULT_SQL)
+                val genericSql = HsqlDbHelper.quoteColumnNamesInQuery(export.sqlQuery ?: DEFAULT_SQL, dbHelper.queryAllColumnNames())
 
                 outputs = mutableListOf()
 
