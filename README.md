@@ -54,8 +54,13 @@ See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc
 What's new
 ==========
 
-* `2021-11-07` Release 2.1.0
-  * 2.1.0 retains the column names as they come, even from JSON - i.e. `SELECT foo.bar.baz FROM myJson` is possible.
+* `2021-11-07` Release 2.2.0
+  * \#59 Move all integration tests from Maven to JUnit (POM cleanup)
+  * Fixed #57 SELECT containing LIMIT causes SQL error
+  * \#2 Support running a SQL script before loading the data
+  * \#17 + #39  Quote all SQL identifiers to retain the case. feature
+* `2021-11-06` Release 2.1.0
+* 2.1.0 retains the column names as they come, even from JSON - i.e. `SELECT foo.bar.baz FROM myJson` is possible.
 * `2021-11-06` Version 2.0.0 has a reworked way of arguments work - see below in Options.
   * This is not yet completely tested and may be a bit inconsistent with the description below. Feel free to contribute.
 * `2021-11-05` Release 1.31.1 
