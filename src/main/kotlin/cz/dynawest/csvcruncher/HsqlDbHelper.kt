@@ -209,9 +209,12 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
      */
     @Throws(SQLException::class)
     fun extractColumnsInfoFrom1LineSelect(sql: String): Map<String, String> {
+
+        val sql = setOrReplaceLimit(sql, "LIMIT 1")
+
         val statement: PreparedStatement
         statement = try {
-            jdbcConn.prepareStatement("$sql LIMIT 1")
+            jdbcConn.prepareStatement("$sql")
         } catch (ex: SQLSyntaxErrorException) {
             if (ex.message!!.contains("object not found:")) {
                 throw throwHintForObjectNotFound(ex)
@@ -233,6 +236,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         // Column names
         return getResultSetColumnNamesAndTypes(rs)
     }
+
 
     /**
      * Detaches or re-attaches HSQLDB TEXT table.
@@ -388,6 +392,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
 
         fun quote(identifier: String) = "\"${identifier.replace('"', '\'')}\""
 
+        fun setOrReplaceLimit(sql: String, newLimitClause: String) = sql.replace("\\s*\\bLIMIT\\s+\\d+(\\s+OFFSET\\s+\\d+)?\\s*\$".toRegex(), "") + " $newLimitClause"
 
         /**
          * Because of HSQLDB's rules of column names normalization, the column names need to be quoted in queries (or be all uppercased).

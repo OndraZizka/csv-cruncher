@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.util
 
+import cz.dynawest.csvcruncher.HsqlDbHelper
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quoteColumnNamesInQuery
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -30,4 +31,11 @@ class HsqlDbHelperTest {
         assertThat(sqlReplaced).isEqualTo("""SELECT "a.a", "a"+"a", "a+a", "aa"+"aa", "aa", "aaa", "aa.aa", ("a"<"aa"), "a", "a_a"-"a_a", "a.a" FROM table1""")
     }
 
+    @Test fun test_setOrReplaceLimit() {
+        val expected = "SELECT 1 FROM x LIMIT 1"
+        assertThat(HsqlDbHelper.setOrReplaceLimit("SELECT 1 FROM x LIMIT 20", "LIMIT 1")).isEqualTo(expected)
+        assertThat(HsqlDbHelper.setOrReplaceLimit("SELECT 1 FROM x LIMIT 20 ", "LIMIT 1")).isEqualTo(expected)
+        assertThat(HsqlDbHelper.setOrReplaceLimit("SELECT 1 FROM x  LIMIT  20  OFFSET  40 ", "LIMIT 1")).isEqualTo(expected)
+        assertThat(HsqlDbHelper.setOrReplaceLimit("SELECT 1 FROM x LIMIT 1 ", "LIMIT 1")).isEqualTo(expected)
+    }
 }
