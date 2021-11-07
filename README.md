@@ -68,7 +68,7 @@ What's new
 
 Download
 =====
-Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases).  
+Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases). Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
 Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:1.31.0`
 
 Usage
