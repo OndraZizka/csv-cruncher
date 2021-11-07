@@ -1,4 +1,4 @@
-CSV Cruncher - query and process your CSV and JSON files using SQL.
+CSV + JSON Cruncher - query and process your CSV and JSON files using SQL.
 ===================================================================
 
 A tool which treats CSV and JSON files as SQL tables, performs SQL `SELECT` queries on them,
@@ -32,38 +32,64 @@ The SQL operations can be quite powerful – just consider what everything you h
  * XML and JSON processing
  * Time and date functions
  * Statistical agregate functions
- ...[and more](http://hsqldb.org/doc/2.0/guide/guide.html).
+ ...[and more](http://hsqldb.org/doc/guide/guide.html).
 
 On top of that, CSV Cruncher can:
  * Convert CSV to JSON
+ * Convert JSON to CSV
  * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
- * Deal with CSV structure changes between files
- * Filter the CSV lines using regular expression
+ * Deal with CSV structure changes between files (useful e.g. for database logs)
+ * Filter the CSV lines using regular expressions
  * Add a unique incrementing number to each row of the result
-
-Features in progress:
  * Read JSON files
 
 And this is planned:
- * Read and export Excel (XLS) files
- * Read any text files, parsed into columns by a regular expression groups
- * Export HTML tables
+ * Read and export Excel (XLS) files.
+ * Read any text files, parsed into columns by a regular expression groups.
+ * Export HTML tables.
 
 All this is backed by [HyperSQL database](http://hsqldb.org/).
 See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
+What's new
+==========
+
+* `2021-11-07` Release 2.1.0
+  * 2.1.0 retains the column names as they come, even from JSON - i.e. `SELECT foo.bar.baz FROM myJson` is possible.
+* `2021-11-06` Version 2.0.0 has a reworked way of arguments work - see below in Options.
+  * This is not yet completely tested and may be a bit inconsistent with the description below. Feel free to contribute.
+* `2021-11-05` Release 1.31.1 
+  * JSON import. Works by flattening the tree into concatenated column names. 
+  * Upgrade of HSQLDB 2.5.1 -> 2.6.1.
+  * Substantial rework of pom, code refactoring, more tests.
+  * Pushed the first release to Maven Central.
+* `2021-05-02` Release 1.14.0
+    * Flipped the project to Kotlin language. Caused a lot of messy code, but still worth it.
+
 Download
 =====
-
 Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases).  
 Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:1.31.0`
 
 Usage
 =====
 
-    crunch [-in] <in-CSV>, <in-CSV-2>, ... [-out] <out-CSV> --<option> [-sql] "<SQL>"
+CsvCruncher has imports and exports.  
+Each import config starts with `-in`, each export with `-out`.  
+Both need a filesystem path to read from, resp. write to, and have further options.
+Some import options may also be taken from defaults, which are configured after `-all`.
 
-### Options:
+    crunch [<global options...>]
+       -in <file.csv> [-as <alias>] [--format=JSON|CSV] [other options...]
+       -in <file.json> [-as ...] [-itemsAt /path/in/json/tree]  [other options...]
+       -out <resultFile.csv> [-sql <SQL query>] [--format=JSON|CSV] [other options...]
+       -out ...
+       -all [<default or global options>]
+
+### Options
+
+Some of the options bellow are planned to be per-import or per-export. Currently, most are applied on all.
+Leave me a comment in the respective GitHub issues if per-import/export configuration is important for you.
 
  * `-in`
     * Input paths, comma and/or space separated.
@@ -72,12 +98,13 @@ Usage
 
  * `-out`
     * Output path. If ends with `.json`, the output is JSON. 
-    * Currently only one output table/file is supported.
-
- * `-sql`
-    The SQL `SELECT` to be performed.
-    * The input files (or the results of preprocessing them) are available as tables.
-    * See [HSQLDB documentation](http://hsqldb.org/doc/2.0/guide/guide.html#sqlgeneral-chapt) for the vast SQL operations at hand.
+    * Currently only one output table/file is supported (the support for multiple waits for testing).
+    * `-sql`
+       The SQL `SELECT` to be performed.
+       * The input files (or the results of preprocessing them) are available as tables.
+       * See [HSQLDB documentation](http://hsqldb.org/doc/2.0/guide/guide.html#sqlgeneral-chapt) for the vast SQL operations at hand.
+       * The SELECT is subject to certain tweaks necessary to deliver some convenience of usage.  
+         They may, however, result in an unpredicted behavior. Please consult the logs if you hit some cryptic errors from HSQLDB.
 
  * `-db <pathToDatabaseDirectory>`
     * Determines where the files of the underlying database will be stored. Defaults to `hsqldb/cruncher`.
@@ -132,7 +159,7 @@ This README may be slightly obsolete; For a full list of options, check the
 Usage example
 =============
 
-Simple SQL SELECT on a single CSV file:
+Simple SQL SELECT on a single CSV file, producing CSV and JSON:
 
     crunch -in myInput.csv -out output.csv
         -sql "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
@@ -155,28 +182,65 @@ With input files searched in subdirectories of a directory, concatenated, and us
     (Supported, but example to be added)
 
 
-Data and usage example
-======================
+Data example / simple use case
+------------------------------
 
-CSV file named `eapData.csv`:
+Suppose you have a CSV file named `eapData.csv`:
 
-    ## jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale
-    'eap-5.1.0-perf-deployers', 355,'production','testdata/war/hellothere.war','hellothere.war',10282,14804,1000
-    'eap-5.1.0-perf-deployers', 355,'production','testdata/ear/EarWithWar-Counter.ear','EarWithWar-Counter.ear',11005,18904,1000
-    'eap-5.1.0-perf-deployers', 355,'production','testdata-own/war/war-big-1.0.war','war-big-1.0.war',1966,14800,100
-    ...
+```csv
+## jobName,          buildNumber,  config,    archivePath,                  arFile,        deployDur, warmupDur,  scale
+'eap-5.1.0-perf-deployers', 355,'production','testdata/war/hellothere.war','hellothere.war',10282,14804,1000
+'eap-5.1.0-perf-deployers', 355,'production','testdata/ear/EarWithWar-Counter.ear','EarWithWar-Counter.ear',11005,18904,1000
+'eap-5.1.0-perf-deployers', 355,'production','testdata-own/war/war-big-1.0.war','war-big-1.0.war',1966,14800,100
+...
+```
 
-That would create a table named `eapData` (unless concatenation is used).
-So you may issue such SQL query:
+Passing it to CsvCruncher would make a table available named `eapData`, so you may issue such SQL query:
 
-    SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
-            CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
-     FROM eapData ORDER BY deployDur
+```sql
+SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
+   CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
+FROM eapData ORDER BY deployDur
+```
+
+To do that, run this command:
+
+```bash
+crunch -in eapData.csv -out eap-statistics.json -sql "SELECT jobName, ... FROM eapData ..." --json=entries
+```
+
+Notice the `.json` suffix, which tells CsvCruncher to produce JSON. `--json=entries` then formats it as 1 entry per line rather than an array.
+
+```json lines
+{"crunchcounter":106252117707,"jobName":"'eap-5.1.0-perf-deployers'","buildNumber":" 355","config":"'production'","ar":"'testdata/war/hellothere.war'","arFile":"'hellothere.war'","deployDur":"10282","warmupDur":"14804","scale":"1000","warmupslower":1.4397977047267068}
+{"crunchcounter":106252117708,"jobName":"'eap-5.1.0-perf-deployers'","buildNumber":" 355","config":"'production'","ar":"'testdata/ear/EarWithWar-Counter.ear'","arFile":"'EarWithWar-Counter.ear'","deployDur":"11005","warmupDur":"18904","scale":"1000","warmupslower":1.7177646524307133}
+{"crunchcounter":106252117709,"jobName":"'eap-5.1.0-perf-deployers'","buildNumber":" 355","config":"'production'","ar":"'testdata-own/war/war-big-1.0.war'","arFile":"'war-big-1.0.war'","deployDur":"1966","warmupDur":"14800","scale":"100","warmupslower":7.527975584944048}
+```
 
 
-Build status
+Project status
 ==============
 
+I develop this project ocassionally, when I need it. Which has been surprisingly often in the last 10 years,
+for various reasons:
+ * It's faster than importing to a real DB server,
+ * It's the only tool I have found which can convert any generic JSON to tabular data without any prior metadata,
+ * NoSQL databases do not support joins so exporting parts of them to JSON and querying using CsvCruncher is often my only OLAP option,
+ * Lack of other lightweight ETL tools,
+
+That, however, makes it susceptible to being developed in isolated streaks, and lack on features I do not need.  
+I try to avoid bugs with covering the promised features with tests but it's far from complete coverage.
+
+Where can you help (as a developer)?
+--------------
+ * Add some test cases, especially failing ones - simply provide your data and the command you use. Ideally make a PR with test using them.
+ * Add support for additional import / export formats (Excel, ODT, YAML, ...)
+ * Add support for more per-import / per-export options.
+ * Improve the documentation (which currently consists of this README)
+ * Come up with a better name than "CsvCruncher" as it crunches also other formats :)
+ 
+Build status
+------------
 [![Java CI with Maven](https://github.com/OndraZizka/csv-cruncher/actions/workflows/maven-ci.yml/badge.svg)](https://github.com/OndraZizka/csv-cruncher/actions/workflows/maven-ci.yml)
 
 License
@@ -210,7 +274,7 @@ In case you use this in your project, then beware:
 >
 > That might be my POV, since I like SQL and it's my favorite language not only for querying
   but also data-oriented procedural programming. But nonetheless, I already shortened my perf test task
-  by ~ 40 minutes of my work for each release. Instead of manual shannanigans in OpenOffice, I run a single command, and voila ;-)
+  by ~ 40 minutes of my work for each release. Instead of manual shenanigans in OpenOffice, I run a single command, and voila ;-)
 >
 > HSQL's syntax: http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html (I was very surprised by HSQL's features,
   it supports much more of SQL than e.g. MySQL.)
