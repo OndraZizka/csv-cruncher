@@ -49,9 +49,10 @@ object App {
         )
     }
 
-    internal fun printUsage(dest: PrintStream) {
-        dest.println("  Usage:")
-        dest.println("    crunch [-in] <inCSV> [<inCSV> ...] [-out] <outCSV> [--<option> --...] [-sql] <SQL>")
+    internal fun printUsage(outputStream: PrintStream) {
+        outputStream.println("  Usage:")
+        outputStream.println("    crunch -in <input.json> [-in <input2.json> ...] -out <output.csv> [-sql <SQL>] [--<option> --...] ")
+        outputStream.println("  For more, read the README.md.")
         /*
         dest.println("  Options:");
         dest.println("    --ignoreFirstLines[=<number>]     Ignore first N lines; the first is considered a header with column names.");

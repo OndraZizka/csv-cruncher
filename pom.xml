@@ -43,6 +43,10 @@
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
+            <resource>
+                <directory>./</directory>
+                <includes><include>README.md</include></includes>
+            </resource>
         </resources>
         <testResources>
             <testResource>
