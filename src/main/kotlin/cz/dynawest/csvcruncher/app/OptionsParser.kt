@@ -53,14 +53,14 @@ object OptionsParser {
                     OptionsCurrentContext.OUT -> currentExport.path = Path.of(arg)
                     OptionsCurrentContext.DBPATH -> options.dbPath = arg
                     OptionsCurrentContext.INIT_SQL -> options.initSqlArguments.add(InitSqlArgument(tryParsePath(arg)))
-                    else -> throw CsvCruncherException("Not sure what to do with the argument at this place: $arg.")
+                    else -> throw CrucherConfigException("Not sure what to do with the argument at this place: $arg.")
                 }
             }
             else if ("-as" == arg) {
                 when (next) {
                     OptionsCurrentContext.IN -> currentImport.alias = args.getOrNull(++argIndex)
                     OptionsCurrentContext.OUT -> currentExport.alias = args.getOrNull(++argIndex)
-                    else -> throw CsvCruncherException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
+                    else -> throw CrucherConfigException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
                 }
             }
             else if ("-format" == arg) {
@@ -68,7 +68,7 @@ object OptionsParser {
                 when (next) {
                     OptionsCurrentContext.IN -> currentImport.format = format
                     OptionsCurrentContext.OUT -> currentExport.formats.add(format)
-                    else -> throw CsvCruncherException("-format may only come as part of an import or export, i.e. after `-in` or `-out`.")
+                    else -> throw CrucherConfigException("-format may only come as part of an import or export, i.e. after `-in` or `-out`.")
                 }
             }
             else if ("-sql" == arg) {
@@ -87,7 +87,7 @@ object OptionsParser {
             else if ("-itemsAt" == arg) {
                 when (next) {
                     OptionsCurrentContext.IN -> currentImport.itemsPathInTree = args.getOrNull(++argIndex) ?: throw CrucherConfigException("Missing value after --itemsAt; should be a path to the array of entries in the source file.")
-                    else -> throw CsvCruncherException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
+                    else -> throw CrucherConfigException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
                 }
             }
 
@@ -105,7 +105,7 @@ object OptionsParser {
                     options.includePathsRegex = Pattern.compile(regex)
                 }
                 catch (ex: Exception) {
-                    throw CsvCruncherException("Not a valid regex: $regex. ${ex.message}", ex)
+                    throw CrucherConfigException("Not a valid regex: $regex. ${ex.message}")
                 }
             }
             else if (arg.startsWith("--exclude")) {
@@ -115,7 +115,7 @@ object OptionsParser {
                     options.excludePathsRegex = Pattern.compile(regex)
                 }
                 catch (ex: Exception) {
-                    throw CsvCruncherException("Not a valid regex: $regex. ${ex.message}", ex)
+                    throw CrucherConfigException("Not a valid regex: $regex. ${ex.message}")
                 }
             }
             else if (arg.startsWith("--ignoreFirstLines")) {
@@ -127,7 +127,7 @@ object OptionsParser {
                         options.ignoreFirstLines = number
                     }
                     catch (ex: Exception) {
-                        throw CsvCruncherException("Not a valid number: $numberStr. ${ex.message}", ex)
+                        throw CrucherConfigException("Not a valid number: $numberStr. ${ex.message}")
                     }
                 }
             }
@@ -138,7 +138,7 @@ object OptionsParser {
                     options.ignoreLineRegex = Pattern.compile(regex)
                 }
                 catch (ex: Exception) {
-                    throw CsvCruncherException("Not a valid regex: $regex. ${ex.message}", ex)
+                    throw CrucherConfigException("Not a valid regex: $regex. ${ex.message}")
                 }
             }
             else if (arg.startsWith("--rowNumbers")) {
@@ -150,7 +150,7 @@ object OptionsParser {
                         options.initialRowNumber = number
                     }
                     catch (ex: Exception) {
-                        throw CsvCruncherException("Not a valid number: $numberStr. ${ex.message}", ex)
+                        throw CrucherConfigException("Not a valid number: $numberStr. ${ex.message}")
                     }
                 }
             }
@@ -163,7 +163,7 @@ object OptionsParser {
                 else if (arg.endsWith("=" + SortInputPaths.TIME.optionValue))
                     options.sortInputPaths = SortInputPaths.TIME
                 else
-                    throw IllegalArgumentException("Unknown value for ${SortInputPaths.PARAM_SORT_INPUT_PATHS}: $arg Try one of ${SortInputPaths.optionValues}")
+                    throw CrucherConfigException("Unknown value for ${SortInputPaths.PARAM_SORT_INPUT_PATHS}: $arg Try one of ${SortInputPaths.optionValues}")
             }
             else if (arg.startsWith("--" + SortInputPaths.PARAM_SORT_FILE_GROUPS)) {
                 if (arg.endsWith("--" + SortInputPaths.PARAM_SORT_FILE_GROUPS) ||
@@ -174,7 +174,7 @@ object OptionsParser {
                 else if (arg.endsWith("=" + SortInputPaths.PARAMS_ORDER.optionValue))
                     options.sortInputFileGroups = SortInputPaths.PARAMS_ORDER
                 else
-                    throw IllegalArgumentException("Unknown value for ${SortInputPaths.PARAM_SORT_FILE_GROUPS}: $arg Try one of ${SortInputPaths.optionValues}")
+                    throw CrucherConfigException("Unknown value for ${SortInputPaths.PARAM_SORT_FILE_GROUPS}: $arg Try one of ${SortInputPaths.optionValues}")
             }
             else if (arg.startsWith("--" + CombineInputFiles.PARAM_NAME)) {
                 if (arg.endsWith("--" + CombineInputFiles.PARAM_NAME) ||
@@ -185,7 +185,7 @@ object OptionsParser {
                 else if (arg.endsWith("=" + CombineInputFiles.EXCEPT.optionValue))
                     options.combineInputFiles = CombineInputFiles.EXCEPT
                 else
-                    throw IllegalArgumentException("Unknown value for ${CombineInputFiles.PARAM_NAME}: $arg Try one of ${CombineInputFiles.optionValues}")
+                    throw CrucherConfigException("Unknown value for ${CombineInputFiles.PARAM_NAME}: $arg Try one of ${CombineInputFiles.optionValues}")
 
                 // TODO: Do something like this instead:
                 //opt.combineInputFiles = Utils.processOptionIfMatches(arg, Options.CombineInputFiles.class, Options.CombineInputFiles.CONCAT);
@@ -205,7 +205,7 @@ object OptionsParser {
                 else if (arg == "--" + CombineDirectories.PARAM_NAME)
                     options.combineDirs = CombineDirectories.COMBINE_ALL_FILES
                 else
-                    throw IllegalArgumentException("Unknown value for ${CombineDirectories.PARAM_NAME}: $arg Try one of ${CombineDirectories.optionValues}")
+                    throw CrucherConfigException("Unknown value for ${CombineDirectories.PARAM_NAME}: $arg Try one of ${CombineDirectories.optionValues}")
             }
             else if ("--queryPerInputSubpart" == arg) {
                 options.queryPerInputSubpart = true
@@ -241,7 +241,7 @@ object OptionsParser {
             else if (arg.startsWith("-")) {
                 val msg = "Unknown parameter: $arg"
                 println("ERROR: $msg")
-                throw IllegalArgumentException(msg)
+                throw CrucherConfigException(msg)
             }
 
             argIndex++
@@ -250,8 +250,8 @@ object OptionsParser {
         preventHsqldbBug(options)
 
         return if (!options.isFilled) {
-            App.printUsage(System.out)
-            throw IllegalArgumentException("Not enough arguments. Usage: crunch [-in] <inCSV> [-out] <outCSV> [-sql] <SQL> ...")
+            App.printUsage(System.err)
+            throw CrucherConfigException("Not enough arguments.")
         } else {
             options
         }
@@ -285,7 +285,7 @@ object OptionsParser {
                          |    Use table-qualified way: `SELECT myTable.*`""".trimMargin()
                 if (itsForSure) {
                     log.error("\n$msg\n\n")
-                    throw IllegalArgumentException(msg)
+                    throw CrucherConfigException(msg)
                 } else {
                     val notSure = "\n    (This detection is not reliable so the program will continue, but likely fail.)"
                     log.warn("\n$msg$notSure\n\n")
@@ -307,7 +307,7 @@ object OptionsParser {
 
         val enumConstants = T::class.java.enumConstants
         return enumConstants.firstOrNull { it.optionName == valueStr }
-            ?: throw IllegalArgumentException("Unknown value for ${enumArgumentDefault.optionName}: $arg Try one of ${enumConstants.map { it.optionValue }}")
+            ?: throw CrucherConfigException("Unknown value for ${enumArgumentDefault.optionName}: $arg Try one of ${enumConstants.map { it.optionValue }}")
     }
 
     enum class OptionsCurrentContext {
