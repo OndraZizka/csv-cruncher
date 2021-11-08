@@ -38,7 +38,7 @@ class JsonFileFlattener : FileTabularizer {
 
     private fun deriveOutputPath(inputPath: Path): Path {
         val baseName = inputPath.fileName ?: "output"
-        return inputPath.parent.resolve("$baseName.csv")
+        return inputPath.resolveSibling("$baseName.csv")
     }
 
     fun visitEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
