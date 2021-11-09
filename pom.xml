@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.zizka.csvcruncher</groupId>
     <artifactId>csv-cruncher</artifactId>
-    <version>2.3.1-SNAPSHOT</version>
+    <version>2.3.1</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV or JSON files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
@@ -14,7 +14,7 @@
     <scm>
         <url>https://github.com/OndraZizka/csv-cruncher</url>
         <developerConnection>scm:git:git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
-      <tag>HEAD</tag>
+      <tag>csv-cruncher-2.3.1</tag>
   </scm>
 
     <properties>
