@@ -17,7 +17,7 @@ object VersionUtils {
 
     /** Only works when running from a .jar . */
     private fun readVersionFromMavenPom(groupId: String, artifactid: String): String? {
-        val versionFilePath = "META-INF/maven/$groupId/csv-cruncher/pom.properties"
+        val versionFilePath = "META-INF/maven/$groupId/$artifactid/pom.properties"
 
         try {
             val inStream = Utils::class.java.classLoader.getResourceAsStream(versionFilePath)
