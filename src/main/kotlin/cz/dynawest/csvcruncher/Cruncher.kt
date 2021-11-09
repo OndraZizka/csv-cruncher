@@ -1,9 +1,11 @@
 package cz.dynawest.csvcruncher
 
+import HsqlDbTableCreator
 import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
+import cz.dynawest.csvcruncher.util.JsonUtils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.io.FileUtils
@@ -105,7 +107,7 @@ class Cruncher(private val options: Options2) {
 
                 val colNames: List<String> = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile)
                 // Create a table and bind the CSV to it.
-                dbHelper.createTableFromInputFile(tableName, csvInFile, colNames, true, options.overwrite)
+                HsqlDbTableCreator(dbHelper).createTableFromInputFile(tableName, csvInFile, colNames, true, options.overwrite)
                 inputSubpart.tableName = tableName
             }
 
@@ -145,11 +147,12 @@ class Cruncher(private val options: Options2) {
                 for (output in outputs) {
                     log.debug("Output part: {}", output)
                     val csvOutFile = output.outputFile.toFile()
-                    var sql = genericSql
                     //String outputTableName = TABLE_NAME__OUTPUT;
                     val outputTableName = output.deriveOutputTableName()
+
+                    var sql = genericSql
                     if (output.inputTableName != null) {
-                        sql = sql.replace(SQL_TABLE_PLACEHOLDER, output.inputTableName)
+                        sql = sql.replace(SQL_TABLE_PLACEHOLDER, HsqlDbHelper.quote(output.inputTableName))
                         //outputTableName = output.getInputTableName() + "_out";
                     }
 
@@ -165,7 +168,7 @@ class Cruncher(private val options: Options2) {
 
                     // Write the result into a CSV
                     log.info(" * CSV output: $csvOutFile")
-                    dbHelper.createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
+                    HsqlDbTableCreator(dbHelper).createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
 
                     // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
                     //String selectSql = this.options.sql.replace("@counter", value);
@@ -189,7 +192,7 @@ class Cruncher(private val options: Options2) {
                         val destJsonFile = Paths.get(pathStr)
                         log.info(" * JSON output: $destJsonFile")
                         jdbcConn.createStatement().use { statement2 ->
-                            FilesUtils.convertResultToJson(
+                            JsonUtils.convertResultToJson(
                                     statement2.executeQuery("SELECT * FROM $outputTableName"),
                                     destJsonFile,
                                     printAsArray

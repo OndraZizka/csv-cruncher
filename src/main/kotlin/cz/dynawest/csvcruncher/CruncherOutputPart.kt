@@ -5,7 +5,7 @@ import java.nio.file.Path
 /**
  * Info about one file to be created by one SQL query.
  */
-class CruncherOutputPart(
+data class CruncherOutputPart(
     val outputFile: Path,
     val inputTableName: String? = null,
 ) {

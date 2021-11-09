@@ -1,8 +1,8 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.util.DbUtils.analyzeWhatWasNotFound
 import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
 import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
+import cz.dynawest.csvcruncher.util.HsqldbErrorHandling.throwHintForObjectNotFound
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
@@ -10,108 +10,15 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.sql.*
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.SQLException
+import java.sql.SQLSyntaxErrorException
 
 @Suppress("NAME_SHADOWING")
 class HsqlDbHelper(private val jdbcConn: Connection) {
 
-    @Throws(SQLException::class)
-    fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
-        createTableAndBindCsv(tableName, csvFileToBind, columnNames, ignoreFirst, "", true, overwrite)
-    }
-
-    @Throws(SQLException::class)
-    private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
-        val columnsNamesAndTypes = listToMapKeysWithNullValues(columnsNames)
-        createTableAndBindCsv(tableName, csvFileToBind, columnsNamesAndTypes, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
-
-        // Try to convert columns types to numbers, where applicable.
-        if (isInputTable) {
-            optimizeTableCoumnsType(tableName, columnsNames)
-        }
-    }
-
-    /**
-     * Creates the input or output table, with the right column names, and binds the file.
-     * For output tables, the file is optionally overwritten if exists.
-     * A header with columns names is added to the output table.
-     * Input tables columns are optimized after binding the file by attempting to reduce the column type.
-     * (The output table has to be optimized later.)
-     */
-    @Throws(SQLException::class)
-    fun createTableAndBindCsv(tableName: String?, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
-        var csvFileToBind = csvFileToBind
-        val readOnly = false
-        val csvUsesSingleQuote = true
-        require(!(isInputTable && !csvFileToBind.exists())) { "The input file does not exist: $csvFileToBind" }
-
-        // Get a full path, because HSQLDB resolves paths against the data dir specified in JDBC URL.
-        csvFileToBind = try {
-            csvFileToBind.canonicalFile
-        } catch (ex: IOException) {
-            throw CsvCruncherException("Failed resolving the CSV file path: $csvFileToBind", ex)
-        }
-
-        // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
-        if (!isInputTable) {
-            if (csvFileToBind.exists()) {
-                if (true || overwrite) // TODO: Obey --overwrite.
-                    csvFileToBind.delete() else throw IllegalArgumentException("The output file already exists. Use --overwrite or delete: $csvFileToBind")
-            } else {
-                try {
-                    Files.createDirectories(csvFileToBind.parentFile.toPath())
-                } catch (ex: IOException) {
-                    throw CsvCruncherException("Failed creating directory to store the output to: " + csvFileToBind.parentFile, ex)
-                }
-            }
-        }
-
-
-        // We are also building a header for the CSV file.
-        val sbCsvHeader = StringBuilder("# ")
-        val sbSql = StringBuilder("CREATE TEXT TABLE ").append(tableName).append(" ( ")
-
-        // The counter column, if any.
-        sbSql.append(counterColumnDdl)
-
-        // Columns
-        for (columnDef in columnsNamesAndTypes.entries) {
-            sbCsvHeader.append(columnDef.key).append(", ")
-
-            val columnQuotedName = quote(columnDef.key)
-
-            var columnType = columnDef.value
-            columnType =
-                if (columnType == null || "VARCHAR" == columnType.uppercase())
-                    "VARCHAR($MAX_STRING_COLUMN_LENGTH)"
-                else escapeSql(columnType)
-            sbSql.append(columnQuotedName).append(" ").append(columnType).append(", ")
-        }
-        sbCsvHeader.delete(sbCsvHeader.length - 2, sbCsvHeader.length)
-        sbSql.delete(sbSql.length - 2, sbSql.length)
-        sbSql.append(" )")
-        log.debug("Table DDL SQL: $sbSql")
-        executeSql(sbSql.toString(), "Failed to CREATE TEXT TABLE: ")
-
-
-        // Bind the table to the CSV file.
-        var csvPath = csvFileToBind.path
-        csvPath = escapeSql(csvPath)
-        val quoteCharacter = if (csvUsesSingleQuote) "\\quote" else "\""
-        val ignoreFirstFlag = if (ignoreFirst) "ignore_first=true;" else ""
-        val csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter
-        val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
-        var sql = "SET TABLE $tableName SOURCE '$csvPath;$csvSettings' $DESC"
-        log.debug("CSV import SQL: $sql")
-        executeSql(sql, "Failed to import CSV: ")
-
-        // SET TABLE <table name> SOURCE HEADER
-        if (!isInputTable) {
-            sql = "SET TABLE $tableName SOURCE HEADER '$sbCsvHeader'"
-            log.debug("CSV source header SQL: $sql")
-            executeSql(sql, "Failed to set CSV header: ")
-        }
-    }
 
     /**
      * Execute a SQL which does not expect a ResultSet,
@@ -180,31 +87,6 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         }
     }
 
-    /**
-     * Analyzes the exception against the given DB connection and rethrows an exception with a message containing the available objects as a hint.
-     */
-    fun throwHintForObjectNotFound(ex: SQLSyntaxErrorException): CsvCruncherException {
-        val notFoundIsColumn = analyzeWhatWasNotFound(ex.message!!)
-        val tableNames = formatListOfAvailableTables(notFoundIsColumn)
-        val hintMsg = if (notFoundIsColumn) """
-            |  Looks like you are referring to a column that is not present in the table(s).
-            |  Check the header (first line) in the CSV.
-            |  Here are the tables and columns are actually available:
-            |  
-            """.trimMargin()
-        else """
-            |  Looks like you are referring to a table that was not created.
-            |  This could mean that you have a typo in the input file name,
-            |  or maybe you use --combineInputs but try to use the original inputs.
-            |  These tables are actually available:
-            |  
-            """.trimMargin()
-
-        return CsvCruncherException(
-                """$hintMsg$tableNames
-                |Message from the database:
-                |    ${ex.message}""".trimMargin(), ex)
-    }
 
     /**
      * Get the columns info: Perform the SQL, LIMIT 1.
@@ -219,7 +101,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
             jdbcConn.prepareStatement("$sql")
         } catch (ex: SQLSyntaxErrorException) {
             if (ex.message!!.contains("object not found:")) {
-                throw throwHintForObjectNotFound(ex)
+                throw throwHintForObjectNotFound(ex, this)
             }
             throw CsvCruncherException("""
                 |    Seems your SQL contains errors:
@@ -380,7 +262,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         /**
          * Returns a map with keys from the given list, and null values. Doesn't deal with duplicate keys.
          */
-        private fun listToMapKeysWithNullValues(keys: List<String>): Map<String, String?> {
+        fun listToMapKeysWithNullValues(keys: List<String>): Map<String, String?> {
             val result = LinkedHashMap<String, String?>()
             for (columnsName in keys) {
                 result[columnsName] = null

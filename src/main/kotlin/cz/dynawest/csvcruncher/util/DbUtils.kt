@@ -28,29 +28,6 @@ object DbUtils {
     }
 
     /**
-     * Tells apart whether the "object not found" was a column or a table.
-     * Relies on HSQLDB's exception message, which looks like this:
-     * USER LACKS PRIVILEGE OR OBJECT NOT FOUND: JOBNAME IN STATEMENT [SELECT JOBNAME, FROM
-     *
-     * user lacks privilege or object not found: JOBNAME in statement [SELECT jobName, ... FROM ...]
-     *
-     * @return true if column, false if table (or something else).
-     */
-    @JvmStatic
-    fun analyzeWhatWasNotFound(message: String): Boolean {
-        @Suppress("NAME_SHADOWING")
-        var message = message
-        var notFoundName = StringUtils.substringAfter(message, "object not found: ")
-        notFoundName = StringUtils.substringBefore(notFoundName, " in statement [")
-        message = message.uppercase().replace('\n', ' ')
-
-        //String sqlRegex = "[^']*\\[SELECT .*" + notFoundName + ".*FROM.*";
-        val sqlRegex = ".*SELECT.*$notFoundName.*FROM.*"
-        //LOG.finer(String.format("\n\tNot found object: %s\n\tMsg: %s\n\tRegex: %s", notFoundName, message.toUpperCase(), sqlRegex));
-        return message.uppercase().matches(sqlRegex.toRegex())
-    }
-
-    /**
      * Dump the content of a table. Debug code.
      */
     @JvmStatic
