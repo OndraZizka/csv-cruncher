@@ -22,6 +22,14 @@ class BasicIT {
     }
 
     @Test
+    fun singleImportSingleExport_defaultSql() {
+        var inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val outputFile = Paths.get("target/results/defaultSql.csv")
+        val command = """-in  | $inPath | -out | $outputFile"""
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+    }
+
+    @Test
     fun test_initSqlScript() {
         var inPath = Paths.get("src/test/data/eapBuilds.csv")
         val outputFile = Paths.get("target/results/test_initSqlScript.csv")

@@ -9,6 +9,7 @@ import java.nio.file.Paths
 import javax.json.Json
 import javax.json.JsonObject
 import javax.json.JsonValue
+import kotlin.io.path.deleteIfExists
 
 /**
  * The testdata contain a change in columns structure, so CSV Cruncher needs to be run with --queryPerInputSubpart.
@@ -19,11 +20,14 @@ class BooleanColumnDetectionIT {
     @Throws(Exception::class)
     fun testBooleanColumns() {
         val outputDir = Paths.get("target/testResults/testBooleanColumns.csv")
+        outputDir.deleteIfExists()
+
         val command = "--json" +
                 " | -in  | " + inPath +
                 " | -out | " + outputDir +
                 " | -sql | SELECT boolTable.* FROM boolTable"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val jsonFile = File(outputDir.toString().replaceFirst("\\.csv$".toRegex(), ".json"))
         Assertions.assertTrue(jsonFile.exists())
         verifyBooleanResults(jsonFile)
@@ -44,20 +48,20 @@ class BooleanColumnDetectionIT {
     }
 
     @Throws(IOException::class)
-    private fun verifyNextLine(reader: BufferedReader, expectedValues: Boolean) {
+    private fun verifyNextLine(reader: BufferedReader, expectedValue: Boolean) {
         val line = reader.readLine()
         //System.out.println(":: " + line);
         val jsonReader = Json.createReader(StringReader(line))
         val row = jsonReader.readObject()
-        verifyPropertyIsBoolean(expectedValues, row, "boolupper")
-        verifyPropertyIsBoolean(expectedValues, row, "boollower")
+        verifyPropertyIsBoolean(expectedValue, row, "boolUpper")
+        verifyPropertyIsBoolean(expectedValue, row, "boolLower")
     }
 
-    private fun verifyPropertyIsBoolean(expectedValues: Boolean, row: JsonObject, propertyName: String) {
-        val expectedValue = if (expectedValues) JsonValue.ValueType.TRUE else JsonValue.ValueType.FALSE
+    private fun verifyPropertyIsBoolean(expectedValue: Boolean, row: JsonObject, propertyName: String) {
+        val expectedValue = if (expectedValue) JsonValue.ValueType.TRUE else JsonValue.ValueType.FALSE
         val jsonValue = row[propertyName]
-        val boolUpperValType = jsonValue!!.valueType
-        Assertions.assertEquals(expectedValue, boolUpperValType, "$propertyName should be a boolean, specifically $expectedValue")
+        val boolUpperValType = jsonValue?.valueType
+        Assertions.assertEquals(expectedValue, boolUpperValType, "$propertyName should be a boolean, specifically $expectedValue\nRow: $row")
     }
 
     @Test @Disabled

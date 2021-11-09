@@ -39,4 +39,15 @@ object Utils {
     fun escapeSql(str: String): String {
         return str.replace("'", "''")
     }
+
+    /**
+     * Returns a map with keys from the given list, and null values. Doesn't deal with duplicate keys.
+     */
+    fun listToMapKeysWithNullValues(keys: List<String>): Map<String, String?> {
+        val result = LinkedHashMap<String, String?>()
+        for (columnsName in keys) {
+            result[columnsName] = null
+        }
+        return result
+    }
 }

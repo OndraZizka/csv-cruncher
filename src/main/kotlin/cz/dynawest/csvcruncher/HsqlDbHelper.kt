@@ -3,12 +3,11 @@ package cz.dynawest.csvcruncher
 import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
 import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.HsqldbErrorHandling.throwHintForObjectNotFound
+import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
 import java.io.File
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -18,7 +17,6 @@ import java.sql.SQLSyntaxErrorException
 
 @Suppress("NAME_SHADOWING")
 class HsqlDbHelper(private val jdbcConn: Connection) {
-
 
     /**
      * Execute a SQL which does not expect a ResultSet,
@@ -32,7 +30,7 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
 
         var errorMsg = errorMsg
         try {
-            log.debug("Executing SQL: $sql")
+            log.debug("    Executing SQL: $sql")
             jdbcConn.createStatement().use { stmt -> return stmt.executeUpdate(sql) }
         } catch (ex: Exception) {
             var addToMsg = ""
@@ -99,7 +97,8 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         val statement: PreparedStatement
         statement = try {
             jdbcConn.prepareStatement("$sql")
-        } catch (ex: SQLSyntaxErrorException) {
+        }
+        catch (ex: SQLSyntaxErrorException) {
             if (ex.message!!.contains("object not found:")) {
                 throw throwHintForObjectNotFound(ex, this)
             }
@@ -127,20 +126,20 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
      * @param drop     Drop the table after detaching.
      */
     @Throws(SQLException::class)
-    fun detachTable(tableName: String?, drop: Boolean) {
+    fun detachTable(tableName: String, drop: Boolean) {
         log.debug("Detaching${if (drop) " and dropping" else ""} table: $tableName")
-        var sql = "SET TABLE " + escapeSql(tableName!!) + " SOURCE OFF"
+        var sql = "SET TABLE ${quote(tableName)} SOURCE OFF"
         executeSql(sql, "Failed to detach/attach the table: ")
         if (drop) {
-            sql = "DROP TABLE " + escapeSql(tableName)
+            sql = "DROP TABLE ${quote(tableName)}"
             executeSql(sql, "Failed to DROP TABLE: ")
         }
     }
 
     @Throws(SQLException::class)
     fun attachTable(tableName: String) {
-        log.debug("Ataching table: $tableName")
-        val sql = "SET TABLE " + escapeSql(tableName) + " SOURCE ON"
+        log.debug("Attaching table: $tableName")
+        val sql = "SET TABLE ${quote(tableName)} SOURCE ON"
         executeSql(sql, "Failed to attach the table: ")
     }
 
@@ -153,8 +152,8 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
      * into the new type without string truncation or loss of significant digits."
      */
     @Throws(SQLException::class)
-    fun optimizeTableCoumnsType(tableName: String, colNames: List<String?>) {
-        val columnsFitIntoType: MutableMap<String?, String> = LinkedHashMap()
+    fun optimizeTableColumnsType(tableName: String, colNames: List<String>) {
+        val columnsFitIntoType: MutableMap<String, String> = LinkedHashMap()
 
         // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
         // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
@@ -165,9 +164,9 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
             // Note: Tried also "VARCHAR(255)", but size limits is not handled below.
             for (sqlType in arrayOf("TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN")) {
                 // Try CAST( AS ...)
-                val sqlCol = "SELECT CAST($colName AS $sqlType) FROM $tableName"
+                val sqlCol = "SELECT CAST(${quote(colName)} AS $sqlType) FROM ${quote(tableName)}"
                 //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
-                log.trace("Column change attempt SQL: $sqlCol")
+                log.debug("Column change attempt SQL: $sqlCol")
                 try {
                     jdbcConn.createStatement().use { st ->
                         st.execute(sqlCol)
@@ -183,10 +182,13 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
 
         // ALTER COLUMNs
         for ((colName, sqlType) in columnsFitIntoType) {
-            val sqlAlter = "ALTER TABLE $tableName ALTER COLUMN $colName SET DATA TYPE $sqlType"
+            val sqlAlter = "ALTER TABLE ${quote(tableName)} ALTER COLUMN ${quote(colName)} SET DATA TYPE $sqlType"
             val sqlCheck =
-                "SELECT data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('$tableName') AND LOWER(column_name) = LOWER('$colName')"
+                """SELECT data_type FROM information_schema.columns 
+                    | WHERE LOWER(table_name) = LOWER('${escapeSql(tableName)}') 
+                    |   AND LOWER(column_name) = LOWER('${escapeSql(colName)}')""".trimMargin()
             log.trace("Changing the column {} to {}", colName, sqlType)
+
             try {
                 jdbcConn.createStatement().use { st ->
                     st.execute(sqlAlter)
@@ -195,7 +197,8 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
                     val columnTypeRes = st.executeQuery(sqlCheck)
                     if (!columnTypeRes.next()) {
                         log.error("Column not found?? {}.{}", tableName, colName)
-                        testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('" + tableName.uppercase() + "')", jdbcConn)
+                        //testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('$tableName')", jdbcConn)
+                        testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('${escapeSql(tableName)}')", jdbcConn)
                         throw ColumnNotFoundException(tableName, colName)
                     }
                     val newType = columnTypeRes.getString("data_type")
@@ -215,30 +218,35 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
 
     class ColumnNotFoundException(tableName: String, colName: String?) : Exception("Column not found: $tableName.$colName")
 
-    fun detachTables(tableNames: Set<String?>, msgOnError: String) {
+    fun detachTables(tableNames: Set<String>, msgOnError: String) {
         for (tableName in tableNames) {
             try {
                 detachTable(tableName, true)
             } catch (ex: Exception) {
-                log.error(msgOnError + ex.message)
+                log.warn(msgOnError + ex.message)
             }
         }
     }
 
-    fun queryAllColumnNames(): List<String> {
+    fun queryAllTableAndColumnNames(includeTables: Boolean = false, includeColumns: Boolean = true): Set<String> {
         val schema = "PUBLIC"
-        val sqlTablesMetadata = """SELECT c.column_name AS "colName" FROM INFORMATION_SCHEMA.TABLES AS t
-             NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c  WHERE t.table_schema = '$schema'"""
+        val sqlTablesMetadata =
+            """SELECT t.table_name AS "tableName", c.column_name AS "colName" 
+                 FROM INFORMATION_SCHEMA.TABLES AS t
+                 NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c  
+                 WHERE t.table_schema = '$schema'
+             """
 
         try {
-            val columnNames = mutableListOf<String>()
+            val identifiers = mutableSetOf<String>()
             jdbcConn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY).use { st ->
                 val resultSet = st.executeQuery(sqlTablesMetadata)
                 while (resultSet.next()) {
-                    columnNames.add(resultSet.getString("colName"))
+                    if (includeTables)  identifiers.add(resultSet.getString("tableName"))
+                    if (includeColumns) identifiers.add(resultSet.getString("colName"))
                 }
             }
-            return columnNames
+            return identifiers
         } catch (ex: SQLException) {
             throw CsvCruncherException("Couldn't list all columns: ${ex.message}", ex)
         }
@@ -255,20 +263,16 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         }
     }
 
+    fun quoteColumnAndTableNamesInQuery(sqlQuery: String): String {
+        val identifiers = mutableListOf<String>()
+        identifiers.addAll(queryAllTableAndColumnNames(true,  true))
+        return quoteIdentifiersInQuery(sqlQuery, identifiers)
+    }
+
+
     companion object {
         private val log = logger()
         const val MAX_STRING_COLUMN_LENGTH = 4092
-
-        /**
-         * Returns a map with keys from the given list, and null values. Doesn't deal with duplicate keys.
-         */
-        fun listToMapKeysWithNullValues(keys: List<String>): Map<String, String?> {
-            val result = LinkedHashMap<String, String?>()
-            for (columnsName in keys) {
-                result[columnsName] = null
-            }
-            return result
-        }
 
         fun normalizeFileNameForTableName(fileName: File): String {
             return fileName.name.replaceFirst(".csv$".toRegex(), "").replace("[^a-zA-Z0-9_]".toRegex(), "_")
@@ -283,9 +287,9 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
          * To relieve the user from quoting everything, this method does it.
          * Although, the current impl is potentially brittle.
          */
-        fun quoteColumnNamesInQuery(sqlQuery: String, columnNames: List<String>): String {
+        fun quoteIdentifiersInQuery(sqlQuery: String, identifiers: List<String>): String {
             var sqlQuery = sqlQuery
-            val columnNames = columnNames.sortedByDescending { it.length }
+            val columnNames = identifiers.sortedByDescending { it.length }
             val substitutes = mutableMapOf<String, String>()
 
             for (name in columnNames.withIndex()) {

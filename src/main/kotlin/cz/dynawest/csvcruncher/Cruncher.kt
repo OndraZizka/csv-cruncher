@@ -1,6 +1,7 @@
 package cz.dynawest.csvcruncher
 
 import HsqlDbTableCreator
+import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
 import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.JsonFileFlattener
@@ -54,13 +55,14 @@ class Cruncher(private val options: Options2) {
         val addCounterColumn = options.initialRowNumber != null
         val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE
         val printAsArray = options.jsonExportFormat == JsonExportFormat.ARRAY
-        val tablesToFiles: MutableMap<String?, File> = HashMap()
+        val tablesToFiles: MutableMap<String, File> = HashMap()
         var outputs: List<CruncherOutputPart> = emptyList()
 
         // Should the result have a unique incremental ID as an added 1st column?
         val counterColumn = CounterColumn()
         if (addCounterColumn) counterColumn.setDdlAndVal()
         try {
+            dbHelper.executeSql("SET AUTOCOMMIT TRUE", "Error setting AUTOCOMMIT TRUE")
             for (script in options.initSqlArguments) dbHelper.executeSqlScript(script.path, "Error executing init SQL script")
 
             // Sort the input paths.
@@ -75,23 +77,20 @@ class Cruncher(private val options: Options2) {
                     import
                 }
                 else {
-                    // TODO: Needs to pass the -itemsAt.
                     val convertedFilePath = convertJsonToCsv(import.path!!, import.itemsPathInTree)
-                    import.apply { path = convertedFilePath }
+                    import.apply { path = convertedFilePath }  // Hack - replacing the path with the converted file.
                 }
             }
 
-            val inputSubparts: List<CruncherInputSubpart>
-
             // Combine files. Should we concat the files or UNION the tables?
-            if (options.combineInputFiles != CombineInputFiles.NONE) {
+            val inputSubparts: List<CruncherInputSubpart>
+            if (options.combineInputFiles == CombineInputFiles.NONE) {
+                inputSubparts = importArguments.map { import -> CruncherInputSubpart.trivial(import.path!!) } .toList()
+            }
+            else {
                 val inputFileGroups: Map<Path?, List<Path>> = FilesUtils.expandFilterSortInputFilesGroups(importArguments.map { it.path!! }, options)
-
-                ///Map<Path, List<Path>> resultingFilePathToConcatenatedFiles = FilesUtils.combineInputFiles(inputFileGroups, this.options);
                 inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options)
                 log.info(" --- Combined input files: --- " + inputSubparts.map { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" }.joinToString())
-            } else {
-                inputSubparts = importArguments.map { import -> CruncherInputSubpart.trivial(import.path!!) } .toList()
             }
             if (inputSubparts.isEmpty()) return
             FilesUtils.validateInputFiles(inputSubparts)
@@ -120,15 +119,15 @@ class Cruncher(private val options: Options2) {
 
             for (export in options.exportArguments) {
 
-                val genericSql = HsqlDbHelper.quoteColumnNamesInQuery(export.sqlQuery ?: DEFAULT_SQL, dbHelper.queryAllColumnNames())
-
                 outputs = mutableListOf()
 
                 // SQL can be executed:
                 // A) Once over all tables, and generate a single result.
                 if (!options.queryPerInputSubpart) {
                     val csvOutFile = resolvePathToUserDirIfRelative(export.path!!)
-                    val output = CruncherOutputPart(csvOutFile.toPath(), null)
+
+                    // If there's just one input, then the generic SQL can be used.
+                    val output = CruncherOutputPart(csvOutFile.toPath(), if (inputSubparts.size == 1) inputSubparts.first().tableName else null)
                     outputs.add(output)
                 }
                 // B) With each table, with a generic SQL query (using "$table"), and generate one result per table.
@@ -142,18 +141,17 @@ class Cruncher(private val options: Options2) {
                     }
                 }
 
+                val genericSql = dbHelper.quoteColumnAndTableNamesInQuery(export.sqlQuery ?: DEFAULT_SQL)
 
                 // For each output...
                 for (output in outputs) {
                     log.debug("Output part: {}", output)
                     val csvOutFile = output.outputFile.toFile()
-                    //String outputTableName = TABLE_NAME__OUTPUT;
                     val outputTableName = output.deriveOutputTableName()
 
                     var sql = genericSql
                     if (output.inputTableName != null) {
                         sql = sql.replace(SQL_TABLE_PLACEHOLDER, HsqlDbHelper.quote(output.inputTableName))
-                        //outputTableName = output.getInputTableName() + "_out";
                     }
 
 
@@ -170,15 +168,12 @@ class Cruncher(private val options: Options2) {
                     log.info(" * CSV output: $csvOutFile")
                     HsqlDbTableCreator(dbHelper).createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
 
-                    // The provided SQL could be something like "SELECT @counter, foo, bar FROM ..."
-                    //String selectSql = this.options.sql.replace("@counter", value);
+                    // TBD: The export SELECT could reference the counter column, like "SELECT @counter, foo FROM ..."
                     // On the other hand, that's too much space for the user to screw up. Let's force it:
-                    val selectSql = sql.replace("SELECT ", "SELECT " + counterColumn.value + " ")
+                    val selectSql = sql.replace("SELECT ", "SELECT ${counterColumn.value} ")
                     output.sql = selectSql
-                    val userSql = "INSERT INTO $outputTableName ($selectSql)"
+                    val userSql = "INSERT INTO ${quote(outputTableName)} ($selectSql)"
                     log.debug(" * User's SQL: $userSql")
-                    //log.info("\n  Tables and column types:\n" + this.formatListOfAvailableTables(true));///
-
 
                     @Suppress("UNUSED_VARIABLE")
                     val rowsAffected = dbHelper.executeSql(userSql, "Error executing user SQL: ")
@@ -186,17 +181,14 @@ class Cruncher(private val options: Options2) {
 
                     // Now let's convert it to JSON if necessary.
                     if (convertResultToJson) {
-                        var pathStr: String? = csvOutFile.toPath().toString()
+                        var pathStr: String = csvOutFile.toPath().toString()
                         pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")
                         pathStr = StringUtils.appendIfMissing(pathStr, ".json")
                         val destJsonFile = Paths.get(pathStr)
                         log.info(" * JSON output: $destJsonFile")
+
                         jdbcConn.createStatement().use { statement2 ->
-                            JsonUtils.convertResultToJson(
-                                    statement2.executeQuery("SELECT * FROM $outputTableName"),
-                                    destJsonFile,
-                                    printAsArray
-                            )
+                            JsonUtils.convertResultToJson(statement2.executeQuery("SELECT * FROM ${quote(outputTableName)}"), destJsonFile, printAsArray)
                             if (!options.keepWorkFiles) csvOutFile.deleteOnExit()
                         }
                     }
@@ -217,11 +209,10 @@ class Cruncher(private val options: Options2) {
         return JsonFileFlattener().convert(inputPath, itemsAt)
     }
 
-    private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String?, File>, outputs: List<CruncherOutputPart>) {
+    private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String, File>, outputs: List<CruncherOutputPart>) {
         // TODO: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
         dbHelper.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
 
-        //dbHelper.detachTables(Collections.singleton(TABLE_NAME__OUTPUT), "Could not delete the output table: ");
         val outputTablesNames = outputs.map { outputPart -> outputPart.deriveOutputTableName() }.toSet()
         dbHelper.detachTables(outputTablesNames, "Could not delete the output table: ")
     }
@@ -295,7 +286,5 @@ class Cruncher(private val options: Options2) {
         const val DEFAULT_SQL = "SELECT $SQL_TABLE_PLACEHOLDER.* FROM $SQL_TABLE_PLACEHOLDER"
     }
 
-    init {
-        init()
-    }
+    init { init() }
 }

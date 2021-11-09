@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.it
 
+import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -7,6 +8,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.awt.FileDialog.LOAD
 import java.nio.file.Paths
 
 /**
@@ -126,10 +129,7 @@ class OptionsCombinationsIT {
                 " |  -out | target/results/session_telephony_pins.csv" +
                 " |  -sql | SELECT * FROM session_telephony_pins"
 
-        try {
-            CsvCruncherTestUtils.runCruncherWithArguments(command)
-        } catch (ex: IllegalArgumentException) { /**/
-        }
+        assertThrows<CrucherConfigException> { CsvCruncherTestUtils.runCruncherWithArguments(command) }
     }
 
     @Test

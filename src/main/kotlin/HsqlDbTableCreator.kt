@@ -1,5 +1,6 @@
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.HsqlDbHelper
+import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
 import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.logger
 import java.io.File
@@ -16,12 +17,12 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
 
     @Throws(SQLException::class)
     private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
-        val columnsNamesAndTypes = HsqlDbHelper.listToMapKeysWithNullValues(columnsNames)
+        val columnsNamesAndTypes = Utils.listToMapKeysWithNullValues(columnsNames)
         createTableAndBindCsv(tableName, csvFileToBind, columnsNamesAndTypes, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
 
         // Try to convert columns types to numbers, where applicable.
         if (isInputTable) {
-            hsqlDbHelper.optimizeTableCoumnsType(tableName, columnsNames)
+            hsqlDbHelper.optimizeTableColumnsType(tableName, columnsNames)
         }
     }
 
@@ -33,7 +34,7 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
      * (The output table has to be optimized later.)
      */
     @Throws(SQLException::class)
-    fun createTableAndBindCsv(tableName: String?, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
+    fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
         @Suppress("NAME_SHADOWING")
         var csvFileToBind = csvFileToBind
         val readOnly = false
@@ -64,7 +65,7 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
 
         // We are also building a header for the CSV file.
         val sbCsvHeader = StringBuilder("# ")
-        val sbSql = StringBuilder("CREATE TEXT TABLE ").append(tableName).append(" ( ")
+        val sbSql = StringBuilder("CREATE TEXT TABLE ").append(quote(tableName)).append(" ( ")
 
         // The counter column, if any.
         sbSql.append(counterColumnDdl)
@@ -73,7 +74,7 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
         for (columnDef in columnsNamesAndTypes.entries) {
             sbCsvHeader.append(columnDef.key).append(", ")
 
-            val columnQuotedName = HsqlDbHelper.quote(columnDef.key)
+            val columnQuotedName = quote(columnDef.key)
 
             var columnType = columnDef.value
             columnType =
@@ -96,13 +97,13 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
         val ignoreFirstFlag = if (ignoreFirst) "ignore_first=true;" else ""
         val csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter
         val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
-        var sql = "SET TABLE $tableName SOURCE '$csvPath;$csvSettings' $DESC"
+        var sql = "SET TABLE ${quote(tableName)} SOURCE '$csvPath;$csvSettings' $DESC"
         log.debug("CSV import SQL: $sql")
         hsqlDbHelper.executeSql(sql, "Failed to import CSV: ")
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
-            sql = "SET TABLE $tableName SOURCE HEADER '$sbCsvHeader'"
+            sql = "SET TABLE ${quote(tableName)} SOURCE HEADER '$sbCsvHeader'"
             log.debug("CSV source header SQL: $sql")
             hsqlDbHelper.executeSql(sql, "Failed to set CSV header: ")
         }
