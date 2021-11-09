@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.regex.Pattern
+import kotlin.io.path.name
 
 object OptionsParser {
 
@@ -49,8 +50,14 @@ object OptionsParser {
             }
             else if (!arg.startsWith("-")) {
                 when (next) {
-                    OptionsCurrentContext.IN -> currentImport.path = Path.of(arg)
-                    OptionsCurrentContext.OUT -> currentExport.path = Path.of(arg)
+                    OptionsCurrentContext.IN -> {
+                        currentImport.path = Path.of(arg)
+                        if (currentImport.path!!.name.lowercase().endsWith(".json")) currentImport.format = Format.JSON
+                    }
+                    OptionsCurrentContext.OUT -> {
+                        currentExport.path = Path.of(arg)
+                        if (currentExport.path!!.name.lowercase().endsWith(".json")) currentExport.formats += Format.JSON
+                    }
                     OptionsCurrentContext.DBPATH -> options.dbPath = arg
                     OptionsCurrentContext.INIT_SQL -> options.initSqlArguments.add(InitSqlArgument(tryParsePath(arg)))
                     else -> throw CrucherConfigException("Not sure what to do with the argument at this place: $arg.")
