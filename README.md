@@ -53,7 +53,9 @@ See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc
 
 What's new
 ==========
-
+* `2021-11-11` Release 2.3.0
+  * \#58 Keep the table names letter case 
+  * Fixed JSON import conversion to CSV, and few more fixes.
 * `2021-11-07` Release 2.2.0
   * \#59 Move all integration tests from Maven to JUnit (POM cleanup)
   * Fixed #57 SELECT containing LIMIT causes SQL error

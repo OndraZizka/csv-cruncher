@@ -39,22 +39,23 @@ object VersionUtils {
             val resourcesEnumeration = Thread.currentThread().getContextClassLoader().getResources(versionFilePath)
 
             while (resourcesEnumeration.hasMoreElements()) {
-                val url: URL = resourcesEnumeration.nextElement() as URL
-                val inStream: InputStream = url.openStream()
-                if (inStream == null) {
-                    log.warn("Can't read resource at " + url.toString())
-                    return null
-                }
-                if (true) {
-                    val manifest = Manifest(inStream)
-                    val mainAttribs: Attributes = manifest.getMainAttributes()
-                    val version: String = mainAttribs.getValue("version")
-                    return version
-                }
-                else {
-                    val props = Properties()
-                    props.load(inStream)
-                    return props.getProperty("version")
+                val url: URL = resourcesEnumeration.nextElement()
+                url.openStream().use { inStream ->
+                    if (inStream == null) {
+                        log.warn("Can't read resource at " + url.toString())
+                        return null
+                    }
+                    if (true) {
+                        val manifest = Manifest(inStream)
+                        val mainAttribs: Attributes = manifest.getMainAttributes()
+                        val version: String = mainAttribs.getValue("version")
+                        return version
+                    }
+                    else {
+                        val props = Properties()
+                        props.load(inStream)
+                        return props.getProperty("version")
+                    }
                 }
             }
         }
