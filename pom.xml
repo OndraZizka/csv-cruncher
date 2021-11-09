@@ -330,7 +330,10 @@
 
         <!-- Releasing to Maven Central -->
         <profile>
-            <id>ossrh</id>
+            <id>release</id><!-- Was: "ossrh", but then this happened:
+                The requested profile "release" could not be activated because it does not exist.
+                Failed to execute goal org.sonatype.plugins:nexus-staging-maven-plugin:1.6.8:deploy (injected-nexus-deploy) on project csv-cruncher: Remote staging failed: Staging rules failure!
+             -->
             <activation>
                 <property><name>release</name></property>
             </activation>
