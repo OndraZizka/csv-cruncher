@@ -81,9 +81,11 @@ class BasicIT {
         var inPath = Paths.get("src/test/data/json/redditAll.json")
         val outputPath = Paths.get("test-DELETE.csv")
         outputPath.deleteIfExists()
+        Paths.get("src/test/data/json/redditAll.json.csv").deleteIfExists() // Temp file can remain after debugging
 
         val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+        outputPath.deleteIfExists()
     }
 
     @Test @Disabled("Currently we just overwrite to simplify experimenting. Maybe let's have --noOverwrite?")

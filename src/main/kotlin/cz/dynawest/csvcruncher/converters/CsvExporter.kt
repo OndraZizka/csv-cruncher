@@ -5,14 +5,16 @@ import java.io.OutputStream
 import java.time.LocalDateTime
 
 class CsvExporter(
-    val outputStream: OutputStream, // TBD: Rather have the file path and handle opening here?
+    outputStream: OutputStream,
     val columnsInfo: MutableMap<String, PropertyInfo>,
     val columnSeparator: String = ","
 )
     : EntryProcessor
 {
+    val writer = outputStream.writer()
+
     override fun beforeEntries() {
-        val writer = outputStream.writer()
+
         writer.write("### Converted by CsvCruncher on ${LocalDateTime.now()}\n")
 
         val header = columnsInfo.map { it.value.name }.joinToString(separator = "$columnSeparator ")
@@ -20,12 +22,17 @@ class CsvExporter(
         writer.write(header + "\n")
         writer.flush()
     }
+
+    override fun afterEntries() {
+        writer.close()
+    }
+
     override fun processEntry(entry: FlattenedEntrySequence) {
         val entryPropsMap: Map<String, CrunchProperty> = entry.flattenedProperties.associateBy { it.name }
-        val line = columnsInfo.map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(
-            columnSeparator
-        )
-        outputStream.writer().write(line + "\n")
+        val line = columnsInfo.map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(columnSeparator)
+
+        writer.write(line + "\n")
+        writer.flush()
     }
 
     companion object { private val log = logger() }

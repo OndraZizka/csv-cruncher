@@ -175,8 +175,8 @@ class Cruncher(private val options: Options2) {
                     val userSql = "INSERT INTO ${quote(outputTableName)} ($selectSql)"
                     log.debug(" * User's SQL: $userSql")
 
-                    @Suppress("UNUSED_VARIABLE")
                     val rowsAffected = dbHelper.executeSql(userSql, "Error executing user SQL: ")
+                    log.debug("Affected rows: $rowsAffected")
 
 
                     // Now let's convert it to JSON if necessary.

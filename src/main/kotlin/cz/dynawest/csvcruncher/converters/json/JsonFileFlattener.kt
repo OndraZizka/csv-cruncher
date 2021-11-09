@@ -32,6 +32,7 @@ class JsonFileFlattener : FileTabularizer {
             csvExporter.beforeEntries()
             visitEntries(inputPath, mainArrayPath, csvExporter)
             csvExporter.afterEntries()
+            outputStream.flush()
         }
         return outputPath
     }
