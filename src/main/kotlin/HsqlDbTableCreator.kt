@@ -1,6 +1,7 @@
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.HsqlDbHelper
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import cz.dynawest.csvcruncher.util.SqlTypeReducer
 import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.logger
 import java.io.File
@@ -22,7 +23,8 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
 
         // Try to convert columns types to numbers, where applicable.
         if (isInputTable) {
-            hsqlDbHelper.optimizeTableColumnsType(tableName, columnsNames)
+            SqlTypeReducer(hsqlDbHelper)
+                .optimizeTableColumnsType(tableName, columnsNames)
         }
     }
 
