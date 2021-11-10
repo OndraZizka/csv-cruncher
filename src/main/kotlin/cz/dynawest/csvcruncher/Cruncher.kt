@@ -7,6 +7,7 @@ import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.JsonUtils
+import cz.dynawest.csvcruncher.util.SqlFunctions.defineSqlFunctions
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.io.FileUtils
@@ -18,7 +19,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.sql.*
 import java.util.regex.Pattern
-import kotlin.io.path.nameWithoutExtension
 
 class Cruncher(private val options: Options2) {
     private lateinit var jdbcConn: Connection
@@ -36,7 +36,7 @@ class Cruncher(private val options: Options2) {
         val dbPath = StringUtils.defaultIfEmpty(options.dbPath, "hsqldb").toString() + "/cruncher"
         try {
             FileUtils.forceMkdir(File(dbPath))
-            jdbcConn = DriverManager.getConnection("jdbc:hsqldb:file:$dbPath;shutdown=true", "SA", "")
+            jdbcConn = DriverManager.getConnection("jdbc:hsqldb:file:$dbPath;shutdown=true;sql.syntax_mys=true", "SA", "")
         } catch (e: IOException) {
             throw CsvCruncherException("Can't create HSQLDB data dir $dbPath: ${e.message}", e)
         } catch (e: SQLException) {
@@ -63,6 +63,8 @@ class Cruncher(private val options: Options2) {
         if (addCounterColumn) counterColumn.setDdlAndVal()
         try {
             dbHelper.executeSql("SET AUTOCOMMIT TRUE", "Error setting AUTOCOMMIT TRUE")
+            defineSqlFunctions(dbHelper)
+
             for (script in options.initSqlArguments) dbHelper.executeSqlScript(script.path, "Error executing init SQL script")
 
             // Sort the input paths.

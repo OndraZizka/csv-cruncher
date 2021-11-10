@@ -77,8 +77,20 @@ class BasicIT {
     }
 
     @Test
-    fun realData_json_noParentDirOfOutput() {
-        var inPath = Paths.get("src/test/data/json/redditAll.json")
+    fun test_basic_json_types() {
+        val inPath = Paths.get("src/test/data/json/jsonTypes_all.json")
+        val outputPath = Paths.get("target/results/jsonTypes.csv")
+        outputPath.deleteIfExists()
+
+        val command = """-in | $inPath | -itemsAt | / | -out | $outputPath | -sql | SELECT * FROM jsonTypes_all_json"""
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+
+        assertThat(outputPath).exists().isNotEmptyFile()
+    }
+
+    @Test
+    fun test_basic_json_noParentDirOfOutput() {
+        val inPath = Paths.get("src/test/data/json/redditAll.json")
         val outputPath = Paths.get("test-DELETE.csv")
         outputPath.deleteIfExists()
         Paths.get("src/test/data/json/redditAll.json.csv").deleteIfExists() // Temp file can remain after debugging

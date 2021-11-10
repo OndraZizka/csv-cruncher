@@ -1,0 +1,22 @@
+[{
+    "string6": "abcdef",
+    "string6Blank": "      ",
+    "stringEmpty": "",
+    "stringTrue": "true",
+    "stringUuid": "123e4567-e89b-12d3-a456-426614174000",
+    "int0": 0,
+    "int1": 1,
+    "int25": 25,
+    "int10mil": 10000000,
+    "int10pow12": 1000000000000,
+    "null": null,
+    "real097": 0.97,
+    "realTimestamp": 1636109245.0,
+    "realExponent": 1e15,
+    "boolTrue": true,
+    "boolFalse": false,
+    "arrayEmpty": [],
+    "arrayInt": [1,2],
+    "objEmpty": {},
+    "objFoo": { "foo":  "bar" }
+}]

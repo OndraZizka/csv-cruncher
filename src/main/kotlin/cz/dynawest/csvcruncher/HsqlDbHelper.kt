@@ -1,9 +1,9 @@
 package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
+import cz.dynawest.csvcruncher.util.DbUtils.testDumpResultSet
 import cz.dynawest.csvcruncher.util.DbUtils.testDumpSelect
 import cz.dynawest.csvcruncher.util.HsqldbErrorHandling.throwHintForObjectNotFound
-import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
@@ -45,8 +45,9 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
             }
             if (errorMsg.isBlank()) errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL."
             throw CsvCruncherException("""$errorMsg
-                |  SQL: $sql
-                |  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg""".trimMargin()
+                |  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg
+                |  SQL: $sql""${'"'}
+                """.trimMargin()
             )
         }
     }
@@ -158,56 +159,82 @@ class HsqlDbHelper(private val jdbcConn: Connection) {
         // TODO: This doesn't work because: Operation is not allowed on text table with data in statement.
         // See https://stackoverflow.com/questions/52647738/hsqldb-hypersql-changing-column-type-in-a-text-table
         // Maybe I need to duplicate the TEXT table into a native table first?
+        val qt = quote(tableName)
         for (colName in colNames) {
+            val qc = quote(colName)
 
             // Note: Tried also "CHAR", but seems that HSQL does some auto casting and the values wouldn't fit. Need to investigate.
             // Note: Tried also "VARCHAR(255)", but size limits is not handled below.
-            for (sqlType in arrayOf("TIMESTAMP", "UUID", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN")) {
+            for (sqlType in arrayOf("TIMESTAMP", "UUID", "DECIMAL(14,6)", "DECIMAL(10,3)", "DECIMAL(2,2)", "BIGINT", "INTEGER", "SMALLINT", "BOOLEAN")) {
+
                 // Try CAST( AS ...)
-                val sqlCol = "SELECT CAST(${quote(colName)} AS $sqlType) FROM ${quote(tableName)}"
-                //String sqlCol = String.format("SELECT 1 + \"%s\" FROM %s", colName, tableName);
-                log.debug("Column change attempt SQL: $sqlCol")
+                //val sqlCol = "SELECT CAST($qt.$qc AS $sqlType) = $qt.$qc AS same, $qt.$qc, CAST($qt.$qc AS $sqlType) AS casted, $qt.$qc - CAST($qt.$qc AS $sqlType) AS diff FROM $qt WHERE NOT CAST($qt.$qc AS $sqlType) = $qt.$qc"
+                val sqlCol =
+                    """SELECT
+                         '$sqlType' AS type, $qt.$qc, 
+                         -- CAST($qt.$qc AS $sqlType) AS casted, 
+                         -- CAST($qt.$qc AS $sqlType) = $qt.$qc AS equal, 
+                         -- CAST(CAST($qt.$qc AS $sqlType) AS LONGVARCHAR) AS castedBack, 
+                         CAST(CAST($qt.$qc AS $sqlType) AS LONGVARCHAR) = CAST($qt.$qc AS LONGVARCHAR) AS stringEqual,
+                         STARTSWITH(CAST(CAST($qt.$qc AS $sqlType) AS LONGVARCHAR), $qt.$qc)  AS startsWith
+                       FROM $qt
+                       WHERE NOT STARTSWITH(CAST(CAST($qt.$qc AS $sqlType) AS LONGVARCHAR), $qt.$qc)
+                    """
+                log.trace("  Column change attempt SQL: $sqlCol")
                 try {
                     jdbcConn.createStatement().use { st ->
-                        st.execute(sqlCol)
-                        log.trace("Column $tableName.$colName fits to $sqlType")
-                        columnsFitIntoType.put(colName, sqlType)
+                        val result = st.executeQuery(sqlCol)
+                        val hasDifferences = result.next()
+                        if (!hasDifferences) {
+                            log.trace("  Column $tableName.$colName +++FITS+++ to $sqlType")
+                            columnsFitIntoType.put(colName, sqlType)
+                        }
+                        else {
+                            log.trace("Column $tableName.$colName ---DOES NOT FIT--- to $sqlType. The casted value looses information.");
+                        }
+                        //testDumpResultSet(result, log)
                     }
                 } catch (ex: SQLException) {
-                    // log.trace(String.format("Column %s.%s values don't fit to %s.\n  %s", tableName, colName, sqlType, ex.getMessage()));
+                    log.trace("Column $tableName.$colName ---DOES NOT FIT--- to $sqlType. DB says: ${ex.message}");
+                    // Possible messages:
+                    // data exception: invalid character value for cast
+                    // precision or scale out of range
+                    // data exception: invalid datetime format
                 }
             }
         }
         detachTable(tableName, false)
 
         // ALTER COLUMNs
-        for ((colName, sqlType) in columnsFitIntoType) {
-            val sqlAlter = "ALTER TABLE ${quote(tableName)} ALTER COLUMN ${quote(colName)} SET DATA TYPE $sqlType"
-            val sqlCheck =
-                """SELECT data_type FROM information_schema.columns 
-                    | WHERE LOWER(table_name) = LOWER('${escapeSql(tableName)}') 
-                    |   AND LOWER(column_name) = LOWER('${escapeSql(colName)}')""".trimMargin()
-            log.trace("Changing the column {} to {}", colName, sqlType)
+        for ((colName, desiredSqlType) in columnsFitIntoType) {
+            val sqlAlter = "ALTER TABLE $qt ALTER COLUMN ${quote(colName)} SET DATA TYPE $desiredSqlType"
+
+            log.trace("Changing the column {} to {}", colName, desiredSqlType)
 
             try {
                 jdbcConn.createStatement().use { st ->
                     st.execute(sqlAlter)
-                    log.debug(String.format("Column %s.%-20s converted to %-14s %s", tableName, colName, sqlType, sqlAlter))
+                    log.debug(String.format("Column %s.%-20s converted to %-14s %s", tableName, colName, desiredSqlType, sqlAlter))
+
+                    val sqlCheck =
+                        "SELECT data_type FROM information_schema.columns " +
+                        "  WHERE LOWER(table_name) = LOWER('${escapeSql(tableName)}') " +
+                           " AND LOWER(column_name) = LOWER('${escapeSql(colName)}')"
                     log.trace("Checking col type: $sqlCheck")
                     val columnTypeRes = st.executeQuery(sqlCheck)
                     if (!columnTypeRes.next()) {
                         log.error("Column not found?? {}.{}", tableName, colName)
-                        //testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('$tableName')", jdbcConn)
-                        testDumpSelect("SELECT table_name, column_name FROM information_schema.columns WHERE LOWER(table_name) = LOWER('${escapeSql(tableName)}')", jdbcConn)
+                        //testDumpSelect("SELECT table_name, column_name, data_type FROM information_schema.columns WHERE LOWER(table_name) = LOWER('${escapeSql(tableName)}')", jdbcConn, log)
                         throw ColumnNotFoundException(tableName, colName)
                     }
                     val newType = columnTypeRes.getString("data_type")
-                    if (newType != sqlType) {
-                        log.error("Column $tableName.$colName did not really change the type to $sqlType, stayed $newType.")
+                    if (!desiredSqlType.startsWith(newType)) {
+                        log.warn("Column $tableName.$colName did not really change the type to $desiredSqlType, stayed $newType.")
                     }
                 }
-            } catch (ex: SQLException) {
-                log.error("Error changing type of column $tableName.$colName to $sqlType.\n  ${ex.message}")
+            }
+            catch (ex: SQLException) {
+                log.error("Error changing type of column $tableName.$colName to $desiredSqlType.\n  ${ex.message}")
             }
             catch (ex: ColumnNotFoundException) {
                 continue

@@ -1,6 +1,7 @@
 package cz.dynawest.csvcruncher.util
 
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.Logger
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -30,20 +31,24 @@ object DbUtils {
     /**
      * Dump the content of a table. Debug code.
      */
-    @JvmStatic
     @Throws(SQLException::class)
     @Suppress("NAME_SHADOWING")
-    fun testDumpSelect(sql: String, jdbcConn: Connection) {
+    fun testDumpSelect(sql: String, jdbcConn: Connection, log: Logger) {
         var sql = sql
         sql = if (sql.startsWith("SELECT ")) sql else "SELECT * FROM $sql"
         val ps = jdbcConn.createStatement()
         val rs = ps.executeQuery(sql)
+        testDumpResultSet(rs, log)
+    }
+
+    fun testDumpResultSet(rs: ResultSet, log: Logger) {
         val metaData = rs.metaData
-        while (rs.next()) {
-            for (i in 1..metaData.columnCount) {
-                print(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i))
-            }
-            println()
+        if (rs.isBeforeFirst) rs.next()
+        do {
+            log.warn((1..metaData.columnCount).map { i ->
+                (metaData.getColumnLabel(i) + ": " + rs.getObject(i))
+            }.joinToString(separator = ", "))
         }
+        while (rs.next())
     }
 }
