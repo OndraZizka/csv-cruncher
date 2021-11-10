@@ -7,6 +7,7 @@ import java.nio.file.Path
  */
 data class CruncherOutputPart(
     val outputFile: Path,
+    val forExport: ExportArgument,
     val inputTableName: String? = null,
 ) {
 

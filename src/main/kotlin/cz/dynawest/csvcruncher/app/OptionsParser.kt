@@ -56,7 +56,10 @@ object OptionsParser {
                     }
                     OptionsCurrentContext.OUT -> {
                         currentExport.path = Path.of(arg)
-                        if (currentExport.path!!.name.lowercase().endsWith(".json")) currentExport.formats += Format.JSON
+                        if (currentExport.path!!.name.lowercase().endsWith(".json")) {
+                            currentExport.formats.clear()
+                            currentExport.formats += Format.JSON
+                        }
                     }
                     OptionsCurrentContext.DBPATH -> options.dbPath = arg
                     OptionsCurrentContext.INIT_SQL -> options.initSqlArguments.add(InitSqlArgument(tryParsePath(arg)))

@@ -13,10 +13,12 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.sql.*
 import java.util.regex.Pattern
+import kotlin.io.path.nameWithoutExtension
 
 class Cruncher(private val options: Options2) {
     private lateinit var jdbcConn: Connection
@@ -53,8 +55,6 @@ class Cruncher(private val options: Options2) {
         }
 
         val addCounterColumn = options.initialRowNumber != null
-        val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE
-        val printAsArray = options.jsonExportFormat == JsonExportFormat.ARRAY
         val tablesToFiles: MutableMap<String, File> = HashMap()
         var outputs: List<CruncherOutputPart> = emptyList()
 
@@ -73,7 +73,7 @@ class Cruncher(private val options: Options2) {
 
             // Convert the .json files to .csv files.
             importArguments = importArguments.map { import ->
-                if (!import.path!!.fileName.toString().endsWith(".json")) {
+                if (!import.path!!.fileName.toString().endsWith(".json") || !import.path!!.toFile().isFile) {
                     import
                 }
                 else {
@@ -139,8 +139,9 @@ class Cruncher(private val options: Options2) {
                     val csvOutFile = resolvePathToUserDirIfRelative(export.path!!)
 
                     // If there's just one input, then the generic SQL can be used.
-                    val output = CruncherOutputPart(csvOutFile.toPath(), if (inputSubparts.size == 1) inputSubparts.first().tableName else null)
-                    outputs.add(output)
+                    outputs.add(
+                        CruncherOutputPart(csvOutFile.toPath(), export, if (inputSubparts.size == 1) inputSubparts.first().tableName else null)
+                    )
                 }
                 // B) With each table, with a generic SQL query (using "$table"), and generate one result per table.
                 else {
@@ -148,7 +149,7 @@ class Cruncher(private val options: Options2) {
                     for (inputSubpart in inputSubparts) {
                         var outputFile = export.path!!.resolve(inputSubpart.combinedFile.fileName)
                         outputFile = FilesUtils.getNonUsedName(outputFile, usedOutputFiles)
-                        val output = CruncherOutputPart(outputFile, inputSubpart.tableName)
+                        val output = CruncherOutputPart(outputFile, export, inputSubpart.tableName)
                         outputs.add(output)
                     }
                 }
@@ -192,6 +193,7 @@ class Cruncher(private val options: Options2) {
 
 
                     // Now let's convert it to JSON if necessary.
+                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(Format.JSON)
                     if (convertResultToJson) {
                         var pathStr: String = csvOutFile.toPath().toString()
                         pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")
@@ -200,8 +202,12 @@ class Cruncher(private val options: Options2) {
                         log.info(" * JSON output: $destJsonFile")
 
                         jdbcConn.createStatement().use { statement2 ->
-                            JsonUtils.convertResultToJson(statement2.executeQuery("SELECT * FROM ${quote(outputTableName)}"), destJsonFile, printAsArray)
-                            if (!options.keepWorkFiles) csvOutFile.deleteOnExit()
+                            JsonUtils.convertResultToJson(
+                                statement2.executeQuery("SELECT * FROM ${quote(outputTableName)}"),
+                                destJsonFile,
+                                options.jsonExportFormat == JsonExportFormat.ARRAY
+                            )
+                            if (!output.forExport.formats.contains(Format.CSV) && !options.keepWorkFiles) csvOutFile.deleteOnExit()
                         }
                     }
                 }
