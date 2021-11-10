@@ -53,6 +53,12 @@ See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc
 
 What's new
 ==========
+* `2021-11-12` Release 2.3.6
+    * Fix: The SQL type reduction - because of how auto-cast works, real numbers were being truncated to integers.
+    * Fix: Handle quoted column names in 1st line of CSV.
+    * Fix: Quote the values in CSV converted from JSON.
+    * Fix: Extra line in JSON converted to CSV.
+    * Better handling of what formats should be left after the app run.
 * `2021-11-11` Release 2.3.0
   * \#58 Keep the table names letter case 
   * Fixed JSON import conversion to CSV, and few more fixes.
