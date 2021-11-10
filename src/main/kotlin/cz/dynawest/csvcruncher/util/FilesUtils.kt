@@ -437,11 +437,11 @@ object FilesUtils {
         val cols = ArrayList<String>()
         val lineIterator = FileUtils.lineIterator(file)
 
-        // Skip comment lines, starting with ##
+        // Skip comment lines, starting with ###
         var line: String?
         do {
             if (!lineIterator.hasNext())
-                throw IllegalStateException("No first line with columns definition (format: [# ] <colName> [, ...]) in: " + file.path)
+                throw IllegalStateException("No first line with columns definition (format: [# ] [\"]<colName>[\"] [, ...]) in: " + file.path)
             line = lineIterator.nextLine().trim { it <= ' ' }
         } while (line!!.startsWith(CSV_COMMENT_PREFIX))
 
@@ -455,10 +455,9 @@ object FilesUtils {
         val colNames = StringUtils.splitPreserveAllTokens(line, ",;")
         for (colName in Arrays.asList(*colNames)) {
             @Suppress("NAME_SHADOWING")
-            val colName = colName.trim { it <= ' ' }
-            check(!colName.isEmpty()) {
-                "Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line"
-            }
+            var colName = colName.trim{ it <= ' ' }.trim('"')
+            if (colName.isEmpty()) throw CsvCruncherException("Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line")
+
             /* Removed for #17 and #39.
             check(Cruncher.REGEX_SQL_COLUMN_VALID_NAME.matcher(colName).matches()) {
                 "Colname '$colName' must be valid SQL identifier, i.e. must match /${Cruncher.REGEX_SQL_COLUMN_VALID_NAME.pattern()}/i in: ${file.path}"
