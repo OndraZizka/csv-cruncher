@@ -15,7 +15,7 @@ class CsvExporter(
 
     override fun beforeEntries() {
 
-        writer.write("### Converted by CsvCruncher on ${LocalDateTime.now()}\n")
+        //writer.write("### Converted by CsvCruncher on ${LocalDateTime.now()}\n") // HSQLDB can't skip more than 1 line.
 
         val header = columnsInfo.map { it.value.name }.joinToString(separator = "$columnSeparator ")
         log.debug("CSV header: $header")
