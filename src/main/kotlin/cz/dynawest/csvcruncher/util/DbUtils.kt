@@ -40,10 +40,10 @@ object DbUtils {
         val rs = ps.executeQuery(sql)
         val metaData = rs.metaData
         while (rs.next()) {
-            println(" ------- ")
             for (i in 1..metaData.columnCount) {
-                println(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i))
+                print(" " + metaData.getColumnLabel(i) + ": " + rs.getObject(i))
             }
+            println()
         }
     }
 }
