@@ -12,6 +12,7 @@ import org.junit.jupiter.api.assertThrows
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 import kotlin.test.assertEquals
 
 class TabularPropertiesMetadataCollectorTest {
@@ -105,7 +106,11 @@ class TabularPropertiesMetadataCollectorTest {
 
     @Test
     fun `testConvertJson_large_github`() {
-        val collectedProperties = collectProperties("./target/testData/json/github_data.json", "/")
+        val testInputPath = "./target/testData/json/github_data.json"
+        if (!Path.of(testInputPath).isRegularFile())
+            return // It's ok, maybe the test is not run through Maven, so it was not unzipped.
+
+        val collectedProperties = collectProperties(testInputPath, "/")
 
         val propsList = collectedProperties.map { "\n * $it" }.joinToString()
         assertEquals(615, collectedProperties.size, propsList)

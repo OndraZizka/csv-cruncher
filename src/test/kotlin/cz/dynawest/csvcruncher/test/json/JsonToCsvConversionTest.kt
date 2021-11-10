@@ -10,6 +10,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Path
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.isRegularFile
 
 class JsonToCsvConversionTest {
 
@@ -18,6 +19,9 @@ class JsonToCsvConversionTest {
         val x = DateTimeFormatter.ofPattern("")
         val testInputPath = "target/testData/json/github_data.json"
         val testOutputPath = "target/testData/json/github_data_${System.currentTimeMillis()}.csv"
+
+        if (!Path.of(testInputPath).isRegularFile())
+            return // It's ok, maybe the test is not run through Maven, so it was not unzipped.
 
         // TBD - move this to some use case class.
 
