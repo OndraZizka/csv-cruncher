@@ -77,8 +77,20 @@ class Cruncher(private val options: Options2) {
                     import
                 }
                 else {
+                    log.debug("Converting JSON to CSV: subtree ${import.itemsPathInTree} in ${import.path}")
                     val convertedFilePath = convertJsonToCsv(import.path!!, import.itemsPathInTree)
                     import.apply { path = convertedFilePath }  // Hack - replacing the path with the converted file.
+                }
+            }
+
+            // A shortcut - for case of: crunch -in foo.json -out bar.csv, we are done.
+            if (importArguments.size == 1 && options.exportArguments.size == 1){
+                val singleConverted = options.importArguments.first()
+                val singleExport = options.exportArguments.first()
+                if (singleExport.sqlQuery == null && singleExport.formats == setOf(Format.CSV)) {
+                    singleExport.path!!.toFile().mkdirs()
+                    Files.move(singleConverted.path!!, singleExport.path!!)
+                    return
                 }
             }
 
