@@ -1,5 +1,7 @@
 package cz.dynawest.csvcruncher.converters
 
+import cz.dynawest.csvcruncher.HsqlDbHelper
+import cz.dynawest.csvcruncher.converters.CrunchProperty.Companion.quoteAndEscape
 import cz.dynawest.csvcruncher.util.logger
 import java.io.OutputStream
 import java.time.LocalDateTime
@@ -17,7 +19,7 @@ class CsvExporter(
 
         //writer.write("### Converted by CsvCruncher on ${LocalDateTime.now()}\n") // HSQLDB can't skip more than 1 line.
 
-        val header = columnsInfo.map { it.value.name }.joinToString(separator = "$columnSeparator ")
+        val header = columnsInfo.asSequence().map { it.value.name }.map { quoteAndEscape(it) }.joinToString(separator = "$columnSeparator ")
         log.debug("CSV header: $header")
         writer.write(header + "\n")
         writer.flush()
@@ -29,7 +31,7 @@ class CsvExporter(
 
     override fun processEntry(entry: FlattenedEntrySequence) {
         val entryPropsMap: Map<String, CrunchProperty> = entry.flattenedProperties.associateBy { it.name }
-        val line = columnsInfo.map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(columnSeparator)
+        val line = columnsInfo.asSequence().map { column -> entryPropsMap.get(column.key)?.toCsvString() ?: "" }.joinToString(columnSeparator)
 
         writer.write(line + "\n")
         writer.flush()
