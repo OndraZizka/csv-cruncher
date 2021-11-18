@@ -25,7 +25,7 @@ object OptionsParser {
         var argIndex = 0
         while (argIndex < args.size) {
             val arg = args[argIndex]
-            log.debug(" * $arg")
+            logArgument(arg)
 
             if ("-in" == arg) {
                 next = OptionsCurrentContext.IN
@@ -96,8 +96,11 @@ object OptionsParser {
 
             else if ("-itemsAt" == arg) {
                 when (next) {
-                    OptionsCurrentContext.IN -> currentImport.itemsPathInTree = args.getOrNull(++argIndex) ?: throw CrucherConfigException("Missing value after --itemsAt; should be a path to the array of entries in the source file.")
-                    else -> throw CrucherConfigException("-as may only come as part of an import or export, i.e. after `-in` or `-out`.")
+                    OptionsCurrentContext.IN -> {
+                        currentImport.itemsPathInTree = args.getOrNull(++argIndex)?.also { logArgument(it) }
+                            ?: throw CrucherConfigException("Missing value after --itemsAt; should be a path to the array of entries in the source file.")
+                    }
+                    else -> throw CrucherConfigException("-itemsAt may only come as part of an import, i.e. after `-in`.")
                 }
             }
 
@@ -265,6 +268,10 @@ object OptionsParser {
         } else {
             options
         }
+    }
+
+    private fun logArgument(arg: String) {
+        log.debug(" * $arg")
     }
 
     private fun tryParsePath(arg: String) =
