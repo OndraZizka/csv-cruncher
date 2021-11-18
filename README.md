@@ -51,42 +51,43 @@ And this is planned:
 All this is backed by [HyperSQL database](http://hsqldb.org/).
 See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
-What's new
-==========
-* `2021-11-12` Release 2.3.6
-    * Fix: The SQL type reduction - because of how auto-cast works, real numbers were being truncated to integers.
-    * Fix: Handle quoted column names in 1st line of CSV.
-    * Fix: Quote the values in CSV converted from JSON.
-    * Fix: Extra line in JSON converted to CSV.
-    * Better handling of what formats should be left after the app run.
-* `2021-11-11` Release 2.3.0
-  * \#58 Keep the table names letter case 
-  * Fixed JSON import conversion to CSV, and few more fixes.
-* `2021-11-07` Release 2.2.0
-  * \#59 Move all integration tests from Maven to JUnit (POM cleanup)
-  * Fixed #57 SELECT containing LIMIT causes SQL error
-  * \#2 Support running a SQL script before loading the data
-  * \#17 + #39  Quote all SQL identifiers to retain the case. feature
-* `2021-11-06` Release 2.1.0
-* 2.1.0 retains the column names as they come, even from JSON - i.e. `SELECT foo.bar.baz FROM myJson` is possible.
-* `2021-11-06` Version 2.0.0 has a reworked way of arguments work - see below in Options.
-  * This is not yet completely tested and may be a bit inconsistent with the description below. Feel free to contribute.
-* `2021-11-05` Release 1.31.1 
-  * JSON import. Works by flattening the tree into concatenated column names. 
-  * Upgrade of HSQLDB 2.5.1 -> 2.6.1.
-  * Substantial rework of pom, code refactoring, more tests.
-  * Pushed the first release to Maven Central.
-* `2021-05-02` Release 1.14.0
-    * Flipped the project to Kotlin language. Caused a lot of messy code, but still worth it.
+Quick example
+=======
+Let's download a JSON with the episodes of Narcos, and pick the best 3 in season 2.
+```bash
+wget -O narcos.json 'http://api.tvmaze.com/singlesearch/shows?q=narcos&embed=episodes'
+cruncher/crunch -in narcos.json -itemsAt '_embedded/episodes' -out narcos.csv \
+   -sql 'SELECT season, number, name FROM $table WHERE season = 2 ORDER BY rating.average DESC LIMIT 3'
+open narcos.csv
+```
 
-Download
-=====
-Download at the [releases page](https://github.com/OndraZizka/csv-cruncher/releases). Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
-Also available as a Maven artifact: `ch.zizka.csvcruncher:csv-cruncher:2.1.0`
+<div style="float: left; clear: both; width: 100%">
+    <img src="./docs/images/narcos-json.png" width="227" height="107" style="float: left">
+    <div style="font-size: 400%; float: left; padding: 0 60px">➜</div>
+    <img src="./docs/images/narcos-csv-best3-Numbers.png" width="227" height="107"  style="float: left">
+</div>
+<!--
+#wget "https://raw.githubusercontent.com/prust/wikipedia-movie-data/master/movies.json"
+-->
 
-After downloading, find the script `crunch` which calls Java;   
-if you run `java -jar csv-cruncher-single.jar` directly, do not add `crunch` (see issue #33).  
-You might need to make the `crunch` script executable depending on your OS (until issue #) 
+Download & run
+==============
+
+* Download from the Maven repo or the latest [release page](https://github.com/OndraZizka/csv-cruncher/releases/latest) and unzip.
+    ```bash
+    ## Install...
+    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.3.6/csv-cruncher-2.3.6.zip"
+    unzip csv-cruncher-*.zip
+    mv csv-cruncher-*-dist cruncher
+    ``` 
+
+* Find the script `crunch` which calls Java;
+    ```bash
+    cruncher/crunch -in narcos.json -itemsAt '_embedded/episodes' -out narcos.csv -sql 'SELECT season, number, name FROM $table WHERE rating.average > 8'
+    ```
+    Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
+    If you run `java -jar csv-cruncher-single.jar` directly, do not add `crunch`.  
+    You might need to make the `crunch` script executable depending on your OS (until issue #): `chmod +x crunch`
 
 Usage
 =====
@@ -256,6 +257,37 @@ Where can you help (as a developer)?
  * Add support for more per-import / per-export options.
  * Improve the documentation (which currently consists of this README)
  * Come up with a better name than "CsvCruncher" as it crunches also other formats :)
+
+Whats new
+---------
+<details><summary>What's new</summary>
+
+* `2021-11-12` Release 2.3.6
+    * Fix: The SQL type reduction - because of how auto-cast works, real numbers were being truncated to integers.
+    * Fix: Handle quoted column names in 1st line of CSV.
+    * Fix: Quote the values in CSV converted from JSON.
+    * Fix: Extra line in JSON converted to CSV.
+    * Better handling of what formats should be left after the app run.
+* `2021-11-11` Release 2.3.0
+    * \#58 Keep the table names letter case
+    * Fixed JSON import conversion to CSV, and few more fixes.
+* `2021-11-07` Release 2.2.0
+    * \#59 Move all integration tests from Maven to JUnit (POM cleanup)
+    * Fixed #57 SELECT containing LIMIT causes SQL error
+    * \#2 Support running a SQL script before loading the data
+    * \#17 + #39  Quote all SQL identifiers to retain the case. feature
+* `2021-11-06` Release 2.1.0
+* 2.1.0 retains the column names as they come, even from JSON - i.e. `SELECT foo.bar.baz FROM myJson` is possible.
+* `2021-11-06` Version 2.0.0 has a reworked way of arguments work - see below in Options.
+    * This is not yet completely tested and may be a bit inconsistent with the description below. Feel free to contribute.
+* `2021-11-05` Release 1.31.1
+    * JSON import. Works by flattening the tree into concatenated column names.
+    * Upgrade of HSQLDB 2.5.1 -> 2.6.1.
+    * Substantial rework of pom, code refactoring, more tests.
+    * Pushed the first release to Maven Central.
+* `2021-05-02` Release 1.14.0
+    * Flipped the project to Kotlin language. Caused a lot of messy code, but still worth it.
+</details>
  
 Build status
 ------------
