@@ -233,7 +233,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.9.0</version>
+                <version>3.10.0</version>
                 <executions>
                     <!-- Short-circuit the special treatment of default-compile executions. See https://kotlinlang.org/docs/reference/using-maven.html -->
                     <execution><id>default-compile</id><phase>none</phase></execution>
