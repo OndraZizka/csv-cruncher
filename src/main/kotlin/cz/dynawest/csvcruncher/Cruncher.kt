@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher
 
-import HsqlDbTableCreator
+import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
 import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
@@ -166,7 +166,7 @@ class Cruncher(private val options: Options2) {
 
                     var sql = genericSql
                     if (output.inputTableName != null) {
-                        sql = sql.replace(SQL_TABLE_PLACEHOLDER, HsqlDbHelper.quote(output.inputTableName))
+                        sql = sql.replace(SQL_TABLE_PLACEHOLDER, quote(output.inputTableName))
                     }
 
 

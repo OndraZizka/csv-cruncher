@@ -1,9 +1,8 @@
+package cz.dynawest.csvcruncher.util
+
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.HsqlDbHelper
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
-import cz.dynawest.csvcruncher.util.SqlTypeReducer
-import cz.dynawest.csvcruncher.util.Utils
-import cz.dynawest.csvcruncher.util.logger
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -16,6 +15,7 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
         createTableAndBindCsv(tableName, csvFileToBind, columnNames, ignoreFirst, "", true, overwrite)
     }
 
+    @Suppress("SameParameterValue")
     @Throws(SQLException::class)
     private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
         val columnsNamesAndTypes = Utils.listToMapKeysWithNullValues(columnsNames)
