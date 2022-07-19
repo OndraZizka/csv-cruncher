@@ -6,3 +6,5 @@ hsqldb/
 /src/test/kotlin/cz/dynawest/csvcruncher/test/json/data/pipik/
 fileNames*.json
 src/test/data/json/*.json.csv
+/pom.xml.releaseBackup
+/release.properties
