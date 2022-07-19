@@ -110,7 +110,8 @@ class Options2 {
         require(exportArguments.all { it.path != null }) { "Some exports have no path - use `-out <path>`.\n$this" }
         require(importArguments.all { it.path != null }) { "Some imports have no path - use `-in <path>`.\n$this" }
         importArguments.filter { !it.path!!.toFile().exists() }.takeIf { it.isNotEmpty() }
-            ?.let { throw FileNotFoundException("Import files do not exist:" + it.map {"\n  * ${it.alias} ${it.path}"}) }
+            ?.let { throw FileNotFoundException("Import files do not exist:"
+                    + it.joinToString { "\n  * ${it.alias?.let { "\"$it\" at " } ?: ""} ${it.path}" }) }
 
         if (queryPerInputSubpart){
             exportArguments.filter { !it.sqlQuery!!.contains(Cruncher.SQL_TABLE_PLACEHOLDER) } .takeIf { it.isNotEmpty() }
