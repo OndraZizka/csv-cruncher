@@ -29,6 +29,7 @@
         <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
         <skipE2E>false</skipE2E>
         <ossrh.host>oss.sonatype.org</ossrh.host>
+        <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     </properties>
 
     <build>
