@@ -3,6 +3,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://ch.qos.logback/xml/ns/logback https://raw.githubusercontent.com/enricopulatzo/logback-XSD/master/src/main/xsd/logback.xsd"
 >
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
+
     <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.err</target>
         <!-- Encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default. -->

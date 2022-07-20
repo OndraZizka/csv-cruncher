@@ -230,6 +230,12 @@ object OptionsParser {
 
             // Global only options
 
+            else if (arg.startsWith("--logLevel=")) {
+                val name = arg.substringAfter("=").uppercase()
+                enumValueOrNull<LogLevel>(name)
+                    ?.also { options.logLevel = it }
+                    ?: log.error("Invalid logLevel '$name', will use the defaults. Try one of " + LogLevel.values().joinToString(", "))
+            }
             else if ("--keepWorkFiles" == arg) {
                 options.keepWorkFiles = true
             }

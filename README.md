@@ -127,6 +127,8 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
  * `-db <pathToDatabaseDirectory>`
     * Determines where the files of the underlying database will be stored. Defaults to `hsqldb/cruncher`.
 
+ * `--logLevel=<TRACE|DEBUG|INFO|WARN|ERROR|OFF>` - controls which log lines will appear.
+
  * `--include=<regex>`, `--exclude=<regex>`
     * Filters which input files are taken as input.
     * The whole path relative to the is matched, so make sure to use `.*` at the beginning.

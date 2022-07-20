@@ -1,8 +1,14 @@
 package cz.dynawest.csvcruncher.app
 
+import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.Cruncher
+import cz.dynawest.csvcruncher.LogLevel
+import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.util.logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.PrintStream
+
 
 /*
 * This was written long ago and then lost and decompiled from an old .jar of an old version, and refactored a bit.
@@ -15,6 +21,9 @@ object App {
     @Throws(Exception::class)
     fun mainNoExit(args: Array<String>) {
         val options = OptionsParser.parseArgs(args) ?: return
+
+        setLogLevel(options)
+
         log.info("Options: \n$options")
         Cruncher(options).crunch()
     }
@@ -52,15 +61,24 @@ object App {
     internal fun printUsage(outputStream: PrintStream) {
         outputStream.println("  Usage:")
         outputStream.println("    crunch -in <input.json> [-in <input2.json> ...] -out <output.csv> [-sql <SQL>] [--<option> --...] ")
-        outputStream.println("  For more, read the README.md.")
-        /*
-        dest.println("  Options:");
-        dest.println("    --ignoreFirstLines[=<number>]     Ignore first N lines; the first is considered a header with column names.");
-        dest.println("    --rowNumbers[=<firstNumber>]      Add an unique incrementing number as a first column.");
-        dest.println("    --json[=<firstNumber>]      ");
-        TODO: Copy from the README.
-        */
+        outputStream.println("  For more, read the README.md distributed with CsvCruncher, or at: https://github.com/OndraZizka/csv-cruncher#readme")
     }
+
+    private fun setLogLevel(options: Options2) {
+        if (options.logLevel == null) return
+
+        val configuredLevel: Level? = Level.toLevel(options.logLevel!!.name)
+
+        val rootLogger: Logger = LoggerFactory.getLogger("root")
+        val logBackLogger = rootLogger as ch.qos.logback.classic.Logger
+        rootLogger.info("Changing all loggers' level to ${configuredLevel} as per option --logLevel=${options.logLevel!!.name}. Possible levels: " + LogLevel.values().joinToString(", "))
+        logBackLogger.level = configuredLevel
+
+        // For now, this needs to be synchronized with logback.xml, to override all specifically set there.
+        for (loggerName in listOf("cz.dynawest.csvcruncher"))
+            (LoggerFactory.getLogger(loggerName) as ch.qos.logback.classic.Logger).level = configuredLevel
+    }
+
 
     init { printBanner() }
 

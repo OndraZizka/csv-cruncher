@@ -46,10 +46,8 @@ data class InitSqlArgument (
     var path: Path
 )
 
-enum class Format {
-    CSV,
-    JSON
-}
+enum class Format { CSV, JSON }
+enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, OFF }
 
 class Options2 {
 
@@ -75,6 +73,7 @@ class Options2 {
     var keepWorkFiles = false
     var sortInputPaths = Options.SortInputPaths.PARAMS_ORDER
     var combineDirs = Options.CombineDirectories.COMBINE_PER_EACH_DIR
+    var logLevel: LogLevel? = null
 
     // The options below are applicable to individual Imports. These serve as defaults.
     var ignoreFirstLines = 1
@@ -152,7 +151,8 @@ class Options2 {
                     |    combineDirs: ${combineDirs}
                     |    initialRowNumber: ${initialRowNumber}
                     |    jsonExportFormat: ${jsonExportFormat}
-                    |    skipNonReadable: ${skipNonReadable}""".trimMargin()
+                    |    skipNonReadable: ${skipNonReadable}
+                    |    logLevel: ${logLevel}""".trimMargin()
     }
 
     companion object { private val log = logger() }
