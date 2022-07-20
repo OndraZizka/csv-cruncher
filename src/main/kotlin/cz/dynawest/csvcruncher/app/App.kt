@@ -24,7 +24,7 @@ object App {
 
         setLogLevel(options)
 
-        log.info("Options: \n$options")
+        log.debug("Options: \n$options")
         Cruncher(options).crunch()
     }
 
@@ -71,7 +71,7 @@ object App {
 
         val rootLogger: Logger = LoggerFactory.getLogger("root")
         val logBackLogger = rootLogger as ch.qos.logback.classic.Logger
-        rootLogger.info("Changing all loggers' level to ${configuredLevel} as per option --logLevel=${options.logLevel!!.name}. Possible levels: " + LogLevel.values().joinToString(", "))
+        rootLogger.debug("Changing all loggers' level to ${configuredLevel} as per option --logLevel=${options.logLevel!!.name}. Possible levels: " + LogLevel.values().joinToString(", "))
         logBackLogger.level = configuredLevel
 
         // For now, this needs to be synchronized with logback.xml, to override all specifically set there.

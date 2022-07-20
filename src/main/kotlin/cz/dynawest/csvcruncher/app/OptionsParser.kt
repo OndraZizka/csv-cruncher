@@ -20,7 +20,7 @@ object OptionsParser {
         lateinit var currentImport: ImportArgument
         lateinit var currentExport: ExportArgument
 
-        log.debug(" Parameters: ")
+        log.trace(" Parameters: ")
 
         var argIndex = 0
         while (argIndex < args.size) {
@@ -277,7 +277,7 @@ object OptionsParser {
     }
 
     private fun logArgument(arg: String) {
-        log.debug(" * $arg")
+        log.trace(" * $arg")
     }
 
     private fun tryParsePath(arg: String) =

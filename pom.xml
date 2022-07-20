@@ -182,6 +182,7 @@
                                 ${testRunCmd}
                                 --json=entries
                                 --rowNumbers
+                                --logLevel=INFO
                                 -in src/test/data/eapBuilds.csv
                                 -out target/results/result.csv
                                 -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
