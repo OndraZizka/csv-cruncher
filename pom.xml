@@ -266,20 +266,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <!-- Alternatively if you are using the Maven deploy plugin, which is the default behavior, you need to add a full distributionManagement section.
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-    -->
-
-
     <dependencies>
 
         <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-stdlib-jdk8</artifactId><version>${version.kotlin}</version></dependency>
@@ -413,10 +399,17 @@
         </profile>
     </profiles>
 
+    <!-- Releasing to OSSRH, the alternative way. The other way is to use the 'release' profile, using -Drelease. -->
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
+            <name>ossrh</name>
             <url>https://${ossrh.host}/content/repositories/snapshots</url>
         </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <name>ossrh</name>
+            <url>https://${ossrh.host}/service/local/staging/deploy/maven2/</url>
+        </repository>
     </distributionManagement>
 </project>
