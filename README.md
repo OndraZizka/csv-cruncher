@@ -1,3 +1,9 @@
+Security note: CSV Cruncher is currently affected by a CVE: https://cwe.mitre.org/data/definitions/470.html
+See https://github.com/OndraZizka/csv-cruncher/security/dependabot/7
+
+A fix is underway soon.
+
+
 CSV + JSON Cruncher - query and process your CSV and JSON files using SQL.
 ===================================================================
 
