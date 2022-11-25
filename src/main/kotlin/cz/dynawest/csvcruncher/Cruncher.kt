@@ -1,11 +1,11 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
 import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
 import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
+import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
 import cz.dynawest.csvcruncher.util.JsonUtils
 import cz.dynawest.csvcruncher.util.SqlFunctions.defineSqlFunctions
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
@@ -17,7 +17,9 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.sql.*
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.SQLException
 import java.util.regex.Pattern
 
 class Cruncher(private val options: Options2) {
@@ -26,6 +28,7 @@ class Cruncher(private val options: Options2) {
     private val log = logger()
 
     private fun init() {
+        System.setProperty("hsqldb.method_class_names", "${javaClass.packageName}.*")
         System.setProperty("textdb.allow_full_path", "true")
         //System.setProperty("hsqldb.reconfig_logging", "false");
         try {
