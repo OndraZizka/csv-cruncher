@@ -19,9 +19,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.kotlin>1.7.10</version.kotlin>
+        <version.kotlin>1.7.21</version.kotlin>
         <version.jdk>11</version.jdk>
-        <version.jackson>2.13.4</version.jackson>
+        <version.jackson>2.14.1</version.jackson>
         <version.surefire>3.0.0-M7</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
@@ -60,7 +60,7 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.2.2</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.3.0</version>
                 <configuration><includes><include>**/*.class</include><exclude>**/*.kt</exclude></includes></configuration>
             </plugin>
 
@@ -341,7 +341,7 @@
                     <plugin>
                         <groupId>org.jetbrains.dokka</groupId>
                         <artifactId>dokka-maven-plugin</artifactId>
-                        <version>${version.kotlin}</version>
+                        <version>0.9.15</version>
                         <executions>
                             <execution><id>dokka-site</id><phase>pre-site</phase><goals><goal>dokka</goal></goals></execution>
                             <execution><id>dokka-jar</id><phase>package</phase><goals><goal>javadocJar</goal></goals></execution>
@@ -353,7 +353,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-release-plugin</artifactId>
-                        <version>2.5.3</version>
+                        <version>3.0.0-M7</version>
                         <configuration>
                             <autoVersionSubmodules>true</autoVersionSubmodules>
                             <useReleaseProfile>false</useReleaseProfile>
