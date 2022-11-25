@@ -1,7 +1,3 @@
-Security note: CSV Cruncher is currently affected by a CVE: https://cwe.mitre.org/data/definitions/470.html
-See https://github.com/OndraZizka/csv-cruncher/security/dependabot/7
-
-A fix is underway soon.
 
 
 CSV + JSON Cruncher - query and process your CSV and JSON files using SQL.
@@ -82,7 +78,7 @@ Download & run
 * Download from the Maven repo or the latest [release page](https://github.com/OndraZizka/csv-cruncher/releases/latest) and unzip.
     ```bash
     ## Install...
-    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.3.6/csv-cruncher-2.3.6.zip"
+    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.4.1/csv-cruncher-2.4.1-dist.zip"
     unzip csv-cruncher-*.zip
     mv csv-cruncher-*-dist cruncher
     ``` 
@@ -94,6 +90,7 @@ Download & run
     Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
     If you run `java -jar csv-cruncher-single.jar` directly, do not add `crunch`.  
     You might need to make the `crunch` script executable depending on your OS (until issue #): `chmod +x crunch`
+
 
 Usage
 =====
@@ -112,7 +109,7 @@ Some import options may also be taken from defaults, which are configured after 
 
 ### Options
 
-Some of the options bellow are planned to be per-import or per-export. Currently, most are applied on all.
+Some options bellow are planned to be per-import or per-export. Currently, most are applied on all.
 Leave me a comment in the respective GitHub issues if per-import/export configuration is important for you.
 
  * `-in`
@@ -269,7 +266,14 @@ Where can you help (as a developer)?
 Whats new
 ---------
 <details><summary>What's new</summary>
-
+* `2022-11-25` Release 2.4.1
+    * Fix: CVE-2022-41853 in HSQLDB 
+    * Upgrade: HSQLDB to 2.7.1
+* `2022-10-xx` Release 2.4.0
+    * Ported from Java to Kotlin
+    * Dependency upgrades
+    * A couple of new features
+    * Tests converted from raw executions to JUnit tests
 * `2021-11-12` Release 2.3.6
     * Fix: The SQL type reduction - because of how auto-cast works, real numbers were being truncated to integers.
     * Fix: Handle quoted column names in 1st line of CSV.
