@@ -37,24 +37,13 @@
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <resources>
             <!--
-            <resource>
-                <directory>src/main/kotlin</directory>
-                <excludes><exclude>*.java</exclude><exclude>*.kt</exclude></excludes>
-            </resource>
+            <resource> <directory>src/main/kotlin</directory> <excludes><exclude>*.java</exclude><exclude>*.kt</exclude></excludes> </resource>
             -->
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-            <resource>
-                <directory>./</directory>
-                <includes><include>README.md</include></includes>
-            </resource>
+            <resource><directory>src/main/resources</directory></resource>
+            <resource><directory>./</directory><includes><include>README.md</include></includes></resource>
         </resources>
         <testResources>
-            <testResource>
-                <directory>src/test/kotlin</directory>
-                <excludes><exclude>*.java</exclude><exclude>*.kt</exclude></excludes>
-            </testResource>
+            <testResource><directory>src/test/kotlin</directory><excludes><exclude>*.java</exclude><exclude>*.kt</exclude></excludes></testResource>
         </testResources>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
@@ -207,9 +196,7 @@
                         <goals><goal>enforce</goal></goals>
                         <configuration>
                             <rules>
-                                <requireMavenVersion>
-                                    <version>3.8.1</version>
-                                </requireMavenVersion>
+                                <requireMavenVersion><version>3.8.1</version></requireMavenVersion>
                             </rules>
                         </configuration>
                     </execution>
@@ -221,15 +208,15 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${version.kotlin}</version>
                 <executions>
-                    <execution><id>compile</id><phase>compile</phase><goals><goal>compile</goal></goals></execution>
+                    <execution>
+                        <id>compile</id><phase>compile</phase><goals><goal>compile</goal></goals>
+                        <configuration>
+                            <jvmTarget>${version.jdk}</jvmTarget>
+                            <sourceDirs><sourceDir>src/main/kotlin</sourceDir></sourceDirs>
+                        </configuration>
+                    </execution>
                     <execution><id>test-compile</id><phase>test-compile</phase><goals><goal>test-compile</goal></goals></execution>
                 </executions>
-                <configuration>
-                    <jvmTarget>${version.jdk}</jvmTarget>
-                    <sourceDirs>
-                        <sourceDir>src/main/kotlin</sourceDir>
-                    </sourceDirs>
-                </configuration>
             </plugin>
 
             <!-- Maven Compiler plugin -->
