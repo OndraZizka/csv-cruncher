@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.zizka.csvcruncher</groupId>
     <artifactId>csv-cruncher</artifactId>
-    <version>2.4.2-SNAPSHOT</version>
+    <version>2.5.0-SNAPSHOT</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV or JSON files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
@@ -14,8 +14,8 @@
     <scm>
         <url>https://github.com/OndraZizka/csv-cruncher</url>
         <developerConnection>scm:git:git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
-      <tag>csv-cruncher-2.4.1</tag>
-  </scm>
+        <tag>csv-cruncher-2.4.1</tag>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -60,7 +60,10 @@
                     <execution>
                         <phase>generate-test-resources</phase>
                         <goals><goal>run</goal></goals>
-                        <configuration><target><unzip src="src/test/data/json/github_data.zip" dest="target/testData/json/" /></target></configuration>
+                        <configuration><target>
+                            <unzip src="src/test/data/json/github_data.zip" dest="target/testData/json/" />
+                            <unzip src="src/test/data/spreadsheet/sampleSpreadsheets.zip" dest="target/testData/spreadsheet/" />
+                        </target></configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -276,6 +279,10 @@
         <dependency><groupId>javax.json</groupId><artifactId>javax.json-api</artifactId><version>1.1.4</version></dependency>
         <dependency><groupId>org.glassfish</groupId><artifactId>javax.json</artifactId><version>1.1.4</version></dependency>
 
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi</artifactId><version>5.2.3</version></dependency>
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi-ooxml</artifactId><version>5.2.3</version></dependency>
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi-ooxml-lite</artifactId><version>5.2.3</version></dependency>
+
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${version.jackson}</version></dependency>
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${version.jackson}</version></dependency>
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-annotations</artifactId><version>${version.jackson}</version></dependency>
@@ -284,6 +291,7 @@
 
         <!-- Logging -->
         <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.5</version></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>log4j-over-slf4j</artifactId><version>2.0.5</version></dependency>
         <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.4.5</version></dependency>
         <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.4.5</version></dependency>
 

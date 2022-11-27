@@ -1,7 +1,8 @@
 package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.app.App
-import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVFormat.Builder
+import org.apache.commons.csv.CSVFormat.DEFAULT
 import org.apache.commons.csv.CSVRecord
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -75,14 +76,13 @@ object CsvCruncherTestUtils {
      * @param lineOffset1Based    1 for 1st line, etc.
      * @param columnOffset0Based  0 for 1st column, etc.
      */
-    fun getCsvCellValue(csvFile: File?, lineOffset1Based: Int, columnOffset0Based: Int): String? {
+    fun getCsvCellValue(csvFile: File, lineOffset1Based: Int, columnOffset0Based: Int): String? {
         require(lineOffset1Based >= 1) { "lineOffset1Based must be >= 1." }
         return try {
             val reader: Reader = FileReader(csvFile)
-            val records: Iterable<CSVRecord> = CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withNullString("")
-                    .parse(reader)
+            //val format = CSVFormat.DEFAULT.withFirstRecordAsHeader().withNullString("")
+            val format = Builder.create(DEFAULT).setHeader().setSkipHeaderRecord(true).setNullString("").build()
+            val records: Iterable<CSVRecord> = format.parse(reader)
             var csvRecord: CSVRecord? = null
             val iterator = records.iterator()
             for (i in 0 until lineOffset1Based) {

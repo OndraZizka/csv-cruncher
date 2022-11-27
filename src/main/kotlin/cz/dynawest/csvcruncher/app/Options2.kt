@@ -12,7 +12,7 @@ class ImportArgument {
     var path: Path? = null
     var alias: String? = null
     var format: Format = Format.CSV
-    var itemsPathInTree: String = "/"
+    var itemsPath: String = "/"
 
     // Overrides for the defaults. Not implemented yet.
     var includePathsRegex: Pattern? = null
@@ -26,7 +26,7 @@ class ImportArgument {
     var jsonExportFormat: Options.JsonExportFormat? = null
 
     override fun toString(): String {
-        return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path ${itemsPathInTree}"
+        return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path ${itemsPath}"
     }
 }
 
@@ -46,7 +46,7 @@ data class InitSqlArgument (
     var path: Path
 )
 
-enum class Format { CSV, JSON }
+enum class Format { CSV, JSON, SPREADSHEET }
 enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, OFF }
 
 class Options2 {

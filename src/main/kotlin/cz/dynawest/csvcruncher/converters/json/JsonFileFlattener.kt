@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher.converters
+package cz.dynawest.csvcruncher.converters.json
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonLocation
@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
+import cz.dynawest.csvcruncher.converters.*
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -16,9 +17,9 @@ import kotlin.io.path.outputStream
 
 class JsonFileFlattener : FileTabularizer {
 
-    override fun convert(inputPath: Path, mainArrayLocation: String): Path {
+    override fun convert(inputPath: Path, formatSpecificItemsLocation: String): Path {
 
-        val mainArrayPath = Path.of(mainArrayLocation)
+        val mainArrayPath = Path.of(formatSpecificItemsLocation)
 
         // 1st pass - Identify the columns
         val propertiesMetadataCollector = TabularPropertiesMetadataCollector()
@@ -42,7 +43,7 @@ class JsonFileFlattener : FileTabularizer {
         return inputPath.resolveSibling("$baseName.csv")
     }
 
-    fun visitEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
+    private fun visitEntries(inputPath: Path, mainArrayLocation: Path, entryProcessor: EntryProcessor) {
         inputPath.inputStream().use { inputStream ->
             visitEntries(inputStream, mainArrayLocation, entryProcessor)
         }
@@ -134,7 +135,7 @@ data class TreeFlatteningContext (
 }
 
 
-class ItemsArraySproutNotFound : Exception {
+class ItemsArraySproutNotFound : EntriesNotFoundAtLocationException {
     constructor(sproutPath: Path, location: JsonLocation) : super("Items JSON Array not found after traversing over path '$sproutPath', Not matching at $location.")
     constructor(msg: String) : super(msg)
 }

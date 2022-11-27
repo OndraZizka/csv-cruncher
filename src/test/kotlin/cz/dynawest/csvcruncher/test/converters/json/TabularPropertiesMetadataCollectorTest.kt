@@ -1,12 +1,11 @@
-package cz.dynawest.csvcruncher.test.json
+package cz.dynawest.csvcruncher.test.converters.json
 
-import cz.dynawest.csvcruncher.converters.ItemsArraySproutNotFound
-import cz.dynawest.csvcruncher.converters.JsonFileFlattener
 import cz.dynawest.csvcruncher.converters.PropertyInfo
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
-import cz.dynawest.csvcruncher.util.logger
+import cz.dynawest.csvcruncher.converters.json.ItemsArraySproutNotFound
+import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.util.ResourceLoader
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.FileInputStream
@@ -92,8 +91,8 @@ class TabularPropertiesMetadataCollectorTest {
         }
     }
 
-    @Test //@Disabled("A bug in walkThroughToTheCollectionOfMainItems()")
-    fun `testConvertJson_real_youtube`() {
+    @Test
+    fun testConvertJson_real_youtube() {
         val collectedProperties = collectProperties("data/real/youtube.json", "/items")
 
         val propsList = collectedProperties.map { "\n * $it" }.joinToString()
@@ -105,7 +104,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_large_github`() {
+    fun testConvertJson_large_github() {
         val testInputPath = "./target/testData/json/github_data.json"
         if (!Path.of(testInputPath).isRegularFile())
             return // It's ok, maybe the test is not run through Maven, so it was not unzipped.
@@ -127,7 +126,7 @@ class TabularPropertiesMetadataCollectorTest {
         val converter = JsonFileFlattener()
         val inputStream: InputStream =
             if (testFilePath.startsWith("#"))
-                javaClass.classLoader.getResourceAsStream(testFilePath)
+                javaClass.classLoader.getResourceAsStream(testFilePath)!!
             else if (testFilePath.startsWith("./"))
                 FileInputStream(testFilePath)
             else
@@ -139,5 +138,4 @@ class TabularPropertiesMetadataCollectorTest {
         return collectedProperties
     }
 
-    companion object { private val log = logger() }
 }

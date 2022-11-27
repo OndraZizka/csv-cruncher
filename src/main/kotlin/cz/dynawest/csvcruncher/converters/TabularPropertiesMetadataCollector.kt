@@ -27,6 +27,7 @@ class TabularPropertiesMetadataCollector : EntryProcessor {
                         is CrunchProperty.String -> { this.types.string++; this.maxLength = max(maxLength, flattenedField.value.length) }
                         is CrunchProperty.Array -> { this.types.array++; this.maxLength = max(maxLength, 2) } // Just "[]"
                         is CrunchProperty.Object -> { this.types.obj++; this.maxLength = max(maxLength, 2) } // Just "{}"
+                        is CrunchProperty.Expression -> { this.types.expr++; this.maxLength = max(maxLength, flattenedField.value.length) }
                     }
                 }
             }
