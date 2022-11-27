@@ -16,7 +16,7 @@ class ParamsParsingTest {
         Assertions.assertThat(opt.importArguments).size().isEqualTo(1)
         Assertions.assertThat(opt.importArguments.first().path).isEqualTo(Path.of("input/path"))
         Assertions.assertThat(opt.importArguments.first().alias).isNull()
-        Assertions.assertThat(opt.importArguments.first().itemsPathInTree).isEqualTo("/data/children")
+        Assertions.assertThat(opt.importArguments.first().itemsPath).isEqualTo("/data/children")
 
         Assertions.assertThat(opt.exportArguments).size().isEqualTo(1)
         Assertions.assertThat(opt.exportArguments.first().path).isEqualTo(Path.of("/output/path"))
@@ -30,10 +30,10 @@ class ParamsParsingTest {
         Assertions.assertThat(opt.importArguments).size().isEqualTo(2)
         Assertions.assertThat(opt.importArguments.first().path).isEqualTo(Path.of("input/path"))
         Assertions.assertThat(opt.importArguments.first().alias).isNull()
-        Assertions.assertThat(opt.importArguments.first().itemsPathInTree).isEqualTo("/data/children")
+        Assertions.assertThat(opt.importArguments.first().itemsPath).isEqualTo("/data/children")
         Assertions.assertThat(opt.importArguments.get(1).path).isEqualTo(Path.of("input2/path"))
         Assertions.assertThat(opt.importArguments.get(1).alias).isNull()
-        Assertions.assertThat(opt.importArguments.get(1).itemsPathInTree).isEqualTo("/")
+        Assertions.assertThat(opt.importArguments.get(1).itemsPath).isEqualTo("/")
 
         Assertions.assertThat(opt.exportArguments).size().isEqualTo(1)
         Assertions.assertThat(opt.exportArguments.first().path).isEqualTo(Path.of("/output/path"))

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.zizka.csvcruncher</groupId>
     <artifactId>csv-cruncher</artifactId>
-    <version>2.10.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <name>CsvCruncher</name>
     <description>Treats CSV or JSON files as SQL tables, and exports SQL SELECTs back to CSV or JSON.</description>
@@ -62,7 +62,10 @@
                     <execution>
                         <phase>generate-test-resources</phase>
                         <goals><goal>run</goal></goals>
-                        <configuration><target><unzip src="src/test/data/json/github_data.zip" dest="target/testData/json/" /></target></configuration>
+                        <configuration><target>
+                            <unzip src="src/test/data/json/github_data.zip" dest="target/testData/json/" />
+                            <unzip src="src/test/data/spreadsheet/sampleSpreadsheets.zip" dest="target/testData/spreadsheet/" />
+                        </target></configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -301,6 +304,10 @@
 
         <dependency><groupId>javax.json</groupId><artifactId>javax.json-api</artifactId><version>1.1.4</version></dependency>
         <dependency><groupId>org.glassfish</groupId><artifactId>javax.json</artifactId><version>1.1.4</version></dependency>
+
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi</artifactId><version>5.2.3</version></dependency>
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi-ooxml</artifactId><version>5.2.3</version></dependency>
+        <dependency><groupId>org.apache.poi</groupId><artifactId>poi-ooxml-lite</artifactId><version>5.2.3</version></dependency>
 
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-core</artifactId><version>${version.jackson}</version></dependency>
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>${version.jackson}</version></dependency>

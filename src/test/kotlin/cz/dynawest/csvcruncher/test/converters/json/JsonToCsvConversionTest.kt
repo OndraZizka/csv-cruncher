@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher.test.json
+package cz.dynawest.csvcruncher.test.converters.json
 
 import cz.dynawest.csvcruncher.converters.CsvExporter
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector

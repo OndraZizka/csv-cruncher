@@ -10,6 +10,7 @@ import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
+import cz.dynawest.csvcruncher.converters.spreadsheet.SpreadsheetFileTabularizer
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
 import cz.dynawest.csvcruncher.util.HsqlDbTableCreator.ColumnInfo
@@ -119,15 +120,20 @@ class Cruncher(private val options: Options) {
             importArguments = FilesUtils.sortImportsByPath(importArguments, options.sortInputPaths)
             log.debug(" --- Sorted imports: --- " + importArguments.joinToString { "\n * $it" })
 
-            // Convert the .json files to .csv files.
+            // Convert the .json or .xls files to .csv files.
             importArguments = importArguments.map { import ->
-                if (!import.path!!.fileName.toString().endsWith(".json") || !import.path!!.toFile().isFile) {
-                    import
+                if (Format.JSON == import.format && import.path!!.toFile().isFile) {
+                    log.debug("Converting JSON to CSV: subtree ${import.itemsPath} in ${import.path}")
+                    val convertedFilePath = JsonFileFlattener().convert(import.path!!, import.itemsPath)
+                    import.apply { path = convertedFilePath }  // Hack - replacing the path with the converted file.
+                }
+                else if (Format.SPREADSHEET == import.format && import.path!!.toFile().isFile) {
+                    log.debug("Converting spreadsheet file to CSV: ${import.path}")
+                    val convertedFilePath = SpreadsheetFileTabularizer().convert(import.path!!, import.itemsPath)
+                    import.apply { path = convertedFilePath }  // Hack - replacing the path with the converted file.
                 }
                 else {
-                    log.debug("Converting JSON to CSV: subtree ${import.itemsPathInTree} in ${import.path}")
-                    val convertedFilePath = convertJsonToCsv(import.path!!, import.itemsPathInTree)
-                    import.apply { path = convertedFilePath }  // Hack - replacing the path with the converted file.
+                    import
                 }
             }
 
@@ -314,10 +320,6 @@ class Cruncher(private val options: Options) {
             jdbcConn.close()
             log.debug(" *** END SHUTDOWN CLEANUP SEQUENCE ***")
         }
-    }
-
-    private fun convertJsonToCsv(inputPath: Path, itemsAt: String): Path {
-        return JsonFileFlattener().convert(inputPath, itemsAt)
     }
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String, File>, outputs: List<CruncherOutputPart>) {

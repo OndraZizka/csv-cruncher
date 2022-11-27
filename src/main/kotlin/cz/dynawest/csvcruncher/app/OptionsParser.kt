@@ -116,8 +116,8 @@ object OptionsParser {
             else if ("-itemsAt" == arg) {
                 when (next) {
                     OptionsCurrentContext.IN -> {
-                        currentImport.itemsPathInTree = args.getOrNull(++argIndex)?.also { logArgument(it) }
-                            ?: throw CrucherConfigException("Missing value after --itemsAt; should be a path to the array of entries in the source file.")
+                        currentImport.itemsPath = args.getOrNull(++argIndex)?.also { logArgument(it) }
+                            ?: throw CrucherConfigException("Missing value after --itemsAt; should be a format-specific path to the array of entries in the source file.")
                     }
                     else -> throw CrucherConfigException("-itemsAt may only come as part of an import, i.e. after `-in`.")
                 }
@@ -348,6 +348,22 @@ object OptionsParser {
         }
     }
 
+    // Possibly not needed anymore?
+    private inline fun <reified T : OptionEnum> tryParseEnumOption(enumArgumentDefault: T, arg: String): T? {
+        val optionIntro = "--${enumArgumentDefault.optionName}"
+
+        if (!arg.startsWith(optionIntro))
+            return null
+
+        if (arg == optionIntro || arg == optionIntro + "=" + enumArgumentDefault.optionValue)
+            return enumArgumentDefault
+
+        val valueStr = arg.substringAfter(optionIntro).removePrefix("=")
+
+        val enumConstants = T::class.java.enumConstants
+        return enumConstants.firstOrNull { it.optionName == valueStr }
+            ?: throw CrucherConfigException("Unknown value for ${enumArgumentDefault.optionName}: $arg Try one of ${enumConstants.map { it.optionValue }}")
+    }
 
     enum class OptionsCurrentContext {
         GLOBAL, IN, OUT, SQL, DBPATH, INIT_SQL

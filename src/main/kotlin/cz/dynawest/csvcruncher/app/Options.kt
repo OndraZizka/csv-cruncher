@@ -17,7 +17,7 @@ class ImportArgument {
     var alias: String? = null
     var format: DataFormat? = null
     var formatFrom: DataFormatFrom = DataFormatFrom.ASSUMED
-    var itemsPathInTree: String = "/"
+    var itemsPath: String = "/"
     var indexed: List<String> = emptyList()
 
     // Overrides for the defaults. Not implemented yet.
@@ -32,7 +32,7 @@ class ImportArgument {
     var jsonExportFormat: OptionsEnums.JsonExportFormat? = null
 
     override fun toString(): String {
-        return "(${alias?:"no alias"}) [$format from $formatFrom] ${initialRowNumber?:""} <- $path ${itemsPathInTree}"
+        return "(${alias?:"no alias"}) [$format from $formatFrom] ${initialRowNumber?:""} <- $path ${itemsPath}"
     }
 }
 
@@ -80,7 +80,9 @@ enum class DataFormat (val suffixes: List<String>, val beginningLineRegex: Regex
     CSV(listOf(".csv"), columnNames.toRegex()),
 
     // Auto-detection:  Starts with { or [ followed by " or \n.
-    JSON(listOf(".json"), "^\\s*[{\\[]\\s*[\"\\n]*.*".toRegex());
+    JSON(listOf(".json"), "^\\s*[{\\[]\\s*[\"\\n]*.*".toRegex()),
+
+    SPREADSHEET(listOf(".xls", ".ods"), "Not applicable...".toRegex());
 
     val suffix: String get() = suffixes.first()
 
