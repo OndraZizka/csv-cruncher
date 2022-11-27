@@ -263,9 +263,11 @@ Where can you help (as a developer)?
  * Improve the documentation (which currently consists of this README)
  * Come up with a better name than "CsvCruncher" as it crunches also other formats :)
 
-Whats new
+What's new
 ---------
 <details><summary>What's new</summary>
+
+* `2022-11-27` Preparing 2.5.x - reading from spreadsheets (Excel/XLS, LibreOffice/ODS, etc.)
 * `2022-11-25` Release 2.4.1
     * Fix: CVE-2022-41853 in HSQLDB 
     * Upgrade: HSQLDB to 2.7.1
