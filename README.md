@@ -347,4 +347,5 @@ In case you use this in your project, then beware:
 
 <img src="http://c1.navrcholu.cz/hit?site=144925;t=lb14;ref=;jss=0" width="14" height="14" alt="NAVRCHOLU.cz" style="border:none" />
 
-![https://smallcounter.com/map/view.php?type=180&id=1670398308]
+![website access counter](https://smallcounter.com/map/view.php?type=180&id=1670398308)
+
