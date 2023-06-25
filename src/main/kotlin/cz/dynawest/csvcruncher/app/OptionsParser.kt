@@ -1,7 +1,7 @@
 package cz.dynawest.csvcruncher.app
 
 import cz.dynawest.csvcruncher.*
-import cz.dynawest.csvcruncher.app.Options.*
+import cz.dynawest.csvcruncher.app.OptionsEnums.*
 import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils

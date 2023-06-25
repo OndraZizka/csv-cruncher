@@ -5,8 +5,8 @@ import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.ImportArgument
 import cz.dynawest.csvcruncher.Options2
-import cz.dynawest.csvcruncher.app.Options
-import cz.dynawest.csvcruncher.app.Options.*
+import cz.dynawest.csvcruncher.app.OptionsEnums
+import cz.dynawest.csvcruncher.app.OptionsEnums.*
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
@@ -193,7 +193,7 @@ object FilesUtils {
 
     /**
      * Walks through the directories given in inputPaths and expands them into the contained files,
-     * into groups as per rules given by options - see [Options.CombineDirectories], [Options2.skipNonReadable].
+     * into groups as per rules given by options - see [OptionsEnums.CombineDirectories], [Options2.skipNonReadable].
      *
      * @return A map with one entry per group, containing the files.
      */
@@ -280,7 +280,7 @@ object FilesUtils {
     }
 
     /**
-     * Sorts the files within the groups by the configured sorting - see [Options.SortInputPaths]. Skips the empty groups.
+     * Sorts the files within the groups by the configured sorting - see [OptionsEnums.SortInputPaths]. Skips the empty groups.
      * @return A map with one entry per group, containing the files in sorted order.
      */
     private fun sortFileGroups(options: Options2, fileGroupsToConcat: Map<Path?, List<Path>>): MutableMap<Path?, List<Path>> {

@@ -19,8 +19,8 @@ class OptionsParsingTest {
         val options = OptionsParser.parseArgs(arguments.toTypedArray())!!
 
         // The default values
-        Assertions.assertThat(options.jsonExportFormat).isEqualTo(Options.JsonExportFormat.ENTRY_PER_LINE)
-        Assertions.assertThat(options.combineInputFiles).isEqualTo(Options.CombineInputFiles.CONCAT)
+        Assertions.assertThat(options.jsonExportFormat).isEqualTo(OptionsEnums.JsonExportFormat.ENTRY_PER_LINE)
+        Assertions.assertThat(options.combineInputFiles).isEqualTo(OptionsEnums.CombineInputFiles.CONCAT)
 
         // Defaults for imports/exports
         Assertions.assertThat(options.excludePathsRegex.toString()).isEqualTo(".*/LOAD.*\\.csv")

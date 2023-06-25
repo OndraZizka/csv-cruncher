@@ -5,7 +5,7 @@ import java.util.*
 import java.util.function.Function
 import java.util.stream.Collectors
 
-class Options {
+class OptionsEnums {
 
     enum class SortInputPaths(override val optionValue: String, private val description: String) : OptionEnum {
         PARAMS_ORDER("paramOrder", "Keep the order from parameters or file system."),

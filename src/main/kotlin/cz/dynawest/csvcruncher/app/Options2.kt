@@ -1,7 +1,7 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.app.Options
-import cz.dynawest.csvcruncher.app.Options.CombineDirectories.COMBINE_PER_INPUT_SUBDIR
+import cz.dynawest.csvcruncher.app.OptionsEnums
+import cz.dynawest.csvcruncher.app.OptionsEnums.CombineDirectories.COMBINE_PER_INPUT_SUBDIR
 import cz.dynawest.csvcruncher.util.logger
 import java.io.FileNotFoundException
 import java.nio.file.Path
@@ -21,9 +21,9 @@ class ImportArgument {
     var ignoreLineRegex: Pattern? = null
     /** If not null, add a 1st column with unique incrementing numbers, starting at this value. */
     var initialRowNumber: Long? = null
-    var sortInputFileGroups: Options.SortInputPaths? = null
-    var combineInputFiles: Options.CombineInputFiles? = null
-    var jsonExportFormat: Options.JsonExportFormat? = null
+    var sortInputFileGroups: OptionsEnums.SortInputPaths? = null
+    var combineInputFiles: OptionsEnums.CombineInputFiles? = null
+    var jsonExportFormat: OptionsEnums.JsonExportFormat? = null
 
     override fun toString(): String {
         return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path ${itemsPathInTree}"
@@ -71,17 +71,17 @@ class Options2 {
     var overwrite = false
     var dbPath: String? = null
     var keepWorkFiles = false
-    var sortInputPaths = Options.SortInputPaths.PARAMS_ORDER
-    var combineDirs = Options.CombineDirectories.COMBINE_PER_EACH_DIR
+    var sortInputPaths = OptionsEnums.SortInputPaths.PARAMS_ORDER
+    var combineDirs = OptionsEnums.CombineDirectories.COMBINE_PER_EACH_DIR
     var logLevel: LogLevel? = null
 
     // The options below are applicable to individual Imports. These serve as defaults.
     var ignoreFirstLines = 1
     var ignoreLineRegex: Pattern? = null
     var initialRowNumber: Long? = null
-    var sortInputFileGroups = Options.SortInputPaths.ALPHA
-    var combineInputFiles = Options.CombineInputFiles.NONE
-    var jsonExportFormat = Options.JsonExportFormat.NONE
+    var sortInputFileGroups = OptionsEnums.SortInputPaths.ALPHA
+    var combineInputFiles = OptionsEnums.CombineInputFiles.NONE
+    var jsonExportFormat = OptionsEnums.JsonExportFormat.NONE
 
     val isFilled: Boolean
         get() = importArguments.isNotEmpty() && exportArguments.isNotEmpty()

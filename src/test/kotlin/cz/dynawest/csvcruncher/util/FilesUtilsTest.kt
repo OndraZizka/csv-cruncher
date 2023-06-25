@@ -1,7 +1,7 @@
 package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*
-import cz.dynawest.csvcruncher.app.Options
+import cz.dynawest.csvcruncher.app.OptionsEnums
 import cz.dynawest.csvcruncher.util.FilesUtils.combineInputFiles
 import cz.dynawest.csvcruncher.util.FilesUtils.deriveNameForCombinedFile
 import cz.dynawest.csvcruncher.util.FilesUtils.expandDirectories
@@ -127,8 +127,8 @@ class FilesUtilsTest {
         val options = Options2()
         options.newImportArgument().apply { path = testDataDir.resolve("sample-changedSchema") }
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
-        options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES
-        options.combineInputFiles = Options.CombineInputFiles.CONCAT
+        options.combineDirs = OptionsEnums.CombineDirectories.COMBINE_ALL_FILES
+        options.combineInputFiles = OptionsEnums.CombineInputFiles.CONCAT
         options.newExportArgument().apply {
             path = testOutputDir.resolve("combineInputFilesTest.csv")
             sqlQuery = "SELECT * FROM concat"
@@ -155,7 +155,7 @@ class FilesUtilsTest {
         options.newImportArgument().apply { path = inputPaths[0] }
         options.includePathsRegex = Pattern.compile(".*\\.csv")
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
-        options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES
+        options.combineDirs = OptionsEnums.CombineDirectories.COMBINE_ALL_FILES
         var fileGroupsToConcat: Map<Path?, List<Path>> = expandDirectories(inputPaths, options)
         assertEquals(1, fileGroupsToConcat.size.toLong(), "Just one catchall group expected")
         assertNotNull(fileGroupsToConcat[null], "Just one catchall group expected")

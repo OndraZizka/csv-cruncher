@@ -3,7 +3,7 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.Options2
-import cz.dynawest.csvcruncher.app.Options
+import cz.dynawest.csvcruncher.app.OptionsEnums
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -20,8 +20,8 @@ class ChangedSchemaIT {
         val testOutputDir = CsvCruncherTestUtils.testOutputDir.resolve("sample-changedSchema")
         val options = Options2()
         options.newImportArgument().apply { this.path = testDataDir }
-        options.combineDirs = Options.CombineDirectories.COMBINE_ALL_FILES
-        options.combineInputFiles = Options.CombineInputFiles.CONCAT
+        options.combineDirs = OptionsEnums.CombineDirectories.COMBINE_ALL_FILES
+        options.combineInputFiles = OptionsEnums.CombineInputFiles.CONCAT
         options.newExportArgument().apply {
             path = testOutputDir.resolve("testResult.csv")
             sqlQuery = "SELECT ${Cruncher.SQL_TABLE_PLACEHOLDER}.* FROM ${Cruncher.SQL_TABLE_PLACEHOLDER}"

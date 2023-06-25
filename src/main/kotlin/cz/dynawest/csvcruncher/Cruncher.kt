@@ -1,8 +1,8 @@
 package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
-import cz.dynawest.csvcruncher.app.Options.CombineInputFiles
-import cz.dynawest.csvcruncher.app.Options.JsonExportFormat
+import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
+import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
