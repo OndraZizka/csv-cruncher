@@ -1,6 +1,5 @@
 package cz.dynawest.csvcruncher.util
 
-import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import java.sql.Connection
 import java.sql.ResultSet
@@ -8,14 +7,6 @@ import java.sql.SQLException
 import java.util.*
 
 object DbUtils {
-    @Throws(SQLException::class)
-    fun getResultSetColumnNames(rs: ResultSet): List<String> {
-        val colNames_ = arrayOfNulls<String>(rs.metaData.columnCount)
-        for (colIndex in colNames_.indices) {
-            colNames_[colIndex] = rs.metaData.getColumnName(colIndex + 1).lowercase()
-        }
-        return Arrays.asList(*colNames_).map { it!! }
-    }
 
     @JvmStatic
     @Throws(SQLException::class)
@@ -32,7 +23,7 @@ object DbUtils {
      * Dump the content of a table. Debug code.
      */
     @Throws(SQLException::class)
-    @Suppress("NAME_SHADOWING")
+    @Suppress("NAME_SHADOWING", "unused")
     fun testDumpSelect(sql: String, jdbcConn: Connection, log: Logger) {
         var sql = sql
         sql = if (sql.startsWith("SELECT ")) sql else "SELECT * FROM $sql"
@@ -41,13 +32,14 @@ object DbUtils {
         testDumpResultSet(rs, log)
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun testDumpResultSet(rs: ResultSet, log: Logger) {
         val metaData = rs.metaData
         if (rs.isBeforeFirst) rs.next()
         do {
-            log.warn((1..metaData.columnCount).map { i ->
+            log.warn((1..metaData.columnCount).joinToString(separator = ", ") { i ->
                 (metaData.getColumnLabel(i) + ": " + rs.getObject(i))
-            }.joinToString(separator = ", "))
+            })
         }
         while (rs.next())
     }

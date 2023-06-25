@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.awt.FileDialog.LOAD
 import java.nio.file.Paths
+import java.util.*
 
 /**
  * TODO: Add the verifications.
@@ -40,7 +41,7 @@ class OptionsCombinationsTest {
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(columnNames.size.toLong(), 9, "Column names fit")
-        assertEquals(columnNames[8].toLowerCase(), "warmupslower")
+        assertEquals(columnNames[8].lowercase(), "warmupslower")
 
         // TODO: Add content verifications.
     }
@@ -78,7 +79,7 @@ class OptionsCombinationsTest {
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(columnNames.size.toLong(), 9, "Column names fit")
-        assertEquals(columnNames[8].toLowerCase(), "warmupslower")
+        assertEquals(columnNames[8].lowercase(), "warmupslower")
     }
 
     @Test
@@ -115,7 +116,7 @@ class OptionsCombinationsTest {
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(columnNames.size.toLong(), 5, "Column names fit")
-        assertEquals(columnNames[4].toLowerCase(), "modified_date")
+        assertEquals(columnNames[4].lowercase(), "modified_date")
 
         // TODO: Add content verifications.
     }
@@ -149,7 +150,7 @@ class OptionsCombinationsTest {
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(columnNames.size.toLong(), 10, "Column names fit")
-        assertEquals(columnNames[9].toLowerCase(), "modified_time")
+        assertEquals(columnNames[9].lowercase(), "modified_time")
         val shouldBeNull = CsvCruncherTestUtils.getCsvCellValue(resultCsv, 1, 8)
         assertEquals(null, shouldBeNull, "row 1, col 9 should be null")
     }

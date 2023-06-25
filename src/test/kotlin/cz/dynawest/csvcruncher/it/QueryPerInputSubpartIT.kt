@@ -13,7 +13,8 @@ import java.util.*
  * The testdata contain a change in columns structure, so CSV Cruncher needs to be run with --queryPerInputSubpart.
  */
 class QueryPerInputSubpartIT {
-    var inPath = Paths.get("src/test/data/sample-queryPerInputSubpart/oauth_consumer")
+
+    var inPath: Path = Paths.get("src/test/data/sample-queryPerInputSubpart/oauth_consumer")
 
     @Test
     fun queryPerInputSubpart() {

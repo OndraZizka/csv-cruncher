@@ -1,3 +1,5 @@
+@file:Suppress("LocalVariableName")
+
 package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*

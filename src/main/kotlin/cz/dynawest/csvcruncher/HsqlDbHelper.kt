@@ -193,7 +193,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
 
     fun quoteColumnAndTableNamesInQuery(sqlQuery: String): String {
         val identifiers = mutableListOf<String>()
-        identifiers.addAll(queryAllTableAndColumnNames(true,  true))
+        identifiers.addAll(queryAllTableAndColumnNames(includeTables = true, includeColumns = true))
         return quoteIdentifiersInQuery(sqlQuery, identifiers)
     }
 
@@ -222,7 +222,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
 
             for (name in columnNames.withIndex()) {
                 val substitute = "{.${name.index}}"
-                substitutes.put(substitute, "\"${name.value}\"")
+                substitutes[substitute] = "\"${name.value}\""
                 val escapedName = Regex.escape(name.value)
                 sqlQuery = sqlQuery.replace("""(?i)\b(?<!")$escapedName(?!")\b""".toRegex(), Regex.escapeReplacement(substitute))
             }

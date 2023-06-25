@@ -12,7 +12,7 @@ class BasicIntegTest {
 
     @Test
     fun singleImportSingleExportWithJson() {
-        var inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("src/test/data/eapBuilds.csv")
         val outputPath = Paths.get("target/results/queryPerInputSubpart.csv")
         outputPath.deleteIfExists()
 
@@ -28,7 +28,7 @@ class BasicIntegTest {
 
     @Test
     fun singleImportSingleExport_defaultSql() {
-        var inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("src/test/data/eapBuilds.csv")
         val outputPath = Paths.get("target/results/defaultSql.csv")
         outputPath.deleteIfExists()
 
@@ -40,7 +40,7 @@ class BasicIntegTest {
 
     @Test
     fun singleImportSingleExport_jsonFileExtension() {
-        var inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("src/test/data/eapBuilds.csv")
         val outputPath = Paths.get("target/results/singleImportSingleExport_jsonFileExtension.json")
         outputPath.deleteIfExists()
 
@@ -52,7 +52,7 @@ class BasicIntegTest {
 
     @Test
     fun test_initSqlScript() {
-        var inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("src/test/data/eapBuilds.csv")
         val outputPath = Paths.get("target/results/test_initSqlScript.csv")
         outputPath.deleteIfExists()
 
@@ -66,7 +66,7 @@ class BasicIntegTest {
 
     @Test
     fun realData_json_redditAll() {
-        var inPath = Paths.get("src/test/data/json/redditAll.json")
+        val inPath = Paths.get("src/test/data/json/redditAll.json")
         val outputPath = Paths.get("target/results/redditAll.csv")
         outputPath.deleteIfExists()
 
@@ -102,7 +102,7 @@ class BasicIntegTest {
 
     @Test @Disabled("Currently we just overwrite to simplify experimenting. Maybe let's have --noOverwrite?")
     fun realData_json_overwrite() {
-        var inPath = Paths.get("src/test/data/json/redditAll.json")
+        val inPath = Paths.get("src/test/data/json/redditAll.json")
         val outputPath = Paths.get("target/results/overwriteTestFile.csv")
         outputPath.deleteIfExists()
 

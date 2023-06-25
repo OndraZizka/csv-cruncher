@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.*
+import java.nio.file.Path
 import java.nio.file.Paths
 import javax.json.Json
 import javax.json.JsonObject
@@ -15,7 +16,9 @@ import kotlin.io.path.deleteIfExists
  * The testdata contain a change in columns structure, so CSV Cruncher needs to be run with --queryPerInputSubpart.
  */
 class BooleanColumnDetectionIT {
-    var inPath = Paths.get("src/test/data/boolTable.csv")
+
+    private var inPath: Path = Paths.get("src/test/data/boolTable.csv")
+
     @Test
     @Throws(Exception::class)
     fun testBooleanColumns() {

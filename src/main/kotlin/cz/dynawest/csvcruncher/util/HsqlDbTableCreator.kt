@@ -8,7 +8,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.sql.SQLException
 
-class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
+class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
 
     @Throws(SQLException::class)
     fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {

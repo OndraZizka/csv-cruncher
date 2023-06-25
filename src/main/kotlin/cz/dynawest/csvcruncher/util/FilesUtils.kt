@@ -23,7 +23,6 @@ import java.util.stream.Collectors
 /**
  * TODO: Convert the concat related methods to a context-based class.
  */
-//@Suppress("NAME_SHADOWING")
 object FilesUtils {
     private const val CONCAT_WORK_SUBDIR_NAME = "concat"
     private val log: Logger = logger()
@@ -63,7 +62,7 @@ object FilesUtils {
                     fileToConcatIS.skip(pathToConcat.toFile().length()-1);
                     if ('\n' != fileToConcatIS.read())
                         resultWriter.write('\n');
-                }*/
+                    }*/
                 }
             }
         } catch (ex: Exception) {
@@ -74,7 +73,6 @@ object FilesUtils {
 
     @JvmStatic
     fun sortImports(importArguments: List<ImportArgument>, sortMethod: SortInputPaths?): List<ImportArgument> {
-        @Suppress("NAME_SHADOWING")
         var inputPaths = importArguments.map { it.path!! }
 
         inputPaths = sortInputPaths(inputPaths, sortMethod)
@@ -86,11 +84,7 @@ object FilesUtils {
         var inputPaths = inputPaths_
         inputPaths = when (sortMethod) {
             SortInputPaths.PARAMS_ORDER -> Collections.unmodifiableList(inputPaths)
-            SortInputPaths.ALPHA -> {
-                inputPaths = ArrayList(inputPaths)
-                Collections.sort(inputPaths)
-                inputPaths
-            }
+            SortInputPaths.ALPHA -> inputPaths.sorted()
             SortInputPaths.TIME -> throw UnsupportedOperationException("Sorting by time not implemented yet.")
             else -> throw UnsupportedOperationException("Unknown sorting method.")
         }
@@ -179,15 +173,18 @@ object FilesUtils {
     }
 
     private fun logFileGroups(fileGroupsToConcat: Map<Path?, List<Path>>, @Suppress("SameParameterValue") level: Level, label: String) {
-        // TBD: Apply level.
-        /*SubstituteLoggingEvent event = new SubstituteLoggingEvent();
-        event.setLevel(level);
-        event.setMessage();
-        ((Logger) log).log(event);*/
-        log.debug("--- $label ---")
+        fun log(msg: String) = when(level) {
+            Level.ERROR -> log.error(msg)
+            Level.WARN -> log.warn(msg)
+            Level.INFO -> log.info(msg)
+            Level.DEBUG -> log.debug(msg)
+            Level.TRACE -> log.trace(msg)
+        }
+
+        log("--- $label ---")
         for ((key, value) in fileGroupsToConcat) {
             val msg = """\n * Path: $key: ${value.stream().map { path: Path -> "\n\t- $path" }.collect(Collectors.joining())}"""
-            log.debug(msg)
+            log(msg)
         }
     }
 
@@ -354,7 +351,7 @@ object FilesUtils {
             val concatenatedFilePath = tmpConcatDir.resolve(concatFileName)
             usedConcatFilePaths.add(concatenatedFilePath)
             log.debug("Into dest file: $concatenatedFilePath\n   Will combine these files: "
-                + fileGroup.value.map { path -> "\n|\t* $path" }.joinToString())
+                + fileGroup.value.joinToString { path -> "\n|\t* $path" })
 
             // TODO: Optionally this could be named better:
             //       1) Find common deepest ancestor dir.
@@ -439,11 +436,6 @@ object FilesUtils {
             line = lineIterator.nextLine().trim { it <= ' ' }
         } while (line!!.startsWith(CSV_COMMENT_PREFIX))
 
-        /*  I could employ CSVReader if needed.
-            CSVReader csvReader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-            String[] header = csvReader.readNext();
-            csvReader.close();
-         */
         line = StringUtils.stripStart(line, "#")
 
         val colNames = StringUtils.splitPreserveAllTokens(line, ",;")

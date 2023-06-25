@@ -74,7 +74,7 @@ class Cruncher(private val options: Options2) {
             //var inputPaths =
             var importArguments = options.importArguments.filter { it.path != null }
             importArguments = FilesUtils.sortImports(importArguments, options.sortInputPaths)
-            log.debug(" --- Sorted imports: --- " + importArguments.map { "\n * $it" }.joinToString())
+            log.debug(" --- Sorted imports: --- " + importArguments.joinToString { "\n * $it" })
 
             // Convert the .json files to .csv files.
             importArguments = importArguments.map { import ->
@@ -107,7 +107,7 @@ class Cruncher(private val options: Options2) {
             else {
                 val inputFileGroups: Map<Path?, List<Path>> = FilesUtils.expandFilterSortInputFilesGroups(importArguments.map { it.path!! }, options)
                 inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options)
-                log.info(" --- Combined input files: --- " + inputSubparts.map { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" }.joinToString())
+                log.info(" --- Combined input files: --- " + inputSubparts.joinToString { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" })
             }
             if (inputSubparts.isEmpty()) return
             FilesUtils.validateInputFiles(inputSubparts)
@@ -304,7 +304,7 @@ class Cruncher(private val options: Options2) {
         const val TABLE_NAME__OUTPUT = "output"
         const val TIMESTAMP_SUBSTRACT = 1530000000000L // To make the unique ID a smaller number.
         const val FILENAME_SUFFIX_CSV = ".csv"
-        val REGEX_SQL_COLUMN_VALID_NAME = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE)
+        val REGEX_SQL_COLUMN_VALID_NAME: Pattern = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE)
         const val SQL_TABLE_PLACEHOLDER = "\$table"
         const val DEFAULT_SQL = "SELECT $SQL_TABLE_PLACEHOLDER.* FROM $SQL_TABLE_PLACEHOLDER"
     }

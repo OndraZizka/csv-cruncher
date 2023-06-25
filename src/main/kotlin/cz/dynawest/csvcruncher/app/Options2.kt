@@ -135,9 +135,9 @@ class Options2 {
     }
 
     override fun toString(): String {
-        return """  |    imports: ${importArguments.map { "\n|      * $it" }.joinToString() }
-                    |    exports: ${exportArguments.map { "\n|      * $it" }.joinToString() }
-                    |    initSql: ${initSqlArguments.map { "\n|      * $it" }.joinToString() }
+        return """  |    imports: ${importArguments.joinToString { "\n|      * $it" }}
+                    |    exports: ${exportArguments.joinToString { "\n|      * $it" }}
+                    |    initSql: ${initSqlArguments.joinToString { "\n|      * $it" }}
                     |    dbPath: ${dbPath}
                     |    includePathsRegex: ${includePathsRegex}
                     |    excludePathsRegex: ${excludePathsRegex}
