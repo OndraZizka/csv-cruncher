@@ -15,6 +15,10 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
         createTableAndBindCsv(tableName, csvFileToBind, columnNames, ignoreFirst, "", true, overwrite)
     }
 
+    /**
+     * Input tables columns are optimized after binding the file by attempting to reduce the column type.
+     * (The output table has to be optimized later.)
+     */
     @Suppress("SameParameterValue")
     @Throws(SQLException::class)
     private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
@@ -32,8 +36,6 @@ class HsqlDbTableCreator(val hsqlDbHelper: HsqlDbHelper) {
      * Creates the input or output table, with the right column names, and binds the file.
      * For output tables, the file is optionally overwritten if exists.
      * A header with columns names is added to the output table.
-     * Input tables columns are optimized after binding the file by attempting to reduce the column type.
-     * (The output table has to be optimized later.)
      */
     @Throws(SQLException::class)
     fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
