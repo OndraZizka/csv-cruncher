@@ -8,7 +8,7 @@ import org.junit.jupiter.api.fail
 import java.nio.file.Paths
 import kotlin.io.path.deleteIfExists
 
-class BasicIT {
+class BasicIntegTest {
 
     @Test
     fun singleImportSingleExportWithJson() {

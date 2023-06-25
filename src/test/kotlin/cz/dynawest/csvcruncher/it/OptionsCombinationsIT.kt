@@ -15,7 +15,7 @@ import java.nio.file.Paths
 /**
  * TODO: Add the verifications.
  */
-class OptionsCombinationsIT {
+class OptionsCombinationsTest {
     /**
      * ${testRunCmd}
      * --json=entries
