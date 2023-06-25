@@ -19,11 +19,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.kotlin>1.7.21</version.kotlin>
-        <version.kotlin-dokka>1.7.20</version.kotlin-dokka>
+        <version.kotlin>1.8.21</version.kotlin>
+        <version.kotlin-dokka>1.8.20</version.kotlin-dokka>
         <version.jdk>11</version.jdk>
         <version.jackson>2.14.1</version.jackson>
-        <version.surefire>3.0.0-M7</version.surefire>
+        <version.surefire>3.0.0-M8</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
@@ -55,7 +55,7 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId><version>3.0.0</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version>
                 <executions>
                     <execution>
                         <phase>generate-test-resources</phase>
@@ -67,9 +67,7 @@
 
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${version.surefire}</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${version.surefire}</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
@@ -81,9 +79,7 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${version.surefire}</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${version.surefire}</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
@@ -103,8 +99,7 @@
                    mvn install assembly:assembly
             -->
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.4.2</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.4.2</version>
                 <executions>
                     <execution>
                         <id>assembleDistJar</id>
@@ -158,9 +153,7 @@
 
             <!-- One real execution of the tool from outside JUnit. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>testCrunch-simple</id>
@@ -187,9 +180,7 @@
 
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
