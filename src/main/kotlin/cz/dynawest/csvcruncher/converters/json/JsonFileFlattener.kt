@@ -1,4 +1,4 @@
-package cz.dynawest.csvcruncher.converters
+package cz.dynawest.csvcruncher.converters.json
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonLocation
@@ -7,6 +7,12 @@ import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
+import cz.dynawest.csvcruncher.converters.CrunchProperty
+import cz.dynawest.csvcruncher.converters.CsvExporter
+import cz.dynawest.csvcruncher.converters.EntryProcessor
+import cz.dynawest.csvcruncher.converters.FileTabularizer
+import cz.dynawest.csvcruncher.converters.FlattenedEntrySequence
+import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -103,11 +109,11 @@ class JsonFileFlattener : FileTabularizer {
                 (fieldName, value) ->
             val fullPropertyName = flatteningContext.currentPrefix + fieldName
             when (value.nodeType) {
-                JsonNodeType.STRING -> sequenceOf( CrunchProperty.String(fullPropertyName, value.textValue()) )
-                JsonNodeType.NUMBER -> sequenceOf( CrunchProperty.Number(fullPropertyName, value.numberValue()) )
-                JsonNodeType.BOOLEAN -> sequenceOf( CrunchProperty.Boolean(fullPropertyName, value.booleanValue()) )
-                JsonNodeType.NULL -> sequenceOf( CrunchProperty.Null(fullPropertyName) )
-                JsonNodeType.ARRAY -> sequenceOf( CrunchProperty.Array(fullPropertyName, listOf()) )
+                JsonNodeType.STRING -> sequenceOf(CrunchProperty.String(fullPropertyName, value.textValue()))
+                JsonNodeType.NUMBER -> sequenceOf(CrunchProperty.Number(fullPropertyName, value.numberValue()))
+                JsonNodeType.BOOLEAN -> sequenceOf(CrunchProperty.Boolean(fullPropertyName, value.booleanValue()))
+                JsonNodeType.NULL -> sequenceOf(CrunchProperty.Null(fullPropertyName))
+                JsonNodeType.ARRAY -> sequenceOf(CrunchProperty.Array(fullPropertyName, listOf()))
                 JsonNodeType.OBJECT -> {
                     val flattenedNode: FlattenedEntrySequence = flattenNode(value, flatteningContext.withPrefixAddition("${fieldName}."))
 
@@ -116,7 +122,7 @@ class JsonFileFlattener : FileTabularizer {
                 JsonNodeType.BINARY -> throw UnsupportedOperationException("Binary JSON nodes?")
                 JsonNodeType.MISSING -> throw UnsupportedOperationException("Missing JSON nodes?")
                 JsonNodeType.POJO -> throw UnsupportedOperationException("POJO JSON nodes?")
-                else -> sequenceOf( CrunchProperty.Null(fullPropertyName) )
+                else -> sequenceOf(CrunchProperty.Null(fullPropertyName))
             }
         }
         return FlattenedEntrySequence(fieldsFlattened)

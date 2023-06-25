@@ -12,19 +12,13 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.event.Level
 import java.io.*
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.sql.ResultSet
-import java.sql.SQLException
-import java.sql.Types
 import java.util.*
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.stream.Collectors
-import javax.json.Json
-import javax.json.JsonObjectBuilder
 
 /**
  * TODO: Convert the concat related methods to a context-based class.
@@ -199,7 +193,7 @@ object FilesUtils {
 
     /**
      * Walks through the directories given in inputPaths and expands them into the contained files,
-     * into groups as per rules given by options - see [Options.CombineDirectories], [Options.skipNonReadable].
+     * into groups as per rules given by options - see [Options.CombineDirectories], [Options2.skipNonReadable].
      *
      * @return A map with one entry per group, containing the files.
      */
@@ -257,7 +251,7 @@ object FilesUtils {
     }
 
     /**
-     * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see [Options.includePathsRegex].
+     * Reduces the groups to only contain files that match the include and don't match the exclude pattern - see [Options2.includePathsRegex].
      * Also, skips the empty groups.
      */
     @JvmStatic

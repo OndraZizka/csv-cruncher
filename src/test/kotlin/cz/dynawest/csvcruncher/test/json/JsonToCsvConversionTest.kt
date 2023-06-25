@@ -1,7 +1,7 @@
 package cz.dynawest.csvcruncher.test.json
 
 import cz.dynawest.csvcruncher.converters.CsvExporter
-import cz.dynawest.csvcruncher.converters.JsonFileFlattener
+import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

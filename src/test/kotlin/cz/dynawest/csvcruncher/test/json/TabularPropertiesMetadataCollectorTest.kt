@@ -1,7 +1,7 @@
 package cz.dynawest.csvcruncher.test.json
 
-import cz.dynawest.csvcruncher.converters.ItemsArraySproutNotFound
-import cz.dynawest.csvcruncher.converters.JsonFileFlattener
+import cz.dynawest.csvcruncher.converters.json.ItemsArraySproutNotFound
+import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.converters.PropertyInfo
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
 import cz.dynawest.csvcruncher.util.logger

@@ -3,7 +3,7 @@ package cz.dynawest.csvcruncher.test.json
 import cz.dynawest.csvcruncher.converters.CrunchProperty
 import cz.dynawest.csvcruncher.converters.EntryProcessor
 import cz.dynawest.csvcruncher.converters.FlattenedEntrySequence
-import cz.dynawest.csvcruncher.converters.JsonFileFlattener
+import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.logger
 import cz.dynawest.util.ResourceLoader
 import java.io.File
