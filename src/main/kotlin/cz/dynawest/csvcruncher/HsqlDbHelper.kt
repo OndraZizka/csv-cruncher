@@ -2,16 +2,11 @@ package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
 import cz.dynawest.csvcruncher.util.HsqldbErrorHandling.throwHintForObjectNotFound
-import cz.dynawest.csvcruncher.util.Utils.escapeSql
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import java.nio.file.Path
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.SQLException
-import java.sql.SQLSyntaxErrorException
+import java.sql.*
 
 @Suppress("NAME_SHADOWING")
 class HsqlDbHelper(val jdbcConn: Connection) {
@@ -30,11 +25,13 @@ class HsqlDbHelper(val jdbcConn: Connection) {
         try {
             log.debug("    Executing SQL: $sql")
             jdbcConn.createStatement().use { stmt -> return stmt.executeUpdate(sql) }
-        } catch (ex: Exception) {
+        }
+        // TBD: Handle SQLSyntaxErrorException specifically
+        catch (ex: Exception) {
             var addToMsg = ""
             if (true || (ex.message?.contains("for cast") ?: false)) {
                 // List column names with types.
-                addToMsg = """
+                addToMsg = """\n
                     |  Tables and column types:
                     |${this.formatListOfAvailableTables(true)}""".trimMargin()
             }

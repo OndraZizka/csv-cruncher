@@ -156,9 +156,7 @@
                 <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>testCrunch-simple</id>
-                        <phase>integration-test</phase>
-                        <goals><goal>exec</goal></goals>
+                        <id>testCrunch-simple</id><phase>integration-test</phase><goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${skipE2E}</skip>
                             <executable>java</executable>
@@ -177,7 +175,15 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.2.0</version>
+                <!-- Delete the pre-existing DB -->
+                <executions>
+                    <execution><id>clean-hsqldb-data</id><phase>pre-integration-test</phase><goals><goal>clean</goal></goals>
+                        <configuration><directory>hsqldb/</directory></configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.1.0</version>
