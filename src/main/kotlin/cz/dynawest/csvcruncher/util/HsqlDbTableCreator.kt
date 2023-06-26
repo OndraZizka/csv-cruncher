@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.util
 
+import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.HsqlDbHelper
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
@@ -11,8 +12,38 @@ import java.sql.SQLException
 class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
 
     @Throws(SQLException::class)
-    fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
+    fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, colsForIndex: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
+        val colGrp = columnNames.groupingBy { it }.eachCount()
+        colGrp.filter { it.value != 1 }.takeIf { it.isNotEmpty() }
+            ?.let { throw CrucherConfigException("Duplicate column names: " + it.entries.joinToString(", ") { "${it.key} ${it.value}x" }) }
+
         createTableAndBindCsv(tableName, csvFileToBind, columnNames, ignoreFirst, "", true, overwrite)
+
+        val indexedColumns = translatePositionsToNames(columnNames, colsForIndex)
+        setUpTableIndexes(tableName, indexedColumns)
+    }
+
+    private fun translatePositionsToNames(columnNames: List<String>, indexedColumns: List<String>): List<String> {
+        //val namesToPosition = columnNames.mapIndexed { index, s -> Pair(s, index) }.associate { it.first to it.second }
+        val problems = mutableListOf<String>()
+
+        // From positions or names into positions.
+        val positions: List<String?> = indexedColumns.map { col ->
+
+            col.toIntOrNull()
+                ?.let {
+                    if (it !in 1..columnNames.size) {
+                        problems += "The column position '$it' requested to be indexed is out of bounds 1..${columnNames.size}"
+                        null
+                    } else columnNames[it-1]
+                }
+                ?: col.takeIf { it.isNotBlank() }
+                ?: let { problems += "One of the column positions requested to be indexed is blank: ${indexedColumns.joinToString(",")}"; null }
+        }
+        if (problems.isNotEmpty())
+            throw CrucherConfigException(problems.joinToString("\n"))
+
+        return positions.filterNotNull()
     }
 
     /**
@@ -101,15 +132,23 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
         val ignoreFirstFlag = if (ignoreFirst) "ignore_first=true;" else ""
         val csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter
         val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
-        var sql = "SET TABLE ${quote(tableName)} SOURCE '$csvPath;$csvSettings' $DESC"
+        val sql = "SET TABLE ${quote(tableName)} SOURCE '$csvPath;$csvSettings' $DESC"
         log.debug("CSV import SQL: $sql")
         hsqlDbHelper.executeSql(sql, "Failed to import CSV: ")
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
-            sql = "SET TABLE ${quote(tableName)} SOURCE HEADER '$sbCsvHeader'"
+            val sql = "SET TABLE ${quote(tableName)} SOURCE HEADER '$sbCsvHeader'"
             log.debug("CSV source header SQL: $sql")
             hsqlDbHelper.executeSql(sql, "Failed to set CSV header: ")
+        }
+    }
+
+    private fun setUpTableIndexes(tableName: String, indexedColumns: List<String>) {
+        for (col in indexedColumns) {
+            val sql = "ALTER TABLE ${quote(tableName)} ADD INDEX ${quote("idx_$tableName")} (${quote(col)})"
+            log.debug("Creating index, SQL: $sql")
+            hsqlDbHelper.executeSql(sql, "Failed to create index: ")
         }
     }
 

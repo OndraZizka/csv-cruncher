@@ -68,7 +68,8 @@ class Cruncher(private val options: Options2) {
             dbHelper.executeSql("SET AUTOCOMMIT TRUE", "Error setting AUTOCOMMIT TRUE")
             defineSqlFunctions(dbHelper)
 
-            for (script in options.initSqlArguments) dbHelper.executeSqlScript(script.path, "Error executing init SQL script")
+            for (script in options.initSqlArguments)
+                dbHelper.executeSqlScript(script.path, "Error executing init SQL script")
 
             // Sort the input paths.
             //var inputPaths =
@@ -99,12 +100,15 @@ class Cruncher(private val options: Options2) {
                 }
             }
 
-            // Combine files. Should we concat the files or UNION the tables?
+            // Combine files. For cases like merging logs, or SQL WAL dumps.
+            // Currently, this concats the files rather than UNIONing the tables.
             val inputSubparts: List<CruncherInputSubpart>
             if (options.combineInputFiles == CombineInputFiles.NONE) {
-                inputSubparts = importArguments.map { import -> CruncherInputSubpart.trivial(import.path!!) } .toList()
+                inputSubparts = importArguments.map { import -> CruncherInputSubpart.trivial(import) } .toList()
             }
             else {
+                // TBD: Apply some ImportArgument options (like indexed columns) if same.
+                // TBD: Fail on unapplicable ImportArgument options.
                 val inputFileGroups: Map<Path?, List<Path>> = FilesUtils.expandFilterSortInputFilesGroups(importArguments.map { it.path!! }, options)
                 inputSubparts = FilesUtils.combineInputFiles(inputFileGroups, options)
                 log.info(" --- Combined input files: --- " + inputSubparts.joinToString { p: CruncherInputSubpart -> "\n * ${p.combinedFile}" })
@@ -123,7 +127,14 @@ class Cruncher(private val options: Options2) {
 
                 val colNames: List<String> = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile)
                 // Create a table and bind the CSV to it.
-                HsqlDbTableCreator(dbHelper).createTableFromInputFile(tableName, csvInFile, colNames, true, options.overwrite)
+                HsqlDbTableCreator(dbHelper).createTableFromInputFile(
+                    tableName = tableName,
+                    csvFileToBind = csvInFile,
+                    columnNames = colNames,
+                    colsForIndex = inputSubpart.originalImportArgument?.indexed ?: emptyList(),
+                    ignoreFirst = true,
+                    overwrite = options.overwrite
+                )
                 inputSubpart.tableName = tableName
             }
 

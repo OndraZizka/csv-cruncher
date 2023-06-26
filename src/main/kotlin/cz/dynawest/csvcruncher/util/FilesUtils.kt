@@ -361,6 +361,7 @@ object FilesUtils {
             // Combine the file sets.
             concatFiles(fileGroup.value, concatenatedFilePath, options.ignoreFirstLines, options.ignoreLineRegex)
             val inputPart = CruncherInputSubpart(
+                    originalImportArgument = null,
                     originalInputPath = fileGroup.key,
                     combinedFile = concatenatedFilePath,
                     combinedFromFiles = fileGroup.value,
@@ -441,7 +442,7 @@ object FilesUtils {
         val colNames = StringUtils.splitPreserveAllTokens(line, ",;")
         for (colName in Arrays.asList(*colNames)) {
             @Suppress("NAME_SHADOWING")
-            var colName = colName.trim{ it <= ' ' }.trim('"')
+            val colName = colName.trim{ it <= ' ' }.trim('"')
             if (colName.isEmpty()) throw CsvCruncherException("Empty column name (separators: ,; ) in: ${file.path}\n  The line was: $line")
 
             /* Removed for #17 and #39.
