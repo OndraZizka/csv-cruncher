@@ -145,9 +145,9 @@ object FilesUtils {
     @Throws(IOException::class)
     fun combineInputFiles(fileGroupsToCombine: Map<Path?, List<Path>>, options: Options2): List<CruncherInputSubpart> {
         // Split into subgroups by column names in the CSV header.
-        @Suppress("NAME_SHADOWING") var fileGroupsToCombine = fileGroupsToCombine
-        val splitResult: FileGroupsSplitBySchemaResult = splitToSubgroupsPerSameHeaders(fileGroupsToCombine)
-        fileGroupsToCombine = splitResult.fileGroupsToCombine
+        @Suppress("NAME_SHADOWING")
+        var fileGroupsToCombine = fileGroupsToCombine
+        fileGroupsToCombine = splitToSubgroupsPerSameHeaders(fileGroupsToCombine).fileGroupsToCombine
         logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:")
 
         // At this point, the group keys are the original group + _<counter>.
@@ -161,6 +161,7 @@ object FilesUtils {
                 log.debug("Concatenating input files.")
                 return concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir)
             }
+
             CombineInputFiles.NONE -> {}
         }
         throw IllegalStateException("Did we miss some CombineInputFiles choice?")
@@ -306,7 +307,8 @@ object FilesUtils {
         // TODO: Record information about what groups were splitted and to what subgroups.
         val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = LinkedHashMap()
         val splittedGroupsInfo_oldGroupToNewGroups: MutableMap<Path?, MutableList<Path>> = LinkedHashMap()
-        val result = FileGroupsSplitBySchemaResult(fileGroupsToConcat2, splittedGroupsInfo_oldGroupToNewGroups)
+        val result = FileGroupsSplitBySchemaResult(fileGroupsToConcat2)
+
         // TODO: Refactor this into proper models. InputGroup, PerHeaderInputSubgroup, etc.
         for ((originalGroupPath, value) in fileGroupsToConcat) {
             // Check if all files have the same columns header.
@@ -323,7 +325,7 @@ object FilesUtils {
                 for (filesWithSameHeaders in subGroups_headerStructureToFiles.values) {
                     val subgroupKey = Paths.get("" + originalGroupPath + "_" + counter++)
                     fileGroupsToConcat2.putIfAbsent(subgroupKey, filesWithSameHeaders)
-                    // Keep information about what groups were splitted and to what subgroups.
+                    // Keep information about what groups were split and to what subgroups.
                     splittedGroupsInfo_oldGroupToNewGroups
                             .computeIfAbsent(originalGroupPath) { ArrayList() }
                             .add(subgroupKey)
@@ -475,15 +477,9 @@ object FilesUtils {
      * TODO: Refactor. Previously this was done into a flat structure, but it seems at least 2 levels will be needed.
      * For now I am only putting it to two flat maps "joined" by the subgroup names.
      */
-    //@Getter
-    //@AllArgsConstructor
     internal class FileGroupsSplitBySchemaResult(
         val fileGroupsToCombine: Map<Path?, List<Path>> = LinkedHashMap(),
 
-        /**
-         * Old group to new subgroups.
-         */
-        val splittedGroupsInfo: Map<Path?, List<Path>> = LinkedHashMap(),
     )
 
     val CSV_COMMENT_PREFIX = "###"
