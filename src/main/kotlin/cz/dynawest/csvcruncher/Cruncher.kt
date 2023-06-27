@@ -6,6 +6,7 @@ import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.FilesUtils
 import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
+import cz.dynawest.csvcruncher.util.HsqlDbTableCreator.ColumnInfo
 import cz.dynawest.csvcruncher.util.JsonUtils
 import cz.dynawest.csvcruncher.util.SqlFunctions.defineSqlFunctions
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
@@ -20,7 +21,6 @@ import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
-import java.util.regex.Pattern
 
 class Cruncher(private val options: Options2) {
     private lateinit var jdbcConn: Connection
@@ -195,7 +195,15 @@ class Cruncher(private val options: Options2) {
 
                     // Write the result into a CSV
                     log.info(" * CSV output: $csvOutFile")
-                    HsqlDbTableCreator(dbHelper).createTableAndBindCsv(outputTableName, csvOutFile, columnsDef, true, counterColumn.ddl, false, options.overwrite)
+                    HsqlDbTableCreator(dbHelper).createTableAndBindCsv(
+                        tableName = outputTableName,
+                        csvFileToBind = csvOutFile,
+                        columnsDef.mapValues { ColumnInfo(typeDdl = it.value) },
+                        ignoreFirst = true,
+                        counterColumnDdl = counterColumn.ddl,
+                        isInputTable = false,
+                        overwrite = options.overwrite
+                    )
 
                     // TBD: The export SELECT could reference the counter column, like "SELECT @counter, foo FROM ..."
                     // On the other hand, that's too much space for the user to screw up. Let's force it:
@@ -315,7 +323,6 @@ class Cruncher(private val options: Options2) {
         const val TABLE_NAME__OUTPUT = "output"
         const val TIMESTAMP_SUBSTRACT = 1530000000000L // To make the unique ID a smaller number.
         const val FILENAME_SUFFIX_CSV = ".csv"
-        val REGEX_SQL_COLUMN_VALID_NAME: Pattern = Pattern.compile("[a-z][a-z0-9_]*", Pattern.CASE_INSENSITIVE)
         const val SQL_TABLE_PLACEHOLDER = "\$table"
         const val DEFAULT_SQL = "SELECT $SQL_TABLE_PLACEHOLDER.* FROM $SQL_TABLE_PLACEHOLDER"
     }
