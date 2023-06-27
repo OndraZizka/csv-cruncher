@@ -95,13 +95,13 @@ Download & run
 Usage
 =====
 
-CsvCruncher has imports and exports.  
-Each import config starts with `-in`, each export with `-out`.  
-Both need a filesystem path to read from, resp. write to, and have further options.
+CsvCruncher has imports and exports.    
+Each import config starts with `-in`, each export with `-out`.    
+Both need a filesystem path to read from, resp. write to, and have further options.  
 Some import options may also be taken from defaults, which are configured after `-all`.
 
     ./crunch [<global options...>]
-       -in <file.csv> [-as <alias>] [--format=JSON|CSV] [other options...]
+       -in <file.csv> [-as <alias>] [--format=JSON|CSV] [-indexed column1,column2,...] [other options...]
        -in <file.json> [-as ...] [-itemsAt /path/in/json/tree]  [other options...]
        -out <resultFile.csv> [-sql <SQL query>] [--format=JSON|CSV] [other options...]
        -out ...
@@ -116,6 +116,7 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
     * Input paths, comma and/or space separated.
     * Can be CSV files, JSON files (if ending `.json`), or directories with such files.  
     * Multiple files may be imported to the same table, see `--combineInputs`.
+    * The columns may get indexed to speed up the `JOIN`, `WHERE` and `GROUP BY` clauses. See `-indexed ...`
 
  * `-out`
     * Output path. If ends with `.json`, the output is JSON. 
@@ -158,6 +159,9 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
 
  * `--sortInputs\[=paramsOrder|alpha|time]`
     * Controls how files are sorted before combining, and in which order the tables are created.
+   
+ * `-indexed <columns>`
+   * A comma-separated list of the CSV columns to index after loading. See [Indexes.md](Indexes.md) 
 
 Read the logs or use `-sql SELECT ... FROM INFORMATION_SCHEMA.*` to study the schema created after preprocessing.
 

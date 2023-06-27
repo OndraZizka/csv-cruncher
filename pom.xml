@@ -302,7 +302,7 @@
 
         <!-- Releasing to Maven Central -->
         <profile>
-            <id>release</id><!-- Was: "ossrh", but then this happened:
+            <id>release</id><!-- Was named "ossrh", but then this happened:
                 The requested profile "release" could not be activated because it does not exist.
                 Failed to execute goal org.sonatype.plugins:nexus-staging-maven-plugin:1.6.8:deploy (injected-nexus-deploy) on project csv-cruncher: Remote staging failed: Staging rules failure!
              -->
@@ -314,12 +314,12 @@
 
                     <!-- Generate a JavaDoc and source jars -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.2.1</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.3.0</version>
                         <configuration><includes>**/*.kt</includes></configuration>
                         <executions><execution><id>attach-sources</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.4.1</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.5.0</version>
                         <executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <!-- <plugin> <groupId>org.jetbrains.kotlin</groupId> <artifactId>kdoc-maven-plugin</artifactId> <version>${version.kotlin}</version> </plugin> -->
@@ -355,7 +355,7 @@
 
                     <!-- This relies on the gpg command being installed and the GPG credentials being available e.g. from settings.xml. -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.0.1</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
