@@ -13,6 +13,7 @@ class ImportArgument {
     var alias: String? = null
     var format: Format = Format.CSV
     var itemsPathInTree: String = "/"
+    var indexed: List<String> = emptyList()
 
     // Overrides for the defaults. Not implemented yet.
     var includePathsRegex: Pattern? = null

@@ -10,11 +10,11 @@ object DbUtils {
 
     @JvmStatic
     @Throws(SQLException::class)
-    fun getResultSetColumnNamesAndTypes(rs: ResultSet): Map<String, String> {
+    fun getResultSetColumnLabelsAndTypes(rs: ResultSet): Map<String, String> {
         val columnCount = rs.metaData.columnCount
         val columns: MutableMap<String, String> = LinkedHashMap(columnCount)
         for (colIndex in 0 until columnCount) {
-            columns[rs.metaData.getColumnName(colIndex + 1)] = rs.metaData.getColumnTypeName(colIndex + 1)
+            columns[rs.metaData.getColumnLabel(colIndex + 1)] = rs.metaData.getColumnTypeName(colIndex + 1)
         }
         return columns
     }

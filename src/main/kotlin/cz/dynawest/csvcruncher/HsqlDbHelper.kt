@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher
 
-import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnNamesAndTypes
+import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnLabelsAndTypes
 import cz.dynawest.csvcruncher.util.HsqldbErrorHandling.throwHintForObjectNotFound
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
@@ -31,7 +31,8 @@ class HsqlDbHelper(val jdbcConn: Connection) {
             var addToMsg = ""
             if (true || (ex.message?.contains("for cast") ?: false)) {
                 // List column names with types.
-                addToMsg = """\n
+                addToMsg = """
+                    |
                     |  Tables and column types:
                     |${this.formatListOfAvailableTables(true)}""".trimMargin()
             }
@@ -41,7 +42,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
             if (errorMsg.isBlank()) errorMsg = "Looks like there was a data type mismatch. Check the output table column types and your SQL."
             throw CsvCruncherException("""$errorMsg
                 |  DB error: ${ex.javaClass.simpleName} ${ex.message}$addToMsg
-                |  SQL: $sql""${'"'}
+                |  SQL: $sql
                 """.trimMargin()
             )
         }
@@ -52,7 +53,9 @@ class HsqlDbHelper(val jdbcConn: Connection) {
      */
     fun formatListOfAvailableTables(withColumns: Boolean): String {
         val schema = "PUBLIC"
-        val sqlTablesMetadata = "SELECT table_name AS t, c.column_name AS c, c.data_type AS ct FROM INFORMATION_SCHEMA.TABLES AS t" +
+        val sqlTablesMetadata =
+            "SELECT t.table_name AS t, c.column_name AS c, c.data_type AS ct " +
+            " FROM INFORMATION_SCHEMA.TABLES AS t" +
             " NATURAL JOIN INFORMATION_SCHEMA.COLUMNS AS c  WHERE t.table_schema = '$schema'"
 
         try {
@@ -72,7 +75,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
                     }
                     rs.previous()
                 }
-                return if (sb.length == 0) "    (No tables)" else sb.toString()
+                return if (sb.isEmpty()) "    (No tables)" else sb.toString()
             }
         } catch (ex: SQLException) {
             val msg = "Failed listing tables: " + ex.message
@@ -92,7 +95,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
 
         val statement: PreparedStatement
         statement = try {
-            jdbcConn.prepareStatement("$sql")
+            jdbcConn.prepareStatement(sql)
         }
         catch (ex: SQLSyntaxErrorException) {
             if (ex.message!!.contains("object not found:")) {
@@ -113,7 +116,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
         val rs = statement.executeQuery()
 
         // Column names
-        return getResultSetColumnNamesAndTypes(rs)
+        return getResultSetColumnLabelsAndTypes(rs)
     }
 
 

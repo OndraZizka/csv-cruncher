@@ -1,7 +1,16 @@
 package cz.dynawest.csvcruncher.app
 
-import cz.dynawest.csvcruncher.*
-import cz.dynawest.csvcruncher.app.OptionsEnums.*
+import cz.dynawest.csvcruncher.CrucherConfigException
+import cz.dynawest.csvcruncher.ExportArgument
+import cz.dynawest.csvcruncher.Format
+import cz.dynawest.csvcruncher.ImportArgument
+import cz.dynawest.csvcruncher.InitSqlArgument
+import cz.dynawest.csvcruncher.LogLevel
+import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.OptionsEnums.CombineDirectories
+import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
+import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
+import cz.dynawest.csvcruncher.app.OptionsEnums.SortInputPaths
 import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
@@ -101,6 +110,17 @@ object OptionsParser {
                             ?: throw CrucherConfigException("Missing value after --itemsAt; should be a path to the array of entries in the source file.")
                     }
                     else -> throw CrucherConfigException("-itemsAt may only come as part of an import, i.e. after `-in`.")
+                }
+            }
+
+            else if ("-indexed" == arg) {
+                when (next) {
+                    OptionsCurrentContext.IN -> {
+                        currentImport.indexed = args.getOrNull(++argIndex)?.also { logArgument(it) }?.split(",")
+                            ?: throw CrucherConfigException("Missing value after --indexed; should be a comma-delimited list" +
+                                " of the indexed parts (columns, tree paths) of the input. Columns may be 1-based position.")
+                    }
+                    else -> throw CrucherConfigException("-indexed may only come as part of an import, i.e. after `-in`.")
                 }
             }
 

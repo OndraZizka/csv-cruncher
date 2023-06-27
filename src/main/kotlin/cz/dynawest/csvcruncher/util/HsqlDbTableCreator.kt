@@ -1,8 +1,10 @@
 package cz.dynawest.csvcruncher.util
 
+import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.HsqlDbHelper
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import org.apache.commons.lang3.RandomStringUtils
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -10,9 +12,39 @@ import java.sql.SQLException
 
 class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
 
+
     @Throws(SQLException::class)
-    fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
-        createTableAndBindCsv(tableName, csvFileToBind, columnNames, ignoreFirst, "", true, overwrite)
+    fun createTableFromInputFile(tableName: String, csvFileToBind: File, columnNames: List<String>, colsForIndex: List<String>, ignoreFirst: Boolean, overwrite: Boolean) {
+        val colGrp = columnNames.groupingBy { it }.eachCount()
+        colGrp.filter { it.value != 1 }.takeIf { it.isNotEmpty() }
+            ?.let { throw CrucherConfigException("Duplicate column names: " + it.entries.joinToString(", ") { "${it.key} ${it.value}x" }) }
+
+        val indexedColumns = translatePositionsToNames(columnNames, colsForIndex)
+
+        createTableAndBindCsv(tableName, csvFileToBind, columnNames, indexedColumns, ignoreFirst, "", true, overwrite)
+    }
+
+    private fun translatePositionsToNames(columnNames: List<String>, indexedColumns: List<String>): List<String> {
+        //val namesToPosition = columnNames.mapIndexed { index, s -> Pair(s, index) }.associate { it.first to it.second }
+        val problems = mutableListOf<String>()
+
+        // From positions or names into positions.
+        val positions: List<String?> = indexedColumns.map { col ->
+
+            col.toIntOrNull()
+                ?.let {
+                    if (it !in 1..columnNames.size) {
+                        problems += "The column position '$it' requested to be indexed is out of bounds 1..${columnNames.size}"
+                        null
+                    } else columnNames[it-1]
+                }
+                ?: col.takeIf { it.isNotBlank() }
+                ?: let { problems += "One of the column positions requested to be indexed is blank: ${indexedColumns.joinToString(",")}"; null }
+        }
+        if (problems.isNotEmpty())
+            throw CrucherConfigException(problems.joinToString("\n"))
+
+        return positions.filterNotNull()
     }
 
     /**
@@ -21,9 +53,18 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
      */
     @Suppress("SameParameterValue")
     @Throws(SQLException::class)
-    private fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNames: List<String>, ignoreFirst: Boolean, counterColumnDdl: String, isInputTable: Boolean, overwrite: Boolean) {
-        val columnsNamesAndTypes = Utils.listToMapKeysWithNullValues(columnsNames)
-        createTableAndBindCsv(tableName, csvFileToBind, columnsNamesAndTypes, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
+    private fun createTableAndBindCsv(
+        tableName: String,
+        csvFileToBind: File,
+        columnsNames: List<String>,
+        indexedColumns: List<String>,
+        ignoreFirst: Boolean,
+        counterColumnDdl: String,
+        isInputTable: Boolean,
+        overwrite: Boolean
+    ) {
+        val columnsInfos = columnsNames.associateWith { ColumnInfo(indexed = indexedColumns.contains(it)) }
+        createTableAndBindCsv(tableName, csvFileToBind, columnsInfos, ignoreFirst, counterColumnDdl, isInputTable, overwrite)
 
         // Try to convert columns types to numbers, where applicable.
         if (isInputTable) {
@@ -32,13 +73,18 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
         }
     }
 
+    data class ColumnInfo (
+        val typeDdl: String? = null,
+        val indexed: Boolean = false,
+    )
+
     /**
      * Creates the input or output table, with the right column names, and binds the file.
      * For output tables, the file is optionally overwritten if exists.
      * A header with columns names is added to the output table.
      */
     @Throws(SQLException::class)
-    fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsNamesAndTypes: Map<String, String?>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
+    fun createTableAndBindCsv(tableName: String, csvFileToBind: File, columnsInfo: Map<String, ColumnInfo>, ignoreFirst: Boolean, counterColumnDdl: String?, isInputTable: Boolean, overwrite: Boolean) {
         @Suppress("NAME_SHADOWING")
         var csvFileToBind = csvFileToBind
         val readOnly = false
@@ -75,12 +121,12 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
         sbSql.append(counterColumnDdl)
 
         // Columns
-        for (columnDef in columnsNamesAndTypes.entries) {
+        for (columnDef in columnsInfo.entries) {
             sbCsvHeader.append(columnDef.key).append(", ")
 
             val columnQuotedName = quote(columnDef.key)
 
-            var columnType = columnDef.value
+            var columnType = columnDef.value.typeDdl
             columnType =
                 if (columnType == null || "VARCHAR" == columnType.uppercase())
                     "VARCHAR(${HsqlDbHelper.MAX_STRING_COLUMN_LENGTH})"
@@ -93,6 +139,8 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
         log.debug("Table DDL SQL: $sbSql")
         hsqlDbHelper.executeSql(sbSql.toString(), "Failed to CREATE TEXT TABLE: ")
 
+        // Indexes. The ADD INDEX needs to be done before SET SOURCE.
+        setUpTableIndexes(tableName, columnsInfo.filter { it.value.indexed }.map { it.key })
 
         // Bind the table to the CSV file.
         var csvPath = csvFileToBind.path
@@ -101,15 +149,24 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
         val ignoreFirstFlag = if (ignoreFirst) "ignore_first=true;" else ""
         val csvSettings = "encoding=UTF-8;cache_rows=50000;cache_size=10240000;" + ignoreFirstFlag + "fs=,;qc=" + quoteCharacter
         val DESC = if (readOnly) "DESC" else "" // Not a mistake, HSQLDB really has "DESC" here for read only.
-        var sql = "SET TABLE ${quote(tableName)} SOURCE '$csvPath;$csvSettings' $DESC"
+        val sql = "SET TABLE ${quote(tableName)} SOURCE '$csvPath;$csvSettings' $DESC"
         log.debug("CSV import SQL: $sql")
         hsqlDbHelper.executeSql(sql, "Failed to import CSV: ")
 
         // SET TABLE <table name> SOURCE HEADER
         if (!isInputTable) {
-            sql = "SET TABLE ${quote(tableName)} SOURCE HEADER '$sbCsvHeader'"
-            log.debug("CSV source header SQL: $sql")
-            hsqlDbHelper.executeSql(sql, "Failed to set CSV header: ")
+            val sqlBind = "SET TABLE ${quote(tableName)} SOURCE HEADER '$sbCsvHeader'"
+            log.debug("CSV source header SQL: $sqlBind")
+            hsqlDbHelper.executeSql(sqlBind, "Failed to set CSV header: ")
+        }
+    }
+
+    private fun setUpTableIndexes(tableName: String, indexedColumns: List<String>) {
+        for (col in indexedColumns) {
+            val rnd = RandomStringUtils.randomAlphanumeric(3)
+            val sql = "CREATE INDEX ${quote("idx_${tableName}_$rnd")} ON ${quote(tableName)} (${quote(col)})"
+            log.debug("Creating index, SQL: $sql")
+            hsqlDbHelper.executeSql(sql, "Failed to create index: ")
         }
     }
 
