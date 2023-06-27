@@ -16,13 +16,15 @@ Releasing
        $ mvn release:perform -Possrh -Prelease
 
     This should include invocation of the `deploy` plugin.  
-    If not, it's possible to do it manually (with `autoReleaseAfterClose` = true and a non-SNAPSHOT version to publish):
+    If not, or if that fails, it's possible to stage the artifacts manually.   
     
-       $ mvn clean deploy -Possrh # p..##
+    Switch to the release tag with the non-SNAPSHOT version to publish, and run:
+        
+       $ mvn clean deploy -Possrh -Prelease   # p..##
 
 4) Go to [Sonatype OSSRH](https://oss.sonatype.org/#stagingRepositories) and release the staged snapshot:
-   * Close the freshly created staging repo
-   * Wait several minutes
+   * Close the freshly created staging repo.
+   * Wait a minute.
    * If it passed validation, promote the staging repo.
 
 5) Go to GitHub and [create a new release](https://github.com/OndraZizka/csv-cruncher/releases/new):

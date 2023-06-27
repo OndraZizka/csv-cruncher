@@ -350,6 +350,9 @@
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://${ossrh.host}/</nexusUrl>
                             <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
+                            <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
+                            <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
                         </configuration>
                     </plugin>
 
