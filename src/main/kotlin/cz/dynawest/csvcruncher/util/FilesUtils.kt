@@ -19,6 +19,7 @@ import java.util.*
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.stream.Collectors
+import kotlin.io.path.nameWithoutExtension
 
 /**
  * TODO: Convert the concat related methods to a context-based class.
@@ -72,12 +73,8 @@ object FilesUtils {
     }
 
     @JvmStatic
-    fun sortImports(importArguments: List<ImportArgument>, sortMethod: SortInputPaths?): List<ImportArgument> {
-        var inputPaths = importArguments.map { it.path!! }
-
-        inputPaths = sortInputPaths(inputPaths, sortMethod)
-        // Poor man's sorting :) Improve later
-        return inputPaths.map { inputPath -> importArguments.find { it.path == inputPath }!! } .toList()
+    fun sortImportsByPath(importArguments: List<ImportArgument>, sortMethod: SortInputPaths?): List<ImportArgument> {
+        return importArguments.sortedBy { it.path }
     }
 
     private fun sortInputPaths(inputPaths_: List<Path>, sortMethod: SortInputPaths?): List<Path> {
