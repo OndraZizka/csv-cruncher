@@ -11,21 +11,32 @@ data class CruncherInputSubpart(
     private val originalInputPath: Path? = null,
     val combinedFile: Path,
     val combinedFromFiles: List<Path>? = null,
-    var tableName: String? = null,
+    var tableName: String,
 ) {
 
     companion object {
         fun trivial(importArgument: ImportArgument): CruncherInputSubpart {
             val path = importArgument.path
             require(path != null) { "importArgument.path not expected to be null here. File a bug. $importArgument" }
-            val cis = CruncherInputSubpart(
+            val subpart = CruncherInputSubpart(
                     originalImportArgument = importArgument,
                     originalInputPath = path,
                     combinedFile = path,
                     combinedFromFiles = listOf(path),
-                    tableName = path.fileName.nameWithoutExtension,
+                    tableName = importArgument.alias ?: path.fileName.nameWithoutExtension,
             )
-            return cis
+            return subpart
         }
     }
+
+    override fun toString(): String {
+        return  """:
+            |    originalImportArgument: $originalImportArgument
+            |    originalInputPath:      $originalInputPath
+            |    combinedFile:           $combinedFile
+            |    combinedFromFiles:      $combinedFromFiles
+            |    tableName:              $tableName
+            |    """.replaceIndentByMargin()
+    }
+
 }

@@ -363,6 +363,7 @@ object FilesUtils {
                     originalInputPath = fileGroup.key,
                     combinedFile = concatenatedFilePath,
                     combinedFromFiles = fileGroup.value,
+                    tableName = concatenatedFilePath.nameWithoutExtension,
             )
             inputSubparts.add(inputPart)
         }

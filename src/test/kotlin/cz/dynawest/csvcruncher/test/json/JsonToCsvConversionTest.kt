@@ -1,22 +1,20 @@
 package cz.dynawest.csvcruncher.test.json
 
 import cz.dynawest.csvcruncher.converters.CsvExporter
-import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
+import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Path
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.isRegularFile
 
 class JsonToCsvConversionTest {
 
     @Test
     fun testJsonToCsvConversion() {
-        val x = DateTimeFormatter.ofPattern("")
         val testInputPath = "target/testData/json/github_data.json"
         val testOutputPath = "target/testData/json/github_data_${System.currentTimeMillis()}.csv"
 

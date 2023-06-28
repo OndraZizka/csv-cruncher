@@ -288,12 +288,12 @@ object OptionsParser {
 
         preventHsqldbBug(options)
 
-        return if (!options.isFilled) {
+        if (!options.isFilled) {
             App.printUsage(System.err)
             throw CrucherConfigException("Not enough arguments.")
-        } else {
-            options
         }
+
+        return options
     }
 
     private fun logArgument(arg: String) {
@@ -337,21 +337,6 @@ object OptionsParser {
         }
     }
 
-    private inline fun <reified T : OptionEnum> tryParseEnumOption(enumArgumentDefault: T, arg: String): T? {
-        val optionIntro = "--${enumArgumentDefault.optionName}"
-
-        if (!arg.startsWith(optionIntro))
-            return null
-
-        if (arg.endsWith(optionIntro) || arg.endsWith("=${enumArgumentDefault.optionValue}"))
-            return enumArgumentDefault
-
-        val valueStr = arg.substringAfter(optionIntro)
-
-        val enumConstants = T::class.java.enumConstants
-        return enumConstants.firstOrNull { it.optionName == valueStr }
-            ?: throw CrucherConfigException("Unknown value for ${enumArgumentDefault.optionName}: $arg Try one of ${enumConstants.map { it.optionValue }}")
-    }
 
     enum class OptionsCurrentContext {
         GLOBAL, IN, OUT, SQL, DBPATH, INIT_SQL

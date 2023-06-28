@@ -72,9 +72,8 @@ class Cruncher(private val options: Options2) {
                 dbHelper.executeSqlScript(script.path, "Error executing init SQL script")
 
             // Sort the input paths.
-            //var inputPaths =
             var importArguments = options.importArguments.filter { it.path != null }
-            importArguments = FilesUtils.sortImports(importArguments, options.sortInputPaths)
+            importArguments = FilesUtils.sortImportsByPath(importArguments, options.sortInputPaths)
             log.debug(" --- Sorted imports: --- " + importArguments.joinToString { "\n * $it" })
 
             // Convert the .json files to .csv files.
@@ -118,12 +117,15 @@ class Cruncher(private val options: Options2) {
 
             // For each input CSV file...
             for (inputSubpart in inputSubparts) {
-                val csvInFile = resolvePathToUserDirIfRelative(inputSubpart.combinedFile)
-                log.info(" * CSV input: $csvInFile")
 
-                val tableName: String = HsqlDbHelper.normalizeFileNameForTableName(csvInFile)
+                val csvInFile = resolvePathToUserDirIfRelative(inputSubpart.combinedFile)
+                log.info(" * Next CSV input: $inputSubpart")
+
+                // Derive table name from the `-as` param, or the file name if missing.
+                val tableName: String = HsqlDbHelper.normalizeTableName(inputSubpart.tableName)
+
                 val previousIfAny = tablesToFiles.put(tableName, csvInFile)
-                require(previousIfAny == null) { "File names normalized to table names collide: $previousIfAny, $csvInFile" }
+                require(previousIfAny == null) { "Table name '$tableName' derived for 2 file names collide: $previousIfAny, $csvInFile" }
 
                 val colNames: List<String> = FilesUtils.parseColumnsFromFirstCsvLine(csvInFile)
                 // Create a table and bind the CSV to it.
@@ -204,6 +206,8 @@ class Cruncher(private val options: Options2) {
                         isInputTable = false,
                         overwrite = options.overwrite
                     )
+
+                    // TBD: Analyze the SQL: "EXPLAIN PLAN FOR $SQL"
 
                     // TBD: The export SELECT could reference the counter column, like "SELECT @counter, foo FROM ..."
                     // On the other hand, that's too much space for the user to screw up. Let's force it:

@@ -4,7 +4,6 @@ import cz.dynawest.csvcruncher.util.DbUtils.getResultSetColumnLabelsAndTypes
 import cz.dynawest.csvcruncher.util.HsqldbErrorHandling.throwHintForObjectNotFound
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
-import java.io.File
 import java.nio.file.Path
 import java.sql.*
 
@@ -202,8 +201,8 @@ class HsqlDbHelper(val jdbcConn: Connection) {
         private val log = logger()
         const val MAX_STRING_COLUMN_LENGTH = 4092
 
-        fun normalizeFileNameForTableName(fileName: File): String {
-            return fileName.name.replaceFirst(".csv$".toRegex(), "").replace("[^a-zA-Z0-9_]".toRegex(), "_")
+        fun normalizeTableName(proposedName: String): String {
+            return proposedName.replace("[^a-zA-Z0-9_]".toRegex(), "_")
         }
 
         fun quote(identifier: String) = "\"${identifier.replace('"', '\'')}\""

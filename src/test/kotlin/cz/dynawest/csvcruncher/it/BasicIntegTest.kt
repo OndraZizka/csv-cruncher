@@ -1,20 +1,33 @@
 package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
+import cz.dynawest.csvcruncher.defaultCsvOutputPath
+import cz.dynawest.csvcruncher.defaultJsonOutputPath
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.assertThrows
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.pathString
 
 class BasicIntegTest {
 
+    @BeforeEach
+    @AfterEach
+    fun cleanup(testInfo: TestInfo) {
+        testInfo.defaultCsvOutputPath().deleteIfExists()
+    }
+
+
     @Test
-    fun singleImportSingleExportWithJson() {
+    fun singleImportSingleExportWithJson(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/eapBuilds.csv")
-        val outputPath = Paths.get("target/results/queryPerInputSubpart.csv")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultCsvOutputPath()
 
         val command =
             """--json=entries | --rowNumbers | -in  | $inPath | -out | $outputPath | -sql |
@@ -27,10 +40,9 @@ class BasicIntegTest {
     }
 
     @Test
-    fun singleImportSingleExport_defaultSql() {
+    fun singleImportSingleExport_defaultSql(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/eapBuilds.csv")
-        val outputPath = Paths.get("target/results/defaultSql.csv")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in  | $inPath | -out | $outputPath"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -39,10 +51,9 @@ class BasicIntegTest {
     }
 
     @Test
-    fun singleImportSingleExport_jsonFileExtension() {
+    fun singleImportSingleExport_jsonFileExtension(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/eapBuilds.csv")
-        val outputPath = Paths.get("target/results/singleImportSingleExport_jsonFileExtension.json")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultJsonOutputPath()
 
         val command = """-in  | $inPath | -out | $outputPath"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -51,10 +62,9 @@ class BasicIntegTest {
     }
 
     @Test
-    fun test_initSqlScript() {
+    fun test_initSqlScript(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/eapBuilds.csv")
-        val outputPath = Paths.get("target/results/test_initSqlScript.csv")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultCsvOutputPath()
 
         val initSqlFile = Paths.get("src/test/data/init.sql")
         val command =
@@ -65,10 +75,9 @@ class BasicIntegTest {
     }
 
     @Test
-    fun realData_json_redditAll() {
+    fun realData_json_redditAll(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/json/redditAll.json")
-        val outputPath = Paths.get("target/results/redditAll.csv")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -77,10 +86,9 @@ class BasicIntegTest {
     }
 
     @Test
-    fun test_basic_json_types() {
+    fun test_basic_json_types(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/json/jsonTypes_all.json")
-        val outputPath = Paths.get("target/results/jsonTypes.csv")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in | $inPath | -itemsAt | / | -out | $outputPath | -sql | SELECT * FROM jsonTypes_all_json"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -89,29 +97,25 @@ class BasicIntegTest {
     }
 
     @Test
-    fun test_basic_json_noParentDirOfOutput() {
+    fun test_basic_json_noParentDirOfOutput(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/json/redditAll.json")
-        val outputPath = Paths.get("test-DELETE.csv")
-        outputPath.deleteIfExists()
-        Paths.get("src/test/data/json/redditAll.json.csv").deleteIfExists() // Temp file can remain after debugging
+        val outputPath = testInfo.defaultJsonOutputPath()
+        Path.of(outputPath.pathString + ".csv").deleteIfExists() // Temp file can remain after debugging
 
         val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
-        outputPath.deleteIfExists()
     }
 
     @Test @Disabled("Currently we just overwrite to simplify experimenting. Maybe let's have --noOverwrite?")
-    fun realData_json_overwrite() {
+    fun testDoesNotOverwrite(testInfo: TestInfo) {
         val inPath = Paths.get("src/test/data/json/redditAll.json")
-        val outputPath = Paths.get("target/results/overwriteTestFile.csv")
-        outputPath.deleteIfExists()
+        val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
-        try {
+
+        assertThrows<Exception> {
             CsvCruncherTestUtils.runCruncherWithArguments(command)
-            fail("Should have failed.")
         }
-        catch (ex: Exception) {}
     }
 }
