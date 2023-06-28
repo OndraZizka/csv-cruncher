@@ -15,7 +15,7 @@ import kotlin.io.path.deleteIfExists
 /**
  * The testdata contain a change in columns structure, so CSV Cruncher needs to be run with --queryPerInputSubpart.
  */
-class BooleanColumnDetectionIT {
+class BooleanColumnDetectionTest {
 
     private var inPath: Path = Paths.get("src/test/data/boolTable.csv")
 

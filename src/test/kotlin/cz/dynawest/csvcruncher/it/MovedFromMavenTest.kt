@@ -4,7 +4,7 @@ import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-class MovedFromMavenIT {
+class MovedFromMavenTest {
 
     @Test
     fun test_testCrunch_simple() {

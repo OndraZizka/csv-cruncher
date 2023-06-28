@@ -7,7 +7,7 @@ import cz.dynawest.csvcruncher.app.OptionsEnums
 import org.junit.jupiter.api.Test
 import java.util.*
 
-class ChangedSchemaIT {
+class ChangedSchemaTest {
 
     @Test
     @Throws(Exception::class)
