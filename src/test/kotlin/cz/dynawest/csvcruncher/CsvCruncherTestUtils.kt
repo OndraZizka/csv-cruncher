@@ -79,9 +79,12 @@ object CsvCruncherTestUtils {
         require(lineOffset1Based >= 1) { "lineOffset1Based must be >= 1." }
         return try {
             val reader: Reader = FileReader(csvFile)
-            val records: Iterable<CSVRecord> = CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withNullString("")
+            val records: Iterable<CSVRecord> = CSVFormat.DEFAULT.builder()
+                    .setNullString("")
+                    .setHeader().setSkipHeaderRecord(true)
+                    .build()
+                    /*.withFirstRecordAsHeader()
+                    .withNullString("")*/
                     .parse(reader)
             var csvRecord: CSVRecord? = null
             val iterator = records.iterator()
