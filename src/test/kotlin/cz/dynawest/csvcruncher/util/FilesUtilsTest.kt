@@ -10,8 +10,8 @@ import cz.dynawest.csvcruncher.util.FilesUtils.expandDirectories
 import cz.dynawest.csvcruncher.util.FilesUtils.expandFilterSortInputFilesGroups
 import cz.dynawest.csvcruncher.util.FilesUtils.filterFileGroups
 import cz.dynawest.csvcruncher.util.FilesUtils.filterPaths
-import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import cz.dynawest.csvcruncher.util.FilesUtils.getNonUsedName
+import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -95,8 +95,6 @@ class FilesUtilsTest {
             val path = Paths.get("some/path.csv")
             val path_1 = Paths.get("some/path_1.csv")
             val path_2 = Paths.get("some/path_2.csv")
-            val path2 = Paths.get("some/path2.csv")
-            val path3 = Paths.get("some/path3.csv")
             nonUsed = getNonUsedName(path, mutableSetOf<Path>())
             assertEquals(path, nonUsed)
             nonUsed = getNonUsedName(path, HashSet(setOf(clonePath(path))))
@@ -108,8 +106,6 @@ class FilesUtilsTest {
             val path = Paths.get("some/path")
             val path_1 = Paths.get("some/path_1")
             val path_2 = Paths.get("some/path_2")
-            val path2 = Paths.get("some/path2")
-            val path3 = Paths.get("some/path3")
             nonUsed = getNonUsedName(path, mutableSetOf<Path>())
             assertEquals(path, nonUsed)
             nonUsed = getNonUsedName(path, HashSet(setOf(clonePath(path))))

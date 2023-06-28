@@ -61,10 +61,10 @@ class BooleanColumnDetectionTest {
     }
 
     private fun verifyPropertyIsBoolean(expectedValue: Boolean, row: JsonObject, propertyName: String) {
-        val expectedValue = if (expectedValue) JsonValue.ValueType.TRUE else JsonValue.ValueType.FALSE
+        val expectedValue_ = if (expectedValue) JsonValue.ValueType.TRUE else JsonValue.ValueType.FALSE
         val jsonValue = row[propertyName]
         val boolUpperValType = jsonValue?.valueType
-        Assertions.assertEquals(expectedValue, boolUpperValType, "$propertyName should be a boolean, specifically $expectedValue\nRow: $row")
+        Assertions.assertEquals(expectedValue_, boolUpperValType, "$propertyName should be a boolean, specifically $expectedValue_\nRow: $row")
     }
 
     @Test @Disabled

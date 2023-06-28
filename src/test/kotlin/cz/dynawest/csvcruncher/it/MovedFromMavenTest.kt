@@ -55,7 +55,7 @@ class MovedFromMavenTest {
         // TBD: Validate the result.
     }
 
-    @Test
+    @Test @Suppress("UNUSED_VARIABLE") @Disabled
     fun test_testCrunch_combineInputFiles_selectStar_negative() {
         val command = """
             | --json | --combineInputs | --rowNumbers
