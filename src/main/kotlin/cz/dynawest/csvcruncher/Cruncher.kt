@@ -278,7 +278,7 @@ class Cruncher(private val options: Options2) {
                 //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
                 //executeDbCommand(sql, "Failed creating the counter variable: ");
                 // Uh oh. Variables can't be used in SELECTs.
-                System.currentTimeMillis() - TIMESTAMP_SUBSTRACT
+                System.currentTimeMillis() - TIMESTAMP_SUBTRACT
             }
             return initialNumber
         }
@@ -304,7 +304,7 @@ class Cruncher(private val options: Options2) {
             sql = "ALTER SEQUENCE crunchCounter RESTART WITH $initialNumber"
             dbHelper.executeSql(sql, "Failed altering the counter sequence: ")
 
-            // ... referencing it explicitely?
+            // ... referencing it explicitly?
             //ddl = "crunchCounter BIGINT PRIMARY KEY, ";
             // INSERT INTO output VALUES (NEXT VALUE FOR crunchCounter, ...)
             //value = "NEXT VALUE FOR crunchCounter, ";
@@ -321,7 +321,7 @@ class Cruncher(private val options: Options2) {
 
     companion object {
         const val TABLE_NAME__OUTPUT = "output"
-        const val TIMESTAMP_SUBSTRACT = 1530000000000L // To make the unique ID a smaller number.
+        const val TIMESTAMP_SUBTRACT = 1600000000000L // To make the unique ID a smaller number.
         const val FILENAME_SUFFIX_CSV = ".csv"
         const val SQL_TABLE_PLACEHOLDER = "\$table"
         const val DEFAULT_SQL = "SELECT $SQL_TABLE_PLACEHOLDER.* FROM $SQL_TABLE_PLACEHOLDER"
