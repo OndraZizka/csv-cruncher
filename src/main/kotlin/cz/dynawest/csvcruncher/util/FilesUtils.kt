@@ -151,20 +151,19 @@ object FilesUtils {
         logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:")
 
         // At this point, the group keys are the original group + _<counter>.
-        // TODO: Again, refactor this to something more sane.
+        // TODO: Refactor this to something more sane.
 
-        // Get the final concatenated file path. Currently, "-out" + _concat.
+        // Get the final concatenated file path.
         val destDir = Paths.get(options.mainOutputDir.toString() + "_" + CONCAT_WORK_SUBDIR_NAME)
+
         when (options.combineInputFiles) {
             CombineInputFiles.INTERSECT, CombineInputFiles.EXCEPT -> throw UnsupportedOperationException("INTERSECT and EXCEPT combining is not implemented yet.")
             CombineInputFiles.CONCAT -> {
                 log.debug("Concatenating input files.")
                 return concatenateFilesFromFileGroups(options, fileGroupsToCombine, destDir)
             }
-
-            CombineInputFiles.NONE -> {}
+            CombineInputFiles.NONE -> throw IllegalStateException("Input files combining is set to NONE, but the input path matched multiple files.")
         }
-        throw IllegalStateException("Did we miss some CombineInputFiles choice?")
     }
 
     /** For each path, creates an entry in a map from that path to a singleton list of that path. */
