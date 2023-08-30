@@ -78,15 +78,21 @@ Download & run
 * Download from the Maven repo or the latest [release page](https://github.com/OndraZizka/csv-cruncher/releases/latest) and unzip.
     ```bash
     ## Install...
-    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.4.1/csv-cruncher-2.4.1-dist.zip"
+    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.6.0/csv-cruncher-2.6.0.zip"
     unzip csv-cruncher-*.zip
     mv csv-cruncher-*-dist cruncher
-    ``` 
-
-* Find the script `crunch` which calls Java;
+    ```
+    
+* Example run - find the script `crunch` which calls Java;
     ```bash
     cruncher/crunch -in narcos.json -itemsAt '_embedded/episodes' -out narcos.csv -sql 'SELECT season, number, name FROM $table WHERE rating.average > 8'
     ```
+
+* Add CsvCruncher to the `PATH`, e.g. by linking it from `bin`:
+  ```bash
+  ln -s $(pwd)/cruncher/crunch ~/.local/bin/crunch
+  ```
+
     Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
     If you run `java -jar csv-cruncher-single.jar` directly, do not add `crunch`.  
     You might need to make the `crunch` script executable depending on your OS (until issue #): `chmod +x crunch`
