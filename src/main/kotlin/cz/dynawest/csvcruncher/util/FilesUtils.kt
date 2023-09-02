@@ -38,22 +38,17 @@ object FilesUtils {
         val ignoreLineMatcher = ignoreLineRegex?.matcher("")
         var headerIncluded = false
 
-        //  try(FileOutputStream resultOS = new FileOutputStream(resultFile);) {
         try {
             FileWriter(resultFile).use { resultWriter ->
                 for (pathToConcat in filesToConcat) {
-                    //try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
-                    //    IOUtils.copy(fileToConcatReader, resultOS);
                     var linesCountDown = ignoreFirstLines
                     BufferedReader(InputStreamReader(FileInputStream(pathToConcat.toFile()))).use { fileToConcatReader ->
                         var line: String?
                         while (null != fileToConcatReader.readLine().also { line = it }) {
                             linesCountDown--
-                            ///System.out.printf("LINE: h: %b lcd: %d LINE:  %s\n", headerIncluded, linesCountDown, line); //
                             if (headerIncluded && linesCountDown >= 0) continue
                             if (headerIncluded && null != ignoreLineMatcher && ignoreLineMatcher.reset(line).matches()) continue
                             headerIncluded = headerIncluded or true // Take the very first line.
-                            ///System.out.println("MADE IT...");
                             resultWriter.append(line).append("\n")
                         }
                     }
