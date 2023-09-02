@@ -1,16 +1,12 @@
 package cz.dynawest.csvcruncher.util
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.InputStream
-import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
-import java.util.jar.Attributes
-import java.util.jar.JarFile
-import java.util.jar.Manifest
 
 /**
  * Creates a logger for the containing class.
@@ -29,6 +25,12 @@ fun Any.logger(): Logger {
  * Note that this source code was auto-migrated so it's a bit ugly.
  */
 object Utils {
+
+    fun setRootLoggerLevel(logbackLevel: Level) {
+        val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+        val logger: ch.qos.logback.classic.Logger = loggerContext.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME)
+        logger.level = logbackLevel
+    }
 
     @JvmStatic
     fun resolvePathToUserDirIfRelative(path: Path): File {

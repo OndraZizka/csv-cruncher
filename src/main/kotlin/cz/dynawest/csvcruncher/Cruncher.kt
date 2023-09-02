@@ -1,6 +1,8 @@
 package cz.dynawest.csvcruncher
 
+import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import cz.dynawest.csvcruncher.app.ExportArgument
 import cz.dynawest.csvcruncher.app.Format
 import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
@@ -11,9 +13,11 @@ import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
 import cz.dynawest.csvcruncher.util.HsqlDbTableCreator.ColumnInfo
 import cz.dynawest.csvcruncher.util.JsonUtils
 import cz.dynawest.csvcruncher.util.SqlFunctions.defineSqlFunctions
+import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import java.io.IOException
@@ -209,7 +213,9 @@ class Cruncher(private val options: Options2) {
                         overwrite = options.overwrite
                     )
 
-                    // TBD: Analyze the SQL: "EXPLAIN PLAN FOR $SQL"
+                    var contentForStdout = csvOutFile
+
+                    // TBD: i109 Analyze the SQL: "EXPLAIN PLAN FOR $SQL"
 
                     // TBD: The export SELECT could reference the counter column, like "SELECT @counter, foo FROM ..."
                     // On the other hand, that's too much space for the user to screw up. Let's force it:
@@ -223,8 +229,7 @@ class Cruncher(private val options: Options2) {
 
 
                     // Now let's convert it to JSON if necessary.
-                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(
-                        Format.JSON)
+                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(Format.JSON)
                     if (convertResultToJson) {
                         var pathStr: String = csvOutFile.toPath().toString()
                         pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")
@@ -240,12 +245,28 @@ class Cruncher(private val options: Options2) {
                             )
                             if (!output.forExport.formats.contains(Format.CSV) && !options.keepWorkFiles) csvOutFile.deleteOnExit()
                         }
+
+                        contentForStdout = destJsonFile.toFile()
+                    }
+
+                    // Print the result to STDOUT.
+                    if (output.forExport.target == ExportArgument.Target.STDOUT) {
+                        contentForStdout.inputStream().use { IOUtils.copy(it, System.out) }
+                        System.out.println()
+                        if (!options.keepWorkFiles) contentForStdout.deleteOnExit()
                     }
                 }
             }
-        } catch (ex: Exception) {
+        }
+        catch (ex: CsvCruncherException) {
+            // On a known error, we will print the message, and can stop logging, to prevent repeating it in the log.
+            Utils.setRootLoggerLevel(Level.ERROR)
             throw ex
-        } finally {
+        }
+        catch (ex: Exception) {
+            throw ex
+        }
+        finally {
             log.debug(" *** SHUTDOWN CLEANUP SEQUENCE ***")
             cleanUpInputOutputTables(tablesToFiles, outputs)
             dbHelper.executeSql("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ")

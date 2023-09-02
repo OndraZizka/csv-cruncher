@@ -1,17 +1,14 @@
 package cz.dynawest.csvcruncher.app
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.LoggerContext
 import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineDirectories
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.app.OptionsEnums.SortInputPaths
+import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -264,7 +261,7 @@ object OptionsParser {
                 val name = arg.substringAfter("=").uppercase()
                 enumValueOrNull<LogLevel>(name)
                     ?.also { options.logLevel = it }
-                    ?.also { setLogLevel(it.logbackLevel) }
+                    ?.also { Utils.setRootLoggerLevel(it.logbackLevel) }
                     ?: log.error("Invalid logLevel '$name', will use the defaults. Try one of " + LogLevel.values().joinToString(", "))
             }
             else if ("--keepWorkFiles" == arg) {
@@ -305,12 +302,6 @@ object OptionsParser {
         }
 
         return options
-    }
-
-    private fun setLogLevel(logbackLevel: Level) {
-        val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
-        val logger: Logger = loggerContext.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME)
-         logger.level = logbackLevel
     }
 
     private fun logArgument(arg: String) {
