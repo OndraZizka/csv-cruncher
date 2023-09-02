@@ -1,6 +1,8 @@
 package cz.dynawest.csvcruncher
 
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import cz.dynawest.csvcruncher.app.Format
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
@@ -221,7 +223,8 @@ class Cruncher(private val options: Options2) {
 
 
                     // Now let's convert it to JSON if necessary.
-                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(Format.JSON)
+                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(
+                        Format.JSON)
                     if (convertResultToJson) {
                         var pathStr: String = csvOutFile.toPath().toString()
                         pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")

@@ -3,8 +3,8 @@ package cz.dynawest.csvcruncher.util
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
-import cz.dynawest.csvcruncher.ImportArgument
-import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.ImportArgument
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import cz.dynawest.csvcruncher.app.OptionsEnums.*
 import org.apache.commons.io.FileUtils

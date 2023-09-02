@@ -2,8 +2,6 @@ package cz.dynawest.csvcruncher.app
 
 import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.Cruncher
-import cz.dynawest.csvcruncher.LogLevel
-import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.util.logger
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
