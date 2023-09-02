@@ -14,8 +14,7 @@
     <scm>
         <url>https://github.com/OndraZizka/csv-cruncher</url>
         <developerConnection>scm:git:git@github.com:OndraZizka/csv-cruncher.git</developerConnection>
-      <tag>csv-cruncher-2.4.1</tag>
-  </scm>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
