@@ -280,36 +280,20 @@ class Cruncher(private val options: Options2) {
     }
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String, File>, outputs: List<CruncherOutputPart>) {
-        // TODO: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
+        // TBD: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
         dbHelper.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
 
         val outputTablesNames = outputs.map { outputPart -> outputPart.deriveOutputTableName() }.toSet()
         dbHelper.detachTables(outputTablesNames, "Could not delete the output table: ")
     }
 
-    // A timestamp at the beginning:
-    //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
-    //executeDbCommand(sql, "Failed creating the counter variable: ");
-    // Uh oh. Variables can't be used in SELECTs.
-
     /**
      * @return The initial number to use for unique row IDs.
      * Takes the value from options, or generates from timestamp if not set.
      */
     private val initialNumber: Long
-        get() {
-            val initialNumber: Long
-            initialNumber = if (options.initialRowNumber != -1L) {
-                options.initialRowNumber!!
-            } else {
-                // A timestamp at the beginning:
-                //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
-                //executeDbCommand(sql, "Failed creating the counter variable: ");
-                // Uh oh. Variables can't be used in SELECTs.
-                System.currentTimeMillis() - TIMESTAMP_SUBTRACT
-            }
-            return initialNumber
-        }
+        get() = options.initialRowNumber?.takeIf { it != -1L }
+            ?: System.currentTimeMillis() - TIMESTAMP_SUBTRACT
 
     /**
      * Information for the extra column used to add a unique id to each row.
