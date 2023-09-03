@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Paths
-import java.util.*
 
 /**
  * TODO: Add the verifications.
@@ -58,6 +57,32 @@ class OptionsCombinationsTest {
         assertTrue(resultCsv.exists())
 
         // TODO: Add JSON verifications.
+    }
+
+    @Test
+    fun testOutputToStdout() {
+        val command = " | --json=entries" +
+                " | --rowNumbers" +
+                " | -in |  | src/test/data/eapBuilds.csv" +
+                " | -out | -" +
+                " | -sql | SELECT CONCAT('This should appear on STDOUT. ', jobName) AS msg" +
+                "  FROM eapBuilds ORDER BY deployDur LIMIT 3"
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+
+        // If printed to stdout, the output goes to a temp file which is deleted at the end.
+        val resultCsv = Paths.get("target/testResults/testOutputToStdout.json").toFile()
+        assertTrue(!resultCsv.exists())
+    }
+
+    @Test @Disabled("CHARACTER bug - https://github.com/OndraZizka/csv-cruncher/issues/122")
+    fun regression_i122_stringReducedToCharacter() {
+        val command = " | --json=entries" +
+                " | --rowNumbers" +
+                " | -in |  | src/test/data/eapBuilds.csv" +
+                " | -out | -" +
+                " | -sql | SELECT 'This should appear on STDOUT' AS msg" +
+                "  FROM eapBuilds ORDER BY deployDur LIMIT 3"
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
     }
 
     @Test
