@@ -3,6 +3,7 @@
 package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import cz.dynawest.csvcruncher.util.FilesUtils.combineInputFiles
 import cz.dynawest.csvcruncher.util.FilesUtils.deriveNameForCombinedFile

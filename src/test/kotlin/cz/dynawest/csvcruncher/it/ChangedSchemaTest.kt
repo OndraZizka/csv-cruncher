@@ -2,7 +2,7 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
-import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import org.junit.jupiter.api.Test
 import java.util.*

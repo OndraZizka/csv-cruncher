@@ -125,7 +125,8 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
     * The columns may get indexed to speed up the `JOIN`, `WHERE` and `GROUP BY` clauses. See `-indexed ...`
 
  * `-out`
-    * Output path. If ends with `.json`, the output is JSON. 
+    * Output path. If ends with `.json`, the output is JSON.
+    * If set to `-` (minus), the result is printed to standard output ("STDOUT").
     * Currently only one output table/file is supported (the support for multiple waits for testing).
     * `-sql`
        The SQL `SELECT` to be performed.

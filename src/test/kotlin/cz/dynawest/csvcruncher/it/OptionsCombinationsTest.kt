@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Paths
-import java.util.*
 
 /**
  * TODO: Add the verifications.
@@ -27,7 +26,6 @@ class OptionsCombinationsTest {
      * FROM eapBuilds ORDER BY deployDur'
      */
     @Test
-    @Throws(Exception::class)
     fun testSimple() {
         val command = " | --rowNumbers" +
                 " | -in |  | src/test/data/eapBuilds.csv" +
@@ -46,7 +44,6 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testSimpleJson() {
         val command = " | --json=entries" +
                 " | --rowNumbers" +
@@ -63,7 +60,32 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
+    fun testOutputToStdout() {
+        val command = " | --json=entries" +
+                " | --rowNumbers" +
+                " | -in |  | src/test/data/eapBuilds.csv" +
+                " | -out | -" +
+                " | -sql | SELECT CONCAT('This should appear on STDOUT. ', jobName) AS msg" +
+                "  FROM eapBuilds ORDER BY deployDur LIMIT 3"
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+
+        // If printed to stdout, the output goes to a temp file which is deleted at the end.
+        val resultCsv = Paths.get("target/testResults/testOutputToStdout.json").toFile()
+        assertTrue(!resultCsv.exists())
+    }
+
+    @Test @Disabled("CHARACTER bug - https://github.com/OndraZizka/csv-cruncher/issues/122")
+    fun regression_i122_stringReducedToCharacter() {
+        val command = " | --json=entries" +
+                " | --rowNumbers" +
+                " | -in |  | src/test/data/eapBuilds.csv" +
+                " | -out | -" +
+                " | -sql | SELECT 'This should appear on STDOUT' AS msg" +
+                "  FROM eapBuilds ORDER BY deployDur LIMIT 3"
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+    }
+
+    @Test
     fun combineInputFile() {
         val command =  //"--json=entries" +
                 " |  --rowNumbers" +
@@ -82,7 +104,6 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun combineInputFiles_sort() {
         val command = "--json=entries" +
                 " |  --rowNumbers" +
@@ -99,7 +120,6 @@ class OptionsCombinationsTest {
 
     @Test
     @Disabled("Not yet implemented")
-    @Throws(Exception::class)
     fun combine_perRootSubDir() {
         val command = "--json=entries" +
                 " |  --rowNumbers" +
@@ -121,7 +141,6 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun combine_selectStar_negative() {
         val command = "--json | --combineInputs | --rowNumbers" +
                 " |  --exclude=.*/LOAD.*\\.csv" +
@@ -133,7 +152,6 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun combine_selectStar_qualified() {
         // cruncherCounter, Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time
         // 123456..., I,9999,950c2668-794b-4cf9-894a-af6aea5bf5d5,1000,1234567891,0,0,,2018-08-02 07:34:55.303000,2018-08-02 07:34:55.303000
@@ -155,7 +173,6 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun collab_ApolloRecGroup() {
         val command = "--json | --combineInputs" +
                 " |  --exclude=.*/LOAD.*\\.csv" +
@@ -169,7 +186,6 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun collab_SessTelPins() {
         // Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time
         // I,9999,950c2668-794b-4cf9-894a-af6aea5bf5d5,1000,1234567891,0,0,,2018-08-02 07:34:55.303000,2018-08-02 07:34:55.303000
@@ -184,14 +200,12 @@ class OptionsCombinationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testVersion() {
         val command = "-v"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
     }
 
     @Test
-    @Throws(Exception::class)
     fun testHelp() {
         val command = "-h"
         CsvCruncherTestUtils.runCruncherWithArguments(command)

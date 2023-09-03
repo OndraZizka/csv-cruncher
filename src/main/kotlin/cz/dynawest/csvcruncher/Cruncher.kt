@@ -1,6 +1,10 @@
 package cz.dynawest.csvcruncher
 
+import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import cz.dynawest.csvcruncher.app.ExportArgument
+import cz.dynawest.csvcruncher.app.Format
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
@@ -9,9 +13,11 @@ import cz.dynawest.csvcruncher.util.HsqlDbTableCreator
 import cz.dynawest.csvcruncher.util.HsqlDbTableCreator.ColumnInfo
 import cz.dynawest.csvcruncher.util.JsonUtils
 import cz.dynawest.csvcruncher.util.SqlFunctions.defineSqlFunctions
+import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.Utils.resolvePathToUserDirIfRelative
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import java.io.IOException
@@ -207,7 +213,9 @@ class Cruncher(private val options: Options2) {
                         overwrite = options.overwrite
                     )
 
-                    // TBD: Analyze the SQL: "EXPLAIN PLAN FOR $SQL"
+                    var contentForStdout = csvOutFile
+
+                    // TBD: i109 Analyze the SQL: "EXPLAIN PLAN FOR $SQL"
 
                     // TBD: The export SELECT could reference the counter column, like "SELECT @counter, foo FROM ..."
                     // On the other hand, that's too much space for the user to screw up. Let's force it:
@@ -237,12 +245,28 @@ class Cruncher(private val options: Options2) {
                             )
                             if (!output.forExport.formats.contains(Format.CSV) && !options.keepWorkFiles) csvOutFile.deleteOnExit()
                         }
+
+                        contentForStdout = destJsonFile.toFile()
+                    }
+
+                    // Print the result to STDOUT.
+                    if (output.forExport.target == ExportArgument.Target.STDOUT) {
+                        contentForStdout.inputStream().use { IOUtils.copy(it, System.out) }
+                        System.out.println()
+                        if (!options.keepWorkFiles) contentForStdout.deleteOnExit()
                     }
                 }
             }
-        } catch (ex: Exception) {
+        }
+        catch (ex: CsvCruncherException) {
+            // On a known error, we will print the message, and can stop logging, to prevent repeating it in the log.
+            Utils.setRootLoggerLevel(Level.ERROR)
             throw ex
-        } finally {
+        }
+        catch (ex: Exception) {
+            throw ex
+        }
+        finally {
             log.debug(" *** SHUTDOWN CLEANUP SEQUENCE ***")
             cleanUpInputOutputTables(tablesToFiles, outputs)
             dbHelper.executeSql("DROP SCHEMA PUBLIC CASCADE", "Failed to delete the database: ")
@@ -256,36 +280,20 @@ class Cruncher(private val options: Options2) {
     }
 
     private fun cleanUpInputOutputTables(inputTablesToFiles: Map<String, File>, outputs: List<CruncherOutputPart>) {
-        // TODO: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
+        // TBD: Implement a cleanup at start. https://github.com/OndraZizka/csv-cruncher/issues/18
         dbHelper.detachTables(inputTablesToFiles.keys, "Could not delete the input table: ")
 
         val outputTablesNames = outputs.map { outputPart -> outputPart.deriveOutputTableName() }.toSet()
         dbHelper.detachTables(outputTablesNames, "Could not delete the output table: ")
     }
 
-    // A timestamp at the beginning:
-    //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
-    //executeDbCommand(sql, "Failed creating the counter variable: ");
-    // Uh oh. Variables can't be used in SELECTs.
-
     /**
      * @return The initial number to use for unique row IDs.
      * Takes the value from options, or generates from timestamp if not set.
      */
     private val initialNumber: Long
-        get() {
-            val initialNumber: Long
-            initialNumber = if (options.initialRowNumber != -1L) {
-                options.initialRowNumber!!
-            } else {
-                // A timestamp at the beginning:
-                //sql = "DECLARE crunchCounter BIGINT DEFAULT UNIX_MILLIS() - 1530000000000";
-                //executeDbCommand(sql, "Failed creating the counter variable: ");
-                // Uh oh. Variables can't be used in SELECTs.
-                System.currentTimeMillis() - TIMESTAMP_SUBTRACT
-            }
-            return initialNumber
-        }
+        get() = options.initialRowNumber?.takeIf { it != -1L }
+            ?: System.currentTimeMillis() - TIMESTAMP_SUBTRACT
 
     /**
      * Information for the extra column used to add a unique id to each row.

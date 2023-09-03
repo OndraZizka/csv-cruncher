@@ -1,6 +1,8 @@
-package cz.dynawest.csvcruncher
+package cz.dynawest.csvcruncher.app
 
-import cz.dynawest.csvcruncher.app.OptionsEnums
+import ch.qos.logback.classic.Level
+import cz.dynawest.csvcruncher.CrucherConfigException
+import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineDirectories.COMBINE_PER_INPUT_SUBDIR
 import cz.dynawest.csvcruncher.util.logger
 import java.io.FileNotFoundException
@@ -34,12 +36,24 @@ class ImportArgument {
 
 class ExportArgument {
     var sqlQuery: String? = null
+    /** The file to export the CSV table to. May be an intermediate storage. If null, will be replaced with a temporary file path. */
     var path: Path? = null
+    var target: Target = Target.STDOUT
     var alias: String? = null
     val formats: MutableSet<Format> = mutableSetOf(Format.CSV)
 
+
     override fun toString(): String {
         return "(${alias?:"no alias"}) $formats -> $path\n\t\t\"$sqlQuery\""
+    }
+
+    enum class Target(
+        val specialOptionValue: String?,
+        val replacementPath: ((ExportArgument) -> Path)?
+    ) {
+        /** This export was explicitly requested to go to STDOUT (versus just a missing path). */
+        STDOUT("-", { exArg -> java.io.File.createTempFile("CsvCrunch-", ".csv").toPath() } ),
+        FILE(null, null),
     }
 }
 
@@ -48,7 +62,9 @@ data class InitSqlArgument (
 )
 
 enum class Format { CSV, JSON }
-enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, OFF }
+enum class LogLevel (val logbackLevel: Level) {
+    TRACE(Level.TRACE), DEBUG(Level.DEBUG), INFO(Level.INFO), WARN(Level.WARN), ERROR(Level.ERROR), OFF(Level.OFF)
+}
 
 class Options2 {
 
@@ -107,7 +123,8 @@ class Options2 {
             exportArguments.forEach { it.sqlQuery = Cruncher.DEFAULT_SQL }
         }
 
-        require(exportArguments.all { it.path != null }) { "Some exports have no path - use `-out <path>`.\n$this" }
+        //require(exportArguments.all { it.path != null }) { "Some exports have no path - use `-out <path>`.\n$this" }
+
         require(importArguments.all { it.path != null }) { "Some imports have no path - use `-in <path>`.\n$this" }
         importArguments.filter { !it.path!!.toFile().exists() }.takeIf { it.isNotEmpty() }
             ?.let { throw FileNotFoundException("Import files do not exist:"

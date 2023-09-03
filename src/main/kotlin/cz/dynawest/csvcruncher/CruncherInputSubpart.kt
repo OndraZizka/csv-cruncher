@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher
 
+import cz.dynawest.csvcruncher.app.ImportArgument
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 

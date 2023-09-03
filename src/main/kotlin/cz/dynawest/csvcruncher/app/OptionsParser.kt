@@ -1,16 +1,11 @@
 package cz.dynawest.csvcruncher.app
 
 import cz.dynawest.csvcruncher.CrucherConfigException
-import cz.dynawest.csvcruncher.ExportArgument
-import cz.dynawest.csvcruncher.Format
-import cz.dynawest.csvcruncher.ImportArgument
-import cz.dynawest.csvcruncher.InitSqlArgument
-import cz.dynawest.csvcruncher.LogLevel
-import cz.dynawest.csvcruncher.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineDirectories
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.app.OptionsEnums.SortInputPaths
+import cz.dynawest.csvcruncher.util.Utils
 import cz.dynawest.csvcruncher.util.VersionUtils
 import cz.dynawest.csvcruncher.util.logger
 import org.apache.commons.lang3.StringUtils
@@ -57,13 +52,25 @@ object OptionsParser {
             else if ("-all" == arg) {
                 next = OptionsCurrentContext.GLOBAL
             }
-            else if (!arg.startsWith("-")) {
+            else if (!arg.startsWith("-") || arg == "-") {
                 when (next) {
                     OptionsCurrentContext.IN -> {
                         currentImport.path = Path.of(arg)
                         if (currentImport.path!!.name.lowercase().endsWith(".json")) currentImport.format = Format.JSON
                     }
                     OptionsCurrentContext.OUT -> {
+                        currentExport.target = ExportArgument.Target.FILE
+
+                        // Any special treatment?
+                        for (it in ExportArgument.Target.values()) {
+                            if (arg.trim() == it.specialOptionValue) {
+                                currentExport.target = it
+                                currentExport.path = it.replacementPath?.invoke(currentExport)
+                                log.debug("Set export path to temp file: ${currentExport.path}")
+                                break
+                            }
+                        }
+
                         currentExport.path = Path.of(arg)
                         if (currentExport.path!!.name.lowercase().endsWith(".json")) {
                             currentExport.formats.clear()
@@ -254,6 +261,7 @@ object OptionsParser {
                 val name = arg.substringAfter("=").uppercase()
                 enumValueOrNull<LogLevel>(name)
                     ?.also { options.logLevel = it }
+                    ?.also { Utils.setRootLoggerLevel(it.logbackLevel) }
                     ?: log.error("Invalid logLevel '$name', will use the defaults. Try one of " + LogLevel.values().joinToString(", "))
             }
             else if ("--keepWorkFiles" == arg) {
@@ -314,7 +322,7 @@ object OptionsParser {
             val initialRowNumber = import.initialRowNumber ?: options.initialRowNumber
             initialRowNumber != null
         }
-        if (numberedImport == null) return
+            ?: return
 
         for (export in options.exportArguments) {
             if (export.sqlQuery == null) continue

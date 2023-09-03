@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher.test.params
 
-import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsParser
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test

@@ -3,8 +3,8 @@ package cz.dynawest.csvcruncher.util
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
-import cz.dynawest.csvcruncher.ImportArgument
-import cz.dynawest.csvcruncher.Options2
+import cz.dynawest.csvcruncher.app.ImportArgument
+import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import cz.dynawest.csvcruncher.app.OptionsEnums.*
 import org.apache.commons.io.FileUtils
@@ -38,22 +38,17 @@ object FilesUtils {
         val ignoreLineMatcher = ignoreLineRegex?.matcher("")
         var headerIncluded = false
 
-        //  try(FileOutputStream resultOS = new FileOutputStream(resultFile);) {
         try {
             FileWriter(resultFile).use { resultWriter ->
                 for (pathToConcat in filesToConcat) {
-                    //try (FileInputStream fileToConcatIS = new FileInputStream(pathToConcat.toFile())) {
-                    //    IOUtils.copy(fileToConcatReader, resultOS);
                     var linesCountDown = ignoreFirstLines
                     BufferedReader(InputStreamReader(FileInputStream(pathToConcat.toFile()))).use { fileToConcatReader ->
                         var line: String?
                         while (null != fileToConcatReader.readLine().also { line = it }) {
                             linesCountDown--
-                            ///System.out.printf("LINE: h: %b lcd: %d LINE:  %s\n", headerIncluded, linesCountDown, line); //
                             if (headerIncluded && linesCountDown >= 0) continue
                             if (headerIncluded && null != ignoreLineMatcher && ignoreLineMatcher.reset(line).matches()) continue
                             headerIncluded = headerIncluded or true // Take the very first line.
-                            ///System.out.println("MADE IT...");
                             resultWriter.append(line).append("\n")
                         }
                     }
