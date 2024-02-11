@@ -8,12 +8,16 @@ Releasing
 
 2) On MacOS, to prevent `gpg: signing failed: Inappropriate ioctl for device `, run:
 
-       $ export GPG_TTY=$(tty)
-
+   ```bash
+       export GPG_TTY=$(tty)
+   ```bash
+   
 3) To do the actual tag:
 
-       $ mvn release:prepare -Possrh -Prelease
-       $ mvn release:perform -Possrh -Prelease
+   ```bash
+       mvn release:prepare -Prelease  ## -Possrh removed, see pom.xml
+       mvn release:perform -Prelease  ## -Possrh removed, see pom.xml
+   ```
 
     This should include invocation of the `deploy` plugin.  
     If not, or if that fails, it's possible to stage the artifacts manually.   
