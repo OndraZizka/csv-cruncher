@@ -178,7 +178,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.2.0</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.3.2</version>
                 <!-- Delete the pre-existing DB -->
                 <executions>
                     <execution><id>clean-hsqldb-data</id><phase>pre-integration-test</phase><goals><goal>clean</goal></goals>
@@ -283,8 +283,9 @@
 
         <!-- Logging -->
         <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.9</version></dependency>
-        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.4.5</version></dependency>
-        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.4.5</version></dependency>
+
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.4.13</version></dependency>
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.4.13</version></dependency>
 
         <!-- Test deps -->
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.10.0</version><scope>test</scope></dependency>
@@ -321,7 +322,7 @@
                         <executions><execution><id>attach-sources</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.5.0</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.6.2</version>
                         <executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <!-- <plugin> <groupId>org.jetbrains.kotlin</groupId> <artifactId>kdoc-maven-plugin</artifactId> <version>${version.kotlin}</version> </plugin> -->
