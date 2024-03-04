@@ -19,10 +19,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.kotlin>1.9.10</version.kotlin>
-        <version.kotlin-dokka>1.8.20</version.kotlin-dokka>
+        <version.kotlin>1.9.22</version.kotlin>
+        <version.kotlin-dokka>1.9.22</version.kotlin-dokka>
         <version.jdk>11</version.jdk>
-        <version.jackson>2.15.2</version.jackson>
+        <version.jackson>2.16.1</version.jackson>
         <version.surefire>3.1.2</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
@@ -222,7 +222,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.11.0</version>
                 <executions>
                     <!-- Short-circuit the special treatment of default-compile executions. See https://kotlinlang.org/docs/reference/using-maven.html -->
                     <execution><id>default-compile</id><phase>none</phase></execution>
@@ -282,17 +282,23 @@
         <dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-cbor</artifactId><version>${version.jackson}</version></dependency>
 
         <!-- Logging -->
-        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.7</version></dependency>
-        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.4.13</version></dependency>
-        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.4.13</version></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.9</version></dependency>
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.4.14</version></dependency>
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.4.14</version></dependency>
 
         <!-- Test deps -->
-        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.10.0</version><scope>test</scope></dependency>
-        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><version>3.23.1</version><scope>test</scope></dependency>
-        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId><version>1.9.0</version><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.10.1</version><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><version>3.25.2</version><scope>test</scope></dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId><version>1.10.0</version><scope>test</scope></dependency>
         <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-test</artifactId><version>${version.kotlin}</version><scope>test</scope></dependency>
 
     </dependencies>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
 
     <profiles>
         <profile>
