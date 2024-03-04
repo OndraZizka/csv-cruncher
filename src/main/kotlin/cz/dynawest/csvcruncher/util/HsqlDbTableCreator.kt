@@ -9,6 +9,9 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.sql.SQLException
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
+import kotlin.random.Random
 
 class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
 
@@ -101,9 +104,24 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
         // Delete any file at the output path, if exists. Other option would be to TRUNCATE, but this is safer.
         if (!isInputTable) {
             if (csvFileToBind.exists()) {
-                if (true || overwrite) // TODO: Obey --overwrite.
-                    csvFileToBind.delete() else throw IllegalArgumentException("The output file already exists. Use --overwrite or delete: $csvFileToBind")
-            } else {
+                if (csvFileToBind.isDirectory)
+                    throw IllegalArgumentException("The output destination is an existing directory, can't overwrite: $csvFileToBind")
+
+                try {
+                    if (overwrite)
+                        csvFileToBind.delete()
+                    else {
+                        //throw IllegalArgumentException("The output file already exists. Use --overwrite or delete: $csvFileToBind")
+                        val backupName = csvFileToBind.name + ".backup-" +
+                                LocalDateTime.now().format(ISO_LOCAL_DATE_TIME) +
+                                Random.nextInt(1000).toString().padStart(3, '0')
+                        log.info("Output already exists, renaming to: $backupName")
+                        csvFileToBind.renameTo(File(backupName))
+                    }
+                }
+                catch (ex: Exception) { throw CsvCruncherException("Failed dealing with an existing file in place of the output: $csvFileToBind\n${ex.message}", ex) }
+            }
+            else {
                 try {
                     Files.createDirectories(csvFileToBind.parentFile.toPath())
                 } catch (ex: IOException) {
