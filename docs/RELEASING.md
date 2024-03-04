@@ -2,7 +2,7 @@
 Releasing
 =========
 
-1) Need the PGP key, see `gpg -K`, `gpg --export-secret-keys` and `gpg --import-secret-keys`
+1) Need the PGP key, see `gpg -K`, `gpg --export-secret-keys` and `gpg --import`.
        
        gpg: key 07838E30786B5257: public key "Ondrej Zizka (Jar signing for Maven Central) <zizka@seznam.cz>" imported
 
