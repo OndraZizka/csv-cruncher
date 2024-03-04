@@ -104,12 +104,13 @@
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.4.2</version>
                 <executions>
                     <execution>
-                        <id>assembleDistJar</id>
+                        <id>single</id> <!-- Was before MJAR-233: assembleDistJar -->
                         <goals><goal>single</goal></goals>
                         <phase>package</phase>
                         <configuration>
-                            <!-- Maven says this is read only. -->
+                            <!-- As of maven-jar-plugin 2.3.3, this is read only and has no effect.
                             <finalName>${project.artifactId}-${project.version}-single</finalName>
+                            -->
                             <archive>
                                 <manifest>
                                     <mainClass>${mainClass}</mainClass>
@@ -128,11 +129,13 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>assembleDistZip</id>
+                        <id>dist</id> <!-- assembleDistZip -->
                         <goals><goal>single</goal></goals>
                         <phase>package</phase>
                         <configuration>
+                            <!-- As of maven-jar-plugin 2.3.3, this is read only and has no effect.
                             <finalName>${project.artifactId}-${project.version}-dist</finalName>
+                            -->
                             <archive>
                                 <manifest>
                                     <mainClass>${mainClass}</mainClass>
