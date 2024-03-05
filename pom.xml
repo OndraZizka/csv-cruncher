@@ -27,7 +27,7 @@
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
-        <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single.jar</testRunCmd>
+        <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</testRunCmd>
         <skipE2E>false</skipE2E>
         <ossrh.host>oss.sonatype.org</ossrh.host>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
@@ -101,7 +101,7 @@
                    mvn install assembly:assembly
             -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.4.2</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.6.0</version>
                 <executions>
                     <execution>
                         <id>single</id> <!-- Was before MJAR-233: assembleDistJar -->
