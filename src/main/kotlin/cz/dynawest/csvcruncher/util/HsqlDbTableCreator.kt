@@ -112,9 +112,7 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
                         csvFileToBind.delete()
                     else {
                         //throw IllegalArgumentException("The output file already exists. Use --overwrite or delete: $csvFileToBind")
-                        val backupName = csvFileToBind.name + ".backup-" +
-                                LocalDateTime.now().format(ISO_LOCAL_DATE_TIME) +
-                                Random.nextInt(1000).toString().padStart(3, '0')
+                        val backupName = csvFileToBind.name + formatBackupSuffix()
                         log.info("Output already exists, renaming to: $backupName")
                         csvFileToBind.renameTo(File(backupName))
                     }
@@ -178,6 +176,10 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
             hsqlDbHelper.executeSql(sqlBind, "Failed to set CSV header: ")
         }
     }
+
+    private fun formatBackupSuffix() = ".backup-" +
+            LocalDateTime.now().format(ISO_LOCAL_DATE_TIME) + "-" +
+            Random.nextInt(1000).toString().padStart(3, '0')
 
     private fun setUpTableIndexes(tableName: String, indexedColumns: List<String>) {
         for (col in indexedColumns) {
