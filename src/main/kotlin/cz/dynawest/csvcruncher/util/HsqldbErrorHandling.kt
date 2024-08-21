@@ -17,14 +17,14 @@ object HsqldbErrorHandling {
             |  Looks like you are referring to a column that is not present in the table(s).
             |  Check the header (first line) in the CSV.
             |  Here are the tables and columns are actually available:
-            |  
+            |
             """.trimMargin()
         else """
             |  Looks like you are referring to a table that was not created.
             |  This could mean that you have a typo in the input file name,
             |  or maybe you use --combineInputs but try to use the original inputs.
             |  These tables are actually available:
-            |  
+            |
             """.trimMargin()
 
         return CsvCruncherException(
