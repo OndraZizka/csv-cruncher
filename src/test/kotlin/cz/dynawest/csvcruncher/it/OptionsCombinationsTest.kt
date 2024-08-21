@@ -89,12 +89,12 @@ class OptionsCombinationsTest {
     fun combineInputFile() {
         val command =  //"--json=entries" +
                 " |  --rowNumbers" +
-                        " |  --combineInputs" +
-                        " |  -in | src/test/data/eapBuilds.csv" +
-                        " |  -out | target/testResults/combineInputFile.csv" +
-                        " |  -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale," +
-                        "   CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
-                        "   FROM eapBuilds ORDER BY deployDur"
+                " |  --combineInputs" +
+                " |  -in | src/test/data/eapBuilds.csv" +
+                " |  -out | target/testResults/combineInputFile.csv" +
+                " |  -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale," +
+                "   CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
+                "   FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get("target/testResults/combineInputFile.csv").toFile()
         assertTrue(resultCsv.exists())
