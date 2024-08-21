@@ -190,6 +190,10 @@ class Cruncher(private val options: Options2) {
                     if (output.inputTableName != null) {
                         sql = sql.replace(SQL_TABLE_PLACEHOLDER, quote(output.inputTableName))
                     }
+                    else if (export.sqlQuery == null) {
+                        throw CsvCruncherException("Default SQL is used (no -sql set), but no single input table name " +
+                                "was determined automatically for output: $output\nTherefore the table placeholder can't be replaced.")
+                    }
 
 
                     // Create the parent dir.

@@ -87,7 +87,7 @@ class OptionsCombinationsTest {
 
     @Test
     fun combineInputFile() {
-        val command =  //"--json=entries" +
+        val command =
                 " |  --rowNumbers" +
                 " |  --combineInputs" +
                 " |  -in | src/test/data/eapBuilds.csv" +
@@ -97,6 +97,34 @@ class OptionsCombinationsTest {
                 "   FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
         val resultCsv = Paths.get("target/testResults/combineInputFile.csv").toFile()
+        assertTrue(resultCsv.exists())
+        val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
+        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
+        assertEquals(columnNames[8].lowercase(), "warmupslower")
+    }
+
+    @Test
+    fun combineInputDir_defaultSql() {
+        val command =
+                " |  -in | src/test/data/sample-multiFile-all" +
+                " |  --combineInputs" +
+                " |  -out | target/testResults/combineInputDir.csv"
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+        val resultCsv = Paths.get("target/testResults/combineInputDir.csv").toFile()
+        assertTrue(resultCsv.exists())
+        val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
+        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
+        assertEquals(columnNames[8].lowercase(), "warmupslower")
+    }
+
+    @Test
+    fun combineInputDir_JsonAndCsv_defaultSql_issue149() {
+        val command =
+                " |  -in | src/test/data/sample-multiFile-json+csv" +
+                " |  --combineInputs" +
+                " |  -out | target/testResults/combineInputDir_json+csv.csv"
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+        val resultCsv = Paths.get("target/testResults/combineInputDir_json+csv.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(columnNames.size.toLong(), 9, "Column names fit")
