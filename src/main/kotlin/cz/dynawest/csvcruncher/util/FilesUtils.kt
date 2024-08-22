@@ -29,9 +29,12 @@ object FilesUtils {
     private val log: Logger = logger()
 
     /**
-     * Concatenates given files into a file in the resultPath, named "CsvCruncherConcat.csv".
+     * Concatenates given files into a file in the resultPath.
      * If some of the input files does not end with a new line, it is appended after that file.
      * @return The path to the created file.
+     *
+     * TODO i146: This will need to take the columns into account.
+     *            It could use HSQLDB and UNION, or read as CSV and align the columns.
      */
     fun concatFiles(filesToConcat: List<Path>, resultPath: Path, ignoreFirstLines: Int, ignoreLineRegex: Pattern?): Path {
         val resultFile = resultPath.toFile()
@@ -139,7 +142,7 @@ object FilesUtils {
         // Split into subgroups by column names in the CSV header.
         @Suppress("NAME_SHADOWING")
         var fileGroupsToCombine = fileGroupsToCombine
-        fileGroupsToCombine = splitToSubgroupsPerSameHeaders(fileGroupsToCombine).fileGroupsToCombine
+        fileGroupsToCombine = splitToSubgroupsPerSameHeaders(fileGroupsToCombine, options).fileGroupsToCombine
         logFileGroups(fileGroupsToCombine, Level.DEBUG, "File groups split per header structure:")
 
         // At this point, the group keys are the original group + _<counter>.
@@ -175,7 +178,7 @@ object FilesUtils {
 
         log("--- $label ---")
         for ((key, value) in fileGroupsToConcat) {
-            val msg = """\n * Path: $key: ${value.stream().map { path: Path -> "\n\t- $path" }.collect(Collectors.joining())}"""
+            val msg = "\n * Path: $key: ${value.stream().map { path: Path -> "\n\t- $path" }.collect(Collectors.joining())}"
             log(msg)
         }
     }
@@ -294,7 +297,7 @@ object FilesUtils {
      * @return A map with one entry per group, containing the files in the original order, but split per CSV header structure.
     </original> */
     @Throws(IOException::class)
-    private fun splitToSubgroupsPerSameHeaders(fileGroupsToConcat: Map<Path?, List<Path>>): FileGroupsSplitBySchemaResult {
+    private fun splitToSubgroupsPerSameHeaders(fileGroupsToConcat: Map<Path?, List<Path>>, options: Options2): FileGroupsSplitBySchemaResult {
         // TODO: Record information about what groups were splitted and to what subgroups.
         val fileGroupsToConcat2: MutableMap<Path?, List<Path>> = LinkedHashMap()
         val splittedGroupsInfo_oldGroupToNewGroups: MutableMap<Path?, MutableList<Path>> = LinkedHashMap()
@@ -305,12 +308,39 @@ object FilesUtils {
             // Check if all files have the same columns header.
             val subGroups_headerStructureToFiles: MutableMap<List<String>, MutableList<Path>> = LinkedHashMap()
             for (fileToConcat in value) {
-                val headers = parseColumnsFromFirstCsvLine(fileToConcat.toFile())
+                var headers: List<String> = parseColumnsFromFirstCsvLine(fileToConcat.toFile())
+                log.debug("Headers as in the file:  ${headers.size}  $headers")
+
+                if (options.combineInputFiles_headersAnyOrder)
+                    headers = headers.sorted()
+
+                if (options.combineInputFiles_headersCaseInsensitive)
+                    headers = headers.map { it.lowercase() }
+
+                // TODO: i149 Allow the columns to be different between files (useful for JSON imports)
+                if (options.combineInputFiles_minimumCommonColumns != -1) {
+                    // If mixing columns is allowed, and the new file has that many overlaps, consider them as the same group.
+
+                    // This won't work great because it depends on the order in which the files come.
+                    // A proper solution would need a 1st pass to collect all columns.
+                    // Also, the concatenation in concatenateFilesFromFileGroups() is literally concatenating lines;
+                    // it would need to handle the columns oder and missing columns.
+                    // At which point the concatenation might be better done at the SQL level with UNION?
+                    subGroups_headerStructureToFiles.keys.firstOrNull() {
+                        it.toSet().intersect(headers).size >= options.combineInputFiles_minimumCommonColumns
+                    }
+                        ?.let { headers = (headers + it).toSet().sorted() }
+                }
+                log.debug("Headers normalized:  ${headers.size}  $headers")
+
                 subGroups_headerStructureToFiles.computeIfAbsent(headers) { ArrayList() }.add(fileToConcat)
             }
+
             if (subGroups_headerStructureToFiles.size == 1) {
+                // All are the same.
                 fileGroupsToConcat2[originalGroupPath] = value
-            } else {
+            }
+            else {
                 // Replaces the original group with few subgroups, with paths suffixed with counter: originalPath_1, originalPath_2, ...
                 var counter = 1
                 for (filesWithSameHeaders in subGroups_headerStructureToFiles.values) {
@@ -327,10 +357,10 @@ object FilesUtils {
     }
 
     /**
-     * @param options Used to filter the files, like "skip 1st line" or regex line matches.
+     * @param options            Used to filter the files, like "skip 1st line" or regex line matches.
      * @param fileGroupsToConcat Mapping from file group "key" (original group path + counter suffix) to the list of files to be concatenated.
-     * @param tmpConcatDir  A directory where the concatenation results shoul go.
-     * @return Mapping from the resulting concatenated file to the files that were concatenated.
+     * @param tmpConcatDir       A directory where the concatenation results shoul go.
+     * @return                   Mapping from the resulting concatenated file to the files that were concatenated.
      */
     @Throws(IOException::class)
     private fun concatenateFilesFromFileGroups(options: Options2, fileGroupsToConcat: Map<Path?, List<Path>>, tmpConcatDir: Path): List<CruncherInputSubpart> {

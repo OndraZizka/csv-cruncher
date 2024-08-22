@@ -98,6 +98,9 @@ class Options2 {
     var initialRowNumber: Long? = null
     var sortInputFileGroups = OptionsEnums.SortInputPaths.ALPHA
     var combineInputFiles = OptionsEnums.CombineInputFiles.NONE
+    var combineInputFiles_headersAnyOrder = true
+    var combineInputFiles_headersCaseInsensitive = true
+    var combineInputFiles_minimumCommonColumns = 3
     var jsonExportFormat = OptionsEnums.JsonExportFormat.NONE
 
     val isFilled: Boolean
