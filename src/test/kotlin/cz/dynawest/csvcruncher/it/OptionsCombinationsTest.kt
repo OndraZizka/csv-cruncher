@@ -116,6 +116,18 @@ class OptionsCombinationsTest {
         assertIterableEquals("Op,recording_group_id,status,storage_base_url,owner_id,room_id,session_id,requested_ts,created_ts,deleted_ts,updated_ts,is_deleted,acc_consumer_id".split(","), columnNames)
     }
 
+    /**
+     * Fails because of:
+     * $table placeholder not replaced when dir input with non-canonical JSONs is used. #149
+     * https://github.com/OndraZizka/csv-cruncher/issues/149
+     *
+     * Fails in extractColumnsInfoFrom1LineSelect()
+     * when querying
+     * SQL: SELECT $table.* FROM $table LIMIT 1
+     *
+     * The solution is not trivial, it needs to determine the output columns, using some merging of common columns,
+     * probably utilizing SQL's NATURAL JOIN to reuse the same-named columns.
+     */
     @Test
     fun combineInputDir_JsonAndCsv_defaultSql_issue149(testInfo: TestInfo) {
         val command =

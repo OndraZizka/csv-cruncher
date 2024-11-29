@@ -98,7 +98,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
         }
         catch (ex: SQLSyntaxErrorException) {
             if (ex.message!!.contains("object not found:")) {
-                throw throwHintForObjectNotFound(ex, this)
+                throw throwHintForObjectNotFound(ex, this, sql)
             }
             throw CsvCruncherException("""
                 |    Seems your SQL contains errors:

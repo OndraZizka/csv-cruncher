@@ -10,7 +10,7 @@ object HsqldbErrorHandling {
     /**
      * Analyzes the exception against the given DB connection and rethrows an exception with a message containing the available objects as a hint.
      */
-    fun throwHintForObjectNotFound(ex: SQLSyntaxErrorException, helper: HsqlDbHelper): CsvCruncherException {
+    fun throwHintForObjectNotFound(ex: SQLSyntaxErrorException, helper: HsqlDbHelper, sql: String): CsvCruncherException {
         val notFoundIsColumn = analyzeWhatWasNotFound(ex.message!!)
         val tableNames = helper.formatListOfAvailableTables(notFoundIsColumn)
         val hintMsg = if (notFoundIsColumn) """
@@ -23,6 +23,8 @@ object HsqldbErrorHandling {
             |  Looks like you are referring to a table that was not created.
             |  This could mean that you have a typo in the input file name,
             |  or maybe you use --combineInputs but try to use the original inputs.
+            |  Or it is this known bug: https://github.com/OndraZizka/csv-cruncher/issues/149
+            |  SQL: $sql
             |  These tables are actually available:
             |
             """.trimMargin()
