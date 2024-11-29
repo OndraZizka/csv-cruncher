@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher
 
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import cz.dynawest.csvcruncher.app.App
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
@@ -111,6 +112,6 @@ object CsvCruncherTestUtils {
 }
 
 
-fun TestInfo.defaultCsvOutputPath() = "target/testResults/${testClass.get().simpleName}_${testMethod.get().name}.csv".let { Path.of(it) }
+fun TestInfo.defaultCsvOutputPath() = "$testOutputDir/${testClass.get().simpleName}_${testMethod.get().name}.csv".let { Path.of(it) }
 
-fun TestInfo.defaultJsonOutputPath() = "target/testResults/${testClass.get().simpleName}_${testMethod.get().name}.json".let { Path.of(it) }
+fun TestInfo.defaultJsonOutputPath() = "$testOutputDir/${testClass.get().simpleName}_${testMethod.get().name}.json".let { Path.of(it) }

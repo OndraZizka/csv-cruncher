@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -24,7 +25,7 @@ class BooleanColumnDetectionTest {
     @Test
     @Throws(Exception::class)
     fun testBooleanColumns(testInfo: TestInfo) {
-        val outputDir = Paths.get("target/testResults/testBooleanColumns.csv")
+        val outputDir = Paths.get("$testOutputDir/testBooleanColumns.csv")
         outputDir.deleteIfExists()
 
         val command = "--json" +
@@ -72,7 +73,7 @@ class BooleanColumnDetectionTest {
     @Test @Disabled
     @Throws(Exception::class)
     fun invalidCombination_noSqlWithoutPerTableQuery(testInfo: TestInfo) {
-        val outputDir = Paths.get("target/testResults/testBooleanColumns.csv")
+        val outputDir = Paths.get("$testOutputDir/testBooleanColumns.csv")
         val command = "--json" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
                 " | -out | " + outputDir

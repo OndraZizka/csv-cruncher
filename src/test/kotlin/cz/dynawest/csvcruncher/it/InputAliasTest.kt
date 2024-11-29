@@ -3,6 +3,7 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.CsvCruncherException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -14,7 +15,7 @@ import kotlin.io.path.deleteIfExists
 
 class InputAliasTest {
 
-    val outputPath = Paths.get("target/testResults/testInputAliasing.csv")
+    val outputPath = Paths.get("$testOutputDir/testInputAliasing.csv")
 
     @BeforeEach @AfterEach
     fun cleanup(){
@@ -32,7 +33,7 @@ class InputAliasTest {
     @Test
     fun testInputAliasing_wrongNameInSql(testInfo: TestInfo) {
         val inPath = Paths.get("$testDataDir/eapBuilds.csv")
-        val outputPath = Paths.get("target/testResults/testInputAliasing.csv")
+        val outputPath = Paths.get("$testOutputDir/testInputAliasing.csv")
 
         assertThrows<CsvCruncherException> {
             val command = """-in | $inPath | -as | foo | -out | $outputPath | -sql | SELECT * FROM bar"""

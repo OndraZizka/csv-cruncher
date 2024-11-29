@@ -3,6 +3,7 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -20,7 +21,7 @@ class QueryPerInputSubpartTest {
 
     @Test
     fun queryPerInputSubpart(testInfo: TestInfo) {
-        val outputDir = Paths.get("target/testResults/queryPerInputSubpart.csv")
+        val outputDir = Paths.get("$testOutputDir/queryPerInputSubpart.csv")
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
                 " | -out | " + outputDir +
@@ -33,7 +34,7 @@ class QueryPerInputSubpartTest {
     @Test
     @Throws(Exception::class)
     fun queryPerInputSubpart_defaultSQL(testInfo: TestInfo) {
-        val outputDir = Paths.get("target/testResults/queryPerInputSubpart_defaultSQL.csv")
+        val outputDir = Paths.get("$testOutputDir/queryPerInputSubpart_defaultSQL.csv")
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
                 " | -out | " + outputDir
@@ -47,7 +48,7 @@ class QueryPerInputSubpartTest {
     fun queryPerInputSubpart_negative(testInfo: TestInfo) {
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
-                " | -out | target/testResults/queryPerInputSubpart_negative.csv" +
+                " | -out | $testOutputDir/queryPerInputSubpart_negative.csv" +
                 " | -sql | SELECT oauth_consumer.* FROM oauth_consumer"
         try {
             CsvCruncherTestUtils.runCruncherWithArguments(command)

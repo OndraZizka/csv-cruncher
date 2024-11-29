@@ -3,6 +3,7 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertIterableEquals
@@ -23,13 +24,13 @@ class OptionsCombinationsTest {
     fun testSimple(testInfo: TestInfo) {
         val command = " | --rowNumbers" +
                 " | -in  | $testDataDir/eapBuilds.csv" +
-                " | -out | target/testResults/testSimple.csv" +
+                " | -out | $testOutputDir/testSimple.csv" +
                 " | -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale," +
                 "  CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "  FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        val resultCsv = Paths.get("target/testResults/testSimple.csv").toFile()
+        val resultCsv = Paths.get("$testOutputDir/testSimple.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(9, columnNames.size.toLong(), "Column names fit")
@@ -43,13 +44,13 @@ class OptionsCombinationsTest {
         val command = " | --json=entries" +
                 " | --rowNumbers" +
                 " | -in  | $testDataDir/eapBuilds.csv" +
-                " | -out | target/testResults/testSimple.csv" +
+                " | -out | $testOutputDir/testSimple.csv" +
                 " | -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale," +
                 "  CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "  FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        val resultCsv = Paths.get("target/testResults/testSimple.json").toFile()
+        val resultCsv = Paths.get("$testOutputDir/testSimple.json").toFile()
         assertTrue(resultCsv.exists())
 
         // TODO: Add JSON verifications.
@@ -66,7 +67,7 @@ class OptionsCombinationsTest {
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         // If printed to stdout, the output goes to a temp file which is deleted at the end.
-        val resultCsv = Paths.get("target/testResults/testOutputToStdout.json").toFile()
+        val resultCsv = Paths.get("$testOutputDir/testOutputToStdout.json").toFile()
         assertTrue(!resultCsv.exists())
     }
 
@@ -87,13 +88,13 @@ class OptionsCombinationsTest {
                 " | --rowNumbers" +
                 " | --combineInputs" +
                 " | -in  | $testDataDir/eapBuilds.csv" +
-                " | -out | target/testResults/combineInputFile.csv" +
+                " | -out | $testOutputDir/combineInputFile.csv" +
                 " | -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale," +
                 "   CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "   FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        val resultCsv = Paths.get("target/testResults/combineInputFile.csv").toFile()
+        val resultCsv = Paths.get("$testOutputDir/combineInputFile.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(9, columnNames.size.toLong(), "Column names fit")
@@ -105,10 +106,10 @@ class OptionsCombinationsTest {
         val command =
                 " | -in  | $testDataDir/sample-multiFile-all" +
                 " | --combineInputs" +
-                " | -out | target/testResults/combineInputDir.csv"
+                " | -out | $testOutputDir/combineInputDir.csv"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        val resultCsv = Paths.get("target/testResults/combineInputDir.csv").toFile()
+        val resultCsv = Paths.get("$testOutputDir/combineInputDir.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(13, columnNames.size.toLong()) { "Column names fit: $columnNames" }
@@ -120,10 +121,10 @@ class OptionsCombinationsTest {
         val command =
                 " | -in  | $testDataDir/sample-multiFile-json+csv" +
                 " | --combineInputs" +
-                " | -out | target/testResults/combineInputDir_json+csv.csv"
+                " | -out | $testOutputDir/combineInputDir_json+csv.csv"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        val resultCsv = Paths.get("target/testResults/combineInputDir_json+csv.csv").toFile()
+        val resultCsv = Paths.get("$testOutputDir/combineInputDir_json+csv.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(9, columnNames.size.toLong(), "Column names fit")
@@ -138,10 +139,10 @@ class OptionsCombinationsTest {
                 " | --combineDirs=all" +
                 " | --sortInputFileGroups" +
                 " | -in  | $testDataDir/sample-multiFile-all" +
-                " | -out | target/testResults/combineInputFiles_sort.csv | --overwrite" +
+                " | -out | $testOutputDir/combineInputFiles_sort.csv | --overwrite" +
                 " | -sql | SELECT sample_multifile_all.* FROM sample_multifile_all"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
-        val csvFile = Paths.get("target/testResults/combineInputFiles_sort.csv").toFile()
+        val csvFile = Paths.get("$testOutputDir/combineInputFiles_sort.csv").toFile()
         CsvCruncherTestUtils.checkThatIdsAreIncrementing(listOf(csvFile), 3, true)
     }
 
@@ -154,12 +155,12 @@ class OptionsCombinationsTest {
                 " | --combineDirs=perInputSubdir" +
                 " | --exclude=.*/LOAD.*\\.csv" +
                 " | -in  | $testDataDir/sample-collab/" +
-                " | -out | target/testResults/combine_perRootSubDir.csv" +
+                " | -out | $testOutputDir/combine_perRootSubDir.csv" +
                 " | -sql | SELECT session_uid, name, session_type, created_time, modified_date" +
                 "    FROM concat ORDER BY session_type, created_time DESC"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        val resultCsv = Paths.get("target/testResults/combine_perRootSubDir.csv").toFile()
+        val resultCsv = Paths.get("$testOutputDir/combine_perRootSubDir.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
         assertEquals(5, columnNames.size.toLong(), "Column names fit")
@@ -173,7 +174,7 @@ class OptionsCombinationsTest {
         val command = "--json | --combineInputs | --rowNumbers" +
                 " | --exclude=.*/LOAD.*\\.csv" +
                 " | -in  | $testDataDir/sampleMultiFilesPerDir/session_telephony_pins/" +
-                " | -out | target/testResults/session_telephony_pins.csv" +
+                " | -out | $testOutputDir/session_telephony_pins.csv" +
                 " | -sql | SELECT * FROM session_telephony_pins"
 
         assertThrows<CrucherConfigException> { CsvCruncherTestUtils.runCruncherWithArguments(command) }
@@ -183,7 +184,7 @@ class OptionsCombinationsTest {
     fun combine_selectStar_qualified(testInfo: TestInfo) {
         // cruncherCounter, Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time
         // 123456..., I,9999,950c2668-794b-4cf9-894a-af6aea5bf5d5,1000,1234567891,0,0,,2018-08-02 07:34:55.303000,2018-08-02 07:34:55.303000
-        val inputCsv = "target/testResults/combine_selectStar_qualified.csv"
+        val inputCsv = "$testOutputDir/combine_selectStar_qualified.csv"
         val command = "--json | --combineInputs | --rowNumbers" +
                 " | --exclude=.*/LOAD.*\\.csv" +
                 " | -in  | $testDataDir/sampleMultiFilesPerDir/session_telephony_pins/" +
@@ -206,7 +207,7 @@ class OptionsCombinationsTest {
         val command = "--json | --combineInputs" +
                 " | --exclude=.*/LOAD.*\\.csv" +
                 " | -in  | $testDataDir/sample-collab/apollo_recording_group/" +
-                " | -out | target/testResults/apollo_recording_group.csv" +
+                " | -out | $testOutputDir/apollo_recording_group.csv" +
                 " | -sql | SELECT * FROM apollo_recording_group"
 
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -221,7 +222,7 @@ class OptionsCombinationsTest {
         val command = "--json | --combineInputs" +
                 " | --exclude=.*/LOAD.*\\.csv" +
                 " | -in  | $testDataDir/sample-collab/session_telephony_pins/" +
-                " | -out | target/testResults/session_telephony_pins.csv" +
+                " | -out | $testOutputDir/session_telephony_pins.csv" +
                 " | -sql | SELECT * FROM session_telephony_pins"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 

@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
@@ -14,7 +15,7 @@ class MovedFromMavenTest {
             | --json=entries
             | --rowNumbers
             | -in  | $testDataDir/eapBuilds.csv
-            | -out | target/testResults/result.csv
+            | -out | $testOutputDir/result.csv
             | -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
             CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
             FROM eapBuilds ORDER BY deployDur
@@ -30,7 +31,7 @@ class MovedFromMavenTest {
             | --rowNumbers
             | --combineInputs
             | -in  | $testDataDir/eapBuilds.csv
-            | -out | target/testResults/result.csv
+            | -out | $testOutputDir/result.csv
             | -sql | SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
                         CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
                         FROM eapBuilds ORDER BY deployDur
@@ -49,7 +50,7 @@ class MovedFromMavenTest {
             | --combineDirs=all
             | --exclude=.*/LOAD.*\.csv
             | -in  | $testDataDir/sampleMultiFilesPerDir/apollo_session/
-            | -out | target/testResults/result.csv
+            | -out | $testOutputDir/result.csv
             | -sql | SELECT session_uid, name, session_type, created_time, modified_date
                         FROM concat ORDER BY session_type, created_time DESC
         """
@@ -63,7 +64,7 @@ class MovedFromMavenTest {
             | --json | --combineInputs | --rowNumbers
             | --exclude=.*/LOAD.*\.csv
             | -in  | $testDataDir/sampleMultiFilesPerDir/session_telephony_pins/
-            | -out | target/testResults/session_telephony_pins.csv
+            | -out | $testOutputDir/session_telephony_pins.csv
             | -sql | SELECT * FROM session_telephony_pins
         """
         // Suppress output. This will fail because the input files don't match.
@@ -76,7 +77,7 @@ class MovedFromMavenTest {
             | --json | --combineInputs | --rowNumbers
             | --exclude=.*/LOAD.*\.csv
             | -in  | $testDataDir/sampleMultiFilesPerDir/session_telephony_pins/
-            | -out | target/testResults/session_telephony_pins.csv
+            | -out | $testOutputDir/session_telephony_pins.csv
             | -sql | SELECT session_telephony_pins.* FROM session_telephony_pins
         """
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -89,7 +90,7 @@ class MovedFromMavenTest {
             | --json | --combineInputs
             | --exclude=.*/LOAD.*\.csv
             | -in  | $testDataDir/sample-collab/apollo_recording_group/
-            | -out | target/testResults/apollo_recording_group.csv
+            | -out | $testOutputDir/apollo_recording_group.csv
             | -sql | SELECT * FROM apollo_recording_group
         """
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -102,7 +103,7 @@ class MovedFromMavenTest {
             | --json | --combineInputs
             | --exclude=.*/LOAD.*\.csv
             | -in  | $testDataDir/sample-collab/session_telephony_pins/
-            | -out | target/testResults/session_telephony_pins.csv
+            | -out | $testOutputDir/session_telephony_pins.csv
             | -sql | SELECT * FROM session_telephony_pins
         """
         CsvCruncherTestUtils.runCruncherWithArguments(command)
