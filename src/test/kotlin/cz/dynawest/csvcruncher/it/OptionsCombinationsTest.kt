@@ -34,11 +34,12 @@ class OptionsCombinationsTest {
                 "  CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "  FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get("target/testResults/testSimple.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
-        assertEquals(columnNames[8].lowercase(), "warmupslower")
+        assertEquals(9, columnNames.size.toLong(), "Column names fit")
+        assertEquals("warmupslower", columnNames[8].lowercase())
 
         // TODO: Add content verifications.
     }
@@ -53,6 +54,7 @@ class OptionsCombinationsTest {
                 "  CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "  FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get("target/testResults/testSimple.json").toFile()
         assertTrue(resultCsv.exists())
 
@@ -96,11 +98,12 @@ class OptionsCombinationsTest {
                 "   CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower" +
                 "   FROM eapBuilds ORDER BY deployDur"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get("target/testResults/combineInputFile.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
-        assertEquals(columnNames[8].lowercase(), "warmupslower")
+        assertEquals(9, columnNames.size.toLong(), "Column names fit")
+        assertEquals("warmupslower", columnNames[8].lowercase())
     }
 
     @Test
@@ -110,11 +113,12 @@ class OptionsCombinationsTest {
                 " |  --combineInputs" +
                 " |  -out | target/testResults/combineInputDir.csv"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get("target/testResults/combineInputDir.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
-        assertEquals(columnNames[8].lowercase(), "warmupslower")
+        assertEquals(9, columnNames.size.toLong(), "Column names fit")
+        assertEquals("warmupslower", columnNames[8].lowercase())
     }
 
     @Test
@@ -124,11 +128,12 @@ class OptionsCombinationsTest {
                 " |  --combineInputs" +
                 " |  -out | target/testResults/combineInputDir_json+csv.csv"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get("target/testResults/combineInputDir_json+csv.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(columnNames.size.toLong(), 9, "Column names fit")
-        assertEquals(columnNames[8].lowercase(), "warmupslower")
+        assertEquals(9, columnNames.size.toLong(), "Column names fit")
+        assertEquals("warmupslower", columnNames[8].lowercase())
     }
 
     @Test
@@ -159,11 +164,12 @@ class OptionsCombinationsTest {
                 " |  -sql | SELECT session_uid, name, session_type, created_time, modified_date" +
                 "    FROM concat ORDER BY session_type, created_time DESC"
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get("target/testResults/combine_perRootSubDir.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(columnNames.size.toLong(), 5, "Column names fit")
-        assertEquals(columnNames[4].lowercase(), "modified_date")
+        assertEquals(5, columnNames.size.toLong(), "Column names fit")
+        assertEquals("modified_date", columnNames[4].lowercase())
 
         // TODO: Add content verifications.
     }
@@ -191,11 +197,12 @@ class OptionsCombinationsTest {
                 " |  -sql | SELECT session_telephony_pins.* FROM session_telephony_pins"
 
         CsvCruncherTestUtils.runCruncherWithArguments(command)
+
         val resultCsv = Paths.get(inputCsv).toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(columnNames.size.toLong(), 10, "Column names fit")
-        assertEquals(columnNames[9].lowercase(), "modified_time")
+        assertEquals(10, columnNames.size.toLong(), "Column names fit")
+        assertEquals("modified_time", columnNames[9].lowercase())
         val shouldBeNull = CsvCruncherTestUtils.getCsvCellValue(resultCsv, 1, 8)
         assertEquals(null, shouldBeNull, "row 1, col 9 should be null")
     }
