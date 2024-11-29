@@ -5,6 +5,7 @@ import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertIterableEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
@@ -110,8 +111,8 @@ class OptionsCombinationsTest {
         val resultCsv = Paths.get("target/testResults/combineInputDir.csv").toFile()
         assertTrue(resultCsv.exists())
         val columnNames = parseColumnsFromFirstCsvLine(resultCsv)
-        assertEquals(9, columnNames.size.toLong(), "Column names fit")
-        assertEquals("warmupslower", columnNames[8].lowercase())
+        assertEquals(13, columnNames.size.toLong()) { "Column names fit: $columnNames" }
+        assertIterableEquals("Op,recording_group_id,status,storage_base_url,owner_id,room_id,session_id,requested_ts,created_ts,deleted_ts,updated_ts,is_deleted,acc_consumer_id".split(","), columnNames)
     }
 
     @Test
