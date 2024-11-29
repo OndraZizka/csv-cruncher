@@ -1,9 +1,12 @@
 package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -17,12 +20,12 @@ import kotlin.io.path.deleteIfExists
  */
 class BooleanColumnDetectionTest {
 
-    private var inPath: Path = Paths.get("src/test/data/boolTable.csv")
+    private var inPath: Path = Paths.get("$testDataDir/boolTable.csv")
 
     @Test
     @Throws(Exception::class)
-    fun testBooleanColumns() {
-        val outputDir = Paths.get("target/testResults/testBooleanColumns.csv")
+    fun testBooleanColumns(testInfo: TestInfo) {
+        val outputDir = Paths.get("$testOutputDir/testBooleanColumns.csv")
         outputDir.deleteIfExists()
 
         val command = "--json" +
@@ -69,8 +72,8 @@ class BooleanColumnDetectionTest {
 
     @Test @Disabled
     @Throws(Exception::class)
-    fun invalidCombination_noSqlWithoutPerTableQuery() {
-        val outputDir = Paths.get("target/testResults/testBooleanColumns.csv")
+    fun invalidCombination_noSqlWithoutPerTableQuery(testInfo: TestInfo) {
+        val outputDir = Paths.get("$testOutputDir/testBooleanColumns.csv")
         val command = "--json" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
                 " | -out | " + outputDir

@@ -6,11 +6,12 @@ import cz.dynawest.csvcruncher.test.json.JsonTestUtils.prepareEntriesFromFile
 import cz.dynawest.csvcruncher.util.logger
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
 class JsonFileTabularizerTest {
 
     @Test
-    fun testConvertJson_01_arrayAtRoot_sameProperties() {
+    fun testConvertJson_01_arrayAtRoot_sameProperties(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/01-arrayAtRoot-sameProperties.json", "/")
 
         Assertions.assertThat(entries).size().isEqualTo(3)
@@ -21,7 +22,7 @@ class JsonFileTabularizerTest {
     }
 
     @Test
-    fun `testConvertJson_02-arrayAtRoot-propertiesMissing`() {
+    fun `testConvertJson_02-arrayAtRoot-propertiesMissing`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/02-arrayAtRoot-propertiesMissing.json", "/")
 
         Assertions.assertThat(entries).size().isEqualTo(3)
@@ -34,7 +35,7 @@ class JsonFileTabularizerTest {
     }
 
     @Test
-    fun `testConvertJson_03-arrayAtRoot-varyingProperties`() {
+    fun `testConvertJson_03-arrayAtRoot-varyingProperties`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/03-arrayAtRoot-varyingProperties.json", "/")
 
         Assertions.assertThat(entries).size().isEqualTo(3)
@@ -50,7 +51,7 @@ class JsonFileTabularizerTest {
     }
 
     @Test
-    fun `testConvertJson_04-arrayAtRoot-differentTypes`() {
+    fun `testConvertJson_04-arrayAtRoot-differentTypes`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/04-arrayAtRoot-differentTypes.json", "/")
 
         Assertions.assertThat(entries).size().isEqualTo(5)
@@ -63,7 +64,7 @@ class JsonFileTabularizerTest {
     }
 
     @Test
-    fun `testConvertJson_10-arrayAtRoot-nestedObject`() {
+    fun `testConvertJson_10-arrayAtRoot-nestedObject`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/10-arrayAtRoot-nestedObject.json", "/")
 
         Assertions.assertThat(entries).size().isEqualTo(3)
@@ -79,7 +80,7 @@ class JsonFileTabularizerTest {
 
 
     @Test
-    fun `testConvertJson_11-arrayAtRoot-nestedArray`() {
+    fun `testConvertJson_11-arrayAtRoot-nestedArray`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/11-arrayAtRoot-nestedArray.json", "/")
 
         Assertions.assertThat(entries).size().isEqualTo(3)
@@ -94,7 +95,7 @@ class JsonFileTabularizerTest {
     }
 
     @Test
-    fun `testConvertJson_12-arrayInObject-sameProperties`() {
+    fun `testConvertJson_12-arrayInObject-sameProperties`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("data/basic/12-arrayInObject-sameProperties.json", "/items")
 
         Assertions.assertThat(entries).size().isEqualTo(3)
@@ -105,7 +106,7 @@ class JsonFileTabularizerTest {
     }
 
     @Test
-    fun `testConvertJson_21_redditAll`() {
+    fun `testConvertJson_21_redditAll`(testInfo: TestInfo) {
         val entries = prepareEntriesFromFile("$testDataDir/json/redditAll.json", "/data/children")
 
         Assertions.assertThat(entries).size().isEqualTo(25)

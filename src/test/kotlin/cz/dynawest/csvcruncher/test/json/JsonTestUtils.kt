@@ -25,16 +25,15 @@ object JsonTestUtils {
         val entries = mutableListOf<Map<String, CrunchProperty>>()
         converter.visitEntries(inputStream, Path.of(itemsArraySprout), object : EntryProcessor {
             override fun processEntry(entry: FlattenedEntrySequence) {
-                val flattenedPropsByName = entry.flattenedProperties.associateBy { myProp -> myProp.name }
+                val flattenedPropsByName: Map<String, CrunchProperty> = entry.flattenedProperties.associateBy { myProp -> myProp.name }
                 entries.add(flattenedPropsByName)
-                log.info("Entry (10 of ${flattenedPropsByName.size}:" + flattenedPropsByName.entries.take(10).map {"\n    ${it.key} = ${it.value}"})
+
+                val countHint = if (flattenedPropsByName.size <= 10) "" else " (10 of ${flattenedPropsByName.size})"
+                log.info("Entry$countHint:" + flattenedPropsByName.entries.take(10).map {"${it.key} = ${it.value.toCsvString()}"})
             }
         })
         return entries
     }
 
-
     private val log = logger()
-
-    val PROJECT_ROOT_TOKEN = "{project}"
 }

@@ -2,7 +2,6 @@ package cz.dynawest.csvcruncher.app
 
 import org.apache.commons.lang3.EnumUtils
 import java.util.*
-import java.util.function.Function
 import java.util.stream.Collectors
 
 class OptionsEnums {
@@ -56,10 +55,9 @@ class OptionsEnums {
         companion object {
             const val PARAM_NAME = "combineInputs"
             val optionValues: List<String>
-                get() = EnumUtils.getEnumList(CombineInputFiles::class.java).stream()
-                    .map(Function<CombineInputFiles, String> { it.optionValue })
-                    .filter { obj: String? -> Objects.nonNull(obj) }
-                    .collect(Collectors.toList())
+                get() = EnumUtils.getEnumList(CombineInputFiles::class.java)
+                    .map { it.optionValue }
+                    .filterNotNull()
         }
     }
 

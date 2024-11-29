@@ -4,13 +4,14 @@ import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsParser
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 
 class ParamsParsingTest {
 
-    @Test fun paramsParsing_singleImport() {
+    @Test fun paramsParsing_singleImport(testInfo: TestInfo) {
 
-        val opt = parseTestOptions("""-in |  input/path | -itemsAt | /data/children | -out | /output/path | -sql | SELECT * FROM redditAll """)
+        val opt = parseTestOptions("""-in | input/path | -itemsAt | /data/children | -out | /output/path | -sql | SELECT * FROM redditAll """)
 
         Assertions.assertThat(opt.importArguments).size().isEqualTo(1)
         Assertions.assertThat(opt.importArguments.first().path).isEqualTo(Path.of("input/path"))
@@ -22,9 +23,9 @@ class ParamsParsingTest {
         Assertions.assertThat(opt.exportArguments.first().alias).isNull()
     }
 
-    @Test fun paramsParsing_twoImports() {
+    @Test fun paramsParsing_twoImports(testInfo: TestInfo) {
 
-        val opt = parseTestOptions("""-in |  input/path | -itemsAt | /data/children | -in | input2/path | -out | /output/path | -sql | SELECT * FROM redditAll """)
+        val opt = parseTestOptions("""-in | input/path | -itemsAt | /data/children | -in | input2/path | -out | /output/path | -sql | SELECT * FROM redditAll """)
 
         Assertions.assertThat(opt.importArguments).size().isEqualTo(2)
         Assertions.assertThat(opt.importArguments.first().path).isEqualTo(Path.of("input/path"))
@@ -40,9 +41,9 @@ class ParamsParsingTest {
         Assertions.assertThat(opt.exportArguments.first().sqlQuery).isEqualTo("SELECT * FROM redditAll")
     }
 
-    @Test fun paramsParsing_twoExports() {
+    @Test fun paramsParsing_twoExports(testInfo: TestInfo) {
 
-        val opt = parseTestOptions("""-in |  input/path | -out | /output1/path | -sql | SELECT * FROM redditAll1 | -out | /output2/path | -sql | SELECT * FROM redditAll2 """)
+        val opt = parseTestOptions("""-in | input/path | -out | /output1/path | -sql | SELECT * FROM redditAll1 | -out | /output2/path | -sql | SELECT * FROM redditAll2 """)
 
         Assertions.assertThat(opt.importArguments).size().isEqualTo(1)
 

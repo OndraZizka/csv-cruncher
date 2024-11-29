@@ -19,10 +19,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.kotlin>1.9.22</version.kotlin>
+        <version.kotlin>2.1.0</version.kotlin>
         <version.kotlin-dokka>1.9.10</version.kotlin-dokka>
         <version.jdk>11</version.jdk>
-        <version.jackson>2.16.1</version.jackson>
+        <version.jackson>2.18.2</version.jackson>
         <version.surefire>3.1.2</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
@@ -71,10 +71,12 @@
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${version.surefire}</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
+                    <workingDirectory>${project.build.directory}/workdir</workingDirectory>
 
                     <systemPropertyVariables>
-                        <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
                         <target.dir>${project.build.directory}</target.dir>
+                        <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
+                        <test.output.dir>${project.build.directory}/testOutput</test.output.dir>
                         <textdb.allow_full_path>true</textdb.allow_full_path>
                     </systemPropertyVariables>
                 </configuration>
@@ -85,9 +87,10 @@
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
+                        <target.dir>${project.build.directory}</target.dir>
                         <test.cruncher.runCmd>${testRunCmd}</test.cruncher.runCmd>
                         <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
-                        <target.dir>${project.build.directory}</target.dir>
+                        <test.output.dir>${project.build.directory}/testOutput</test.output.dir>
                         <textdb.allow_full_path>true</textdb.allow_full_path>
                     </systemPropertyVariables>
                 </configuration>
@@ -264,10 +267,10 @@
         <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-stdlib-jdk8</artifactId><version>${version.kotlin}</version></dependency>
         <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-reflect</artifactId><version>${version.kotlin}</version></dependency>
 
-        <dependency><groupId>org.hsqldb</groupId><artifactId>hsqldb</artifactId><version>2.7.2</version></dependency>
+        <dependency><groupId>org.hsqldb</groupId><artifactId>hsqldb</artifactId><version>2.7.4</version></dependency>
 
-        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.12.0</version></dependency>
-        <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><version>2.11.0</version></dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.17.0</version></dependency>
+        <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><version>2.18.0</version></dependency>
 
         <!-- Just for the JSON encoding. 355 kB.
         <dependency> <groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> <version>1.11</version> </dependency>
@@ -289,13 +292,13 @@
 
         <!-- Logging -->
         <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.9</version></dependency>
-        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.4.14</version></dependency>
-        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.4.14</version></dependency>
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.5.12</version></dependency>
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.5.12</version></dependency>
 
         <!-- Test deps -->
-        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.10.1</version><scope>test</scope></dependency>
-        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><version>3.25.2</version><scope>test</scope></dependency>
-        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId><version>1.10.0</version><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.11.3</version><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><version>3.26.3</version><scope>test</scope></dependency>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId><version>1.12.0</version><scope>test</scope></dependency>
         <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-test</artifactId><version>${version.kotlin}</version><scope>test</scope></dependency>
 
     </dependencies>

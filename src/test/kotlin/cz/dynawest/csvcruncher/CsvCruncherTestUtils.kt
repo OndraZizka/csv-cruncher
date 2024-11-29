@@ -1,27 +1,30 @@
 package cz.dynawest.csvcruncher
 
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
 import cz.dynawest.csvcruncher.app.App
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.TestInfo
 import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
 
 object CsvCruncherTestUtils {
-    /**
-     * @return Path to the default test data dir.
-     */
-    val testDataDir: Path
-        get() = Paths.get(System.getProperty("user.dir")).resolve("src/test/data/")
+    //val testDataDir: Path get() = Paths.get(System.getProperty("user.dir")).resolve("src/test/data/")
 
-    /**
-     * @return Path to the default test output dir.
-     */
+    /** @return Path to the default test data dir. */
+    val testDataDir = Path.of(System.getProperty("test.data.dir"))
+        //.also { it.toFile().mkdirs() }
+        .also { it.toFile().isFile && throw Exception("SysProp test.data.dir needs to point to a directory with the tests data. Was: $it") }
+
+    /** @return Path to the default test output dir. */
     val testOutputDir: Path
-        get() = Paths.get(System.getProperty("user.dir")).resolve("target/testResults/")
+        get() = Paths.get(System.getProperty("test.output.dir"))
+            //.also { it.toFile().mkdirs() }
+            .also { it.toFile().isFile && throw Exception("SysProp test.output.dir needs to point to a directory, was: $it") }
 
     /**
      * Runs CSV Cruncher with the guven command, which is | separated arguments.
@@ -107,3 +110,8 @@ object CsvCruncherTestUtils {
         }
     }
 }
+
+
+fun TestInfo.defaultCsvOutputPath() = "$testOutputDir/${testClass.get().simpleName}_${testMethod.get().name}.csv".let { Path.of(it) }
+
+fun TestInfo.defaultJsonOutputPath() = "$testOutputDir/${testClass.get().simpleName}_${testMethod.get().name}.json".let { Path.of(it) }

@@ -1,13 +1,14 @@
 package cz.dynawest.csvcruncher.test.json
 
-import cz.dynawest.csvcruncher.converters.json.ItemsArraySproutNotFound
-import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.converters.PropertyInfo
 import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
+import cz.dynawest.csvcruncher.converters.json.ItemsArraySproutNotFound
+import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import cz.dynawest.csvcruncher.util.logger
 import cz.dynawest.util.ResourceLoader
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertThrows
 import java.io.FileInputStream
 import java.io.InputStream
@@ -18,7 +19,7 @@ import kotlin.test.assertEquals
 class TabularPropertiesMetadataCollectorTest {
 
     @Test
-    fun `testConvertJson_01-arrayAtRoot-nestedArray`() {
+    fun `testConvertJson_01-arrayAtRoot-nestedArray`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/basic/01-arrayAtRoot-sameProperties.json")
 
         assertThat(collectedProperties).size().isEqualTo(2)
@@ -28,7 +29,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_02-arrayAtRoot-propertiesMissing`() {
+    fun `testConvertJson_02-arrayAtRoot-propertiesMissing`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/basic/02-arrayAtRoot-propertiesMissing.json")
 
         assertThat(collectedProperties).size().isEqualTo(3)
@@ -39,7 +40,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_03-arrayAtRoot-varyingProperties`() {
+    fun `testConvertJson_03-arrayAtRoot-varyingProperties`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/basic/03-arrayAtRoot-varyingProperties.json")
 
         assertThat(collectedProperties).size().isEqualTo(3)
@@ -50,7 +51,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_04-arrayAtRoot-differentTypes`() {
+    fun `testConvertJson_04-arrayAtRoot-differentTypes`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/basic/04-arrayAtRoot-differentTypes.json", "/")
 
         assertThat(collectedProperties).size().isEqualTo(2)
@@ -63,7 +64,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_10-arrayAtRoot-nestedObject`() {
+    fun `testConvertJson_10-arrayAtRoot-nestedObject`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/basic/10-arrayAtRoot-nestedObject.json", "/")
 
         assertThat(collectedProperties).size().isEqualTo(4)
@@ -75,7 +76,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_12-arrayInObject-sameProperties`() {
+    fun `testConvertJson_12-arrayInObject-sameProperties`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/basic/12-arrayInObject-sameProperties.json", "/items")
 
         assertThat(collectedProperties).size().isEqualTo(2)
@@ -86,14 +87,14 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_12-arrayInObject-sameProperties_mainArrayNotFound`() {
+    fun `testConvertJson_12-arrayInObject-sameProperties_mainArrayNotFound`(testInfo: TestInfo) {
         assertThrows<ItemsArraySproutNotFound> {
             collectProperties("data/basic/12-arrayInObject-sameProperties.json", "/")
         }
     }
 
     @Test //@Disabled("A bug in walkThroughToTheCollectionOfMainItems()")
-    fun `testConvertJson_real_youtube`() {
+    fun `testConvertJson_real_youtube`(testInfo: TestInfo) {
         val collectedProperties = collectProperties("data/real/youtube.json", "/items")
 
         val propsList = collectedProperties.map { "\n * $it" }.joinToString()
@@ -105,7 +106,7 @@ class TabularPropertiesMetadataCollectorTest {
     }
 
     @Test
-    fun `testConvertJson_large_github`() {
+    fun `testConvertJson_large_github`(testInfo: TestInfo) {
         val testInputPath = "./target/testData/json/github_data.json"
         if (!Path.of(testInputPath).isRegularFile())
             return // It's ok, maybe the test is not run through Maven, so it was not unzipped.

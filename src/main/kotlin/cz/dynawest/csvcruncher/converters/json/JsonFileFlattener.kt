@@ -62,7 +62,7 @@ class JsonFileFlattener : FileTabularizer {
 
             // Expect an array of objects -> rows
             // TODO: Or expect map of objects -> then the property name is a first column, and the objects props the further columns
-            val locationBefore = jsonParser.currentLocation
+            val locationBefore = jsonParser.currentLocation()
             val nextToken = jsonParser.nextToken()
             if (nextToken !== JsonToken.START_ARRAY) {
                 throw ItemsArraySproutNotFound("Items JSON Array not found after traversing over path '$sproutPath', found: $nextToken at $locationBefore")
@@ -79,11 +79,11 @@ class JsonFileFlattener : FileTabularizer {
         for (nextStep in itemsArrayPath) {
             val nextToken = jsonParser.nextToken()
             if (nextToken != JsonToken.START_OBJECT)
-                throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
+                throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation())
 
             do {
                 val nextFieldName = jsonParser.nextFieldName()
-                    ?: throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation)
+                    ?: throw ItemsArraySproutNotFound(itemsArrayPath, jsonParser.currentLocation())
 
                 if (nextFieldName != nextStep.name) {
                     jsonParser.skipChildren()
