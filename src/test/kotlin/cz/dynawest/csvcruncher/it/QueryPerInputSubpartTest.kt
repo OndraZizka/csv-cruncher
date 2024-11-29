@@ -2,9 +2,11 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -14,10 +16,10 @@ import java.util.*
  */
 class QueryPerInputSubpartTest {
 
-    var inPath: Path = Paths.get("src/test/data/sample-queryPerInputSubpart/oauth_consumer")
+    var inPath: Path = Paths.get("$testDataDir/sample-queryPerInputSubpart/oauth_consumer")
 
     @Test
-    fun queryPerInputSubpart() {
+    fun queryPerInputSubpart(testInfo: TestInfo) {
         val outputDir = Paths.get("target/testResults/queryPerInputSubpart.csv")
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
@@ -30,7 +32,7 @@ class QueryPerInputSubpartTest {
 
     @Test
     @Throws(Exception::class)
-    fun queryPerInputSubpart_defaultSQL() {
+    fun queryPerInputSubpart_defaultSQL(testInfo: TestInfo) {
         val outputDir = Paths.get("target/testResults/queryPerInputSubpart_defaultSQL.csv")
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
@@ -42,7 +44,7 @@ class QueryPerInputSubpartTest {
 
     @Test
     @Throws(Exception::class)
-    fun queryPerInputSubpart_negative() {
+    fun queryPerInputSubpart_negative(testInfo: TestInfo) {
         val command = "--json | --combineInputs | --queryPerInputSubpart | --rowNumbers" +
                 " | -in  | " + inPath +  // " | --exclude=.*/LOAD.*\\.csv" +
                 " | -out | target/testResults/queryPerInputSubpart_negative.csv" +

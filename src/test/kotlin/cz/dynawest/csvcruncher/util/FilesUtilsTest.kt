@@ -3,6 +3,7 @@
 package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import cz.dynawest.csvcruncher.util.FilesUtils.combineInputFiles
@@ -16,6 +17,7 @@ import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -25,7 +27,7 @@ import java.util.regex.Pattern
 
 class FilesUtilsTest {
     @Test
-    fun filterFilePaths() {
+    fun filterFilePaths(testInfo: TestInfo) {
         val paths: MutableList<Path> = ArrayList()
         paths.add(Paths.get("foo.bar"))
         paths.add(Paths.get("foo.foo"))
@@ -58,19 +60,19 @@ class FilesUtilsTest {
     }
 
     @Test
-    fun concatFiles() {
+    fun concatFiles(testInfo: TestInfo) {
     }
 
     @Test
-    fun sortInputPaths() {
+    fun sortInputPaths(testInfo: TestInfo) {
     }
 
     @Test
-    fun convertResultToJson() {
+    fun convertResultToJson(testInfo: TestInfo) {
     }
 
     @Test
-    fun deriveNameForCombinedFile() {
+    fun deriveNameForCombinedFile(testInfo: TestInfo) {
         val fileGroup = HashMap<Path?, List<Path>>()
         fileGroup[Paths.get("foo")] = emptyList()
         val usedConcatFilePaths = HashSet<Path>()
@@ -80,7 +82,7 @@ class FilesUtilsTest {
     }
 
     @Test
-    fun deriveNameForCombinedFile_dir() {
+    fun deriveNameForCombinedFile_dir(testInfo: TestInfo) {
         val fileGroup = HashMap<Path?, List<Path>>()
         fileGroup[Paths.get("foo/bar.csv")] = emptyList()
         val usedConcatFilePaths = HashSet<Path>()
@@ -122,7 +124,7 @@ class FilesUtilsTest {
 
     @Test
     @Throws(IOException::class)
-    fun combineInputFiles_changedSchema() {
+    fun combineInputFiles_changedSchema(testInfo: TestInfo) {
         val options = Options2()
         options.newImportArgument().apply { path = testDataDir.resolve("sample-changedSchema") }
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
@@ -148,7 +150,7 @@ class FilesUtilsTest {
     }
 
     @Test
-    fun expandDirectories() {
+    fun expandDirectories(testInfo: TestInfo) {
         val options = Options2()
         val inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema"))
         options.newImportArgument().apply { path = inputPaths[0] }
@@ -167,9 +169,9 @@ class FilesUtilsTest {
 
     @Test
     @Throws(IOException::class)
-    fun parseColsFromFirstCsvLine() {
-        val csvFileWithHeader = testDataDir.resolve("sample-collab/session_telephony_pins/20180918-132721852.csv")
-        val colNames = parseColumnsFromFirstCsvLine(csvFileWithHeader.toFile())
+    fun parseColsFromFirstCsvLine(testInfo: TestInfo) {
+        val csvFileWithHeader = testDataDir.toFile().resolve("sample-collab/session_telephony_pins/20180918-132721852.csv")
+        val colNames = parseColumnsFromFirstCsvLine(csvFileWithHeader)
 
         // Op,id,uuid,session_id,pin,pin_type,pin_access_type,enrollment_id,created_time,modified_time
         Assertions.assertEquals(10, colNames.size.toLong(), "Proper column count")
@@ -180,7 +182,6 @@ class FilesUtilsTest {
     }
 
     companion object {
-        var testDataDir = CsvCruncherTestUtils.testDataDir
         var testOutputDir = CsvCruncherTestUtils.testOutputDir
     }
 }

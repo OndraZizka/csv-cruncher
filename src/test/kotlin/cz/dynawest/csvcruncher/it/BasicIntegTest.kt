@@ -1,6 +1,7 @@
 package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.defaultCsvOutputPath
 import cz.dynawest.csvcruncher.defaultJsonOutputPath
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +27,7 @@ class BasicIntegTest {
 
     @Test
     fun singleImportSingleExportWithJson(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("$testDataDir/eapBuilds.csv")
         val outputPath = testInfo.defaultCsvOutputPath()
 
         val command =
@@ -41,7 +42,7 @@ class BasicIntegTest {
 
     @Test
     fun singleImportSingleExport_defaultSql(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("$testDataDir/eapBuilds.csv")
         val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in  | $inPath | -out | $outputPath"""
@@ -52,7 +53,7 @@ class BasicIntegTest {
 
     @Test
     fun singleImportSingleExport_jsonFileExtension(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("$testDataDir/eapBuilds.csv")
         val outputPath = testInfo.defaultJsonOutputPath()
 
         val command = """-in  | $inPath | -out | $outputPath"""
@@ -63,10 +64,10 @@ class BasicIntegTest {
 
     @Test
     fun test_initSqlScript(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/eapBuilds.csv")
+        val inPath = Paths.get("$testDataDir/eapBuilds.csv")
         val outputPath = testInfo.defaultCsvOutputPath()
 
-        val initSqlFile = Paths.get("src/test/data/init.sql")
+        val initSqlFile = Paths.get("$testDataDir/init.sql")
         val command =
             """-initSql | $initSqlFile | -in | $inPath | -out | $outputPath | -sql | SELECT jobName FROM eapBuilds LIMIT 1"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
@@ -76,7 +77,7 @@ class BasicIntegTest {
 
     @Test
     fun realData_json_redditAll(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/json/redditAll.json")
+        val inPath = Paths.get("$testDataDir/json/redditAll.json")
         val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""
@@ -87,7 +88,7 @@ class BasicIntegTest {
 
     @Test
     fun test_basic_json_types(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/json/jsonTypes_all.json")
+        val inPath = Paths.get("$testDataDir/json/jsonTypes_all.json")
         val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in | $inPath | -itemsAt | / | -out | $outputPath | -sql | SELECT * FROM jsonTypes_all_json"""
@@ -98,7 +99,7 @@ class BasicIntegTest {
 
     @Test
     fun test_basic_json_noParentDirOfOutput(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/json/redditAll.json")
+        val inPath = Paths.get("$testDataDir/json/redditAll.json")
         val outputPath = testInfo.defaultJsonOutputPath()
         Path.of(outputPath.pathString + ".csv").deleteIfExists() // Temp file can remain after debugging
 
@@ -108,7 +109,7 @@ class BasicIntegTest {
 
     @Test @Disabled("Currently we just overwrite to simplify experimenting. Maybe let's have --noOverwrite?")
     fun testDoesNotOverwrite(testInfo: TestInfo) {
-        val inPath = Paths.get("src/test/data/json/redditAll.json")
+        val inPath = Paths.get("$testDataDir/json/redditAll.json")
         val outputPath = testInfo.defaultCsvOutputPath()
 
         val command = """-in | $inPath | -itemsAt | /data/children | -out | $outputPath | -sql | SELECT * FROM REDDITALL_JSON"""

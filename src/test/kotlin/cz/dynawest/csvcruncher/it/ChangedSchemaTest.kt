@@ -5,13 +5,14 @@ import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.app.Options2
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.util.*
 
 class ChangedSchemaTest {
 
     @Test
     @Throws(Exception::class)
-    fun changedSchema() {
+    fun changedSchema(testInfo: TestInfo) {
         val testDataDir = CsvCruncherTestUtils.testDataDir.resolve("sample-changedSchema")
         val testOutputDir = CsvCruncherTestUtils.testOutputDir.resolve("sample-changedSchema")
         val options = Options2()

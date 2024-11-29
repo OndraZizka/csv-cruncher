@@ -5,6 +5,7 @@ import cz.dynawest.csvcruncher.converters.TabularPropertiesMetadataCollector
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -14,7 +15,7 @@ import kotlin.io.path.isRegularFile
 class JsonToCsvConversionTest {
 
     @Test
-    fun testJsonToCsvConversion() {
+    fun testJsonToCsvConversion(testInfo: TestInfo) {
         val testInputPath = "target/testData/json/github_data.json"
         val testOutputPath = "target/testData/json/github_data_${System.currentTimeMillis()}.csv"
 

@@ -11,15 +11,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 object CsvCruncherTestUtils {
-    /**
-     * @return Path to the default test data dir.
-     */
-    val testDataDir: Path
-        get() = Paths.get(System.getProperty("user.dir")).resolve("src/test/data/")
+    //val testDataDir: Path get() = Paths.get(System.getProperty("user.dir")).resolve("src/test/data/")
 
-    /**
-     * @return Path to the default test output dir.
-     */
+    /** @return Path to the default test data dir. */
+    val testDataDir = Path.of(System.getProperty("test.data.dir"))
+        .also { it.toFile().isDirectory || throw Exception("SysProp test.data.dir needs to point to a directory with the tests data. Was: $it") }
+
+    /** @return Path to the default test output dir. */
     val testOutputDir: Path
         get() = Paths.get(System.getProperty("user.dir")).resolve("target/testResults/")
 
