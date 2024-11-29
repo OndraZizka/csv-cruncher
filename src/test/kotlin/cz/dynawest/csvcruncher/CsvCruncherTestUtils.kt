@@ -16,11 +16,14 @@ object CsvCruncherTestUtils {
 
     /** @return Path to the default test data dir. */
     val testDataDir = Path.of(System.getProperty("test.data.dir"))
-        .also { it.toFile().isDirectory || throw Exception("SysProp test.data.dir needs to point to a directory with the tests data. Was: $it") }
+        //.also { it.toFile().mkdirs() }
+        .also { it.toFile().isFile && throw Exception("SysProp test.data.dir needs to point to a directory with the tests data. Was: $it") }
 
     /** @return Path to the default test output dir. */
     val testOutputDir: Path
-        get() = Paths.get(System.getProperty("user.dir")).resolve("target/testResults/")
+        get() = Paths.get(System.getProperty("test.output.dir"))
+            //.also { it.toFile().mkdirs() }
+            .also { it.toFile().isFile && throw Exception("SysProp test.output.dir needs to point to a directory, was: $it") }
 
     /**
      * Runs CSV Cruncher with the guven command, which is | separated arguments.
@@ -108,6 +111,6 @@ object CsvCruncherTestUtils {
 }
 
 
-fun TestInfo.defaultCsvOutputPath() = "target/results/${testClass.get().simpleName}_${testMethod.get().name}.csv".let { Path.of(it) }
+fun TestInfo.defaultCsvOutputPath() = "target/testResults/${testClass.get().simpleName}_${testMethod.get().name}.csv".let { Path.of(it) }
 
-fun TestInfo.defaultJsonOutputPath() = "target/results/${testClass.get().simpleName}_${testMethod.get().name}.json".let { Path.of(it) }
+fun TestInfo.defaultJsonOutputPath() = "target/testResults/${testClass.get().simpleName}_${testMethod.get().name}.json".let { Path.of(it) }

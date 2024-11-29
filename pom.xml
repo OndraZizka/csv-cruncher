@@ -71,11 +71,12 @@
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${version.surefire}</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
-                    <workingDirectory>target/workdir</workingDirectory>
+                    <workingDirectory>${project.build.directory}/workdir</workingDirectory>
 
                     <systemPropertyVariables>
-                        <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
                         <target.dir>${project.build.directory}</target.dir>
+                        <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
+                        <test.output.dir>${project.build.directory}/testOutput</test.output.dir>
                         <textdb.allow_full_path>true</textdb.allow_full_path>
                     </systemPropertyVariables>
                 </configuration>
@@ -86,9 +87,10 @@
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
+                        <target.dir>${project.build.directory}</target.dir>
                         <test.cruncher.runCmd>${testRunCmd}</test.cruncher.runCmd>
                         <test.data.dir>${project.build.testSourceDirectory}/../data</test.data.dir>
-                        <target.dir>${project.build.directory}</target.dir>
+                        <test.output.dir>${project.build.directory}/testOutput</test.output.dir>
                         <textdb.allow_full_path>true</textdb.allow_full_path>
                     </systemPropertyVariables>
                 </configuration>

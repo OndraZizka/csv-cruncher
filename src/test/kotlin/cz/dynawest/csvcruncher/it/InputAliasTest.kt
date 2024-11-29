@@ -14,7 +14,7 @@ import kotlin.io.path.deleteIfExists
 
 class InputAliasTest {
 
-    val outputPath = Paths.get("target/results/testInputAliasing.csv")
+    val outputPath = Paths.get("target/testResults/testInputAliasing.csv")
 
     @BeforeEach @AfterEach
     fun cleanup(){
@@ -32,7 +32,7 @@ class InputAliasTest {
     @Test
     fun testInputAliasing_wrongNameInSql(testInfo: TestInfo) {
         val inPath = Paths.get("$testDataDir/eapBuilds.csv")
-        val outputPath = Paths.get("target/results/testInputAliasing.csv")
+        val outputPath = Paths.get("target/testResults/testInputAliasing.csv")
 
         assertThrows<CsvCruncherException> {
             val command = """-in | $inPath | -as | foo | -out | $outputPath | -sql | SELECT * FROM bar"""

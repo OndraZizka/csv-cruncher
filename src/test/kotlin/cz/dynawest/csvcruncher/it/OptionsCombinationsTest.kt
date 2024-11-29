@@ -173,7 +173,7 @@ class OptionsCombinationsTest {
         val command = "--json | --combineInputs | --rowNumbers" +
                 " | --exclude=.*/LOAD.*\\.csv" +
                 " | -in  | $testDataDir/sampleMultiFilesPerDir/session_telephony_pins/" +
-                " | -out | target/results/session_telephony_pins.csv" +
+                " | -out | target/testResults/session_telephony_pins.csv" +
                 " | -sql | SELECT * FROM session_telephony_pins"
 
         assertThrows<CrucherConfigException> { CsvCruncherTestUtils.runCruncherWithArguments(command) }
