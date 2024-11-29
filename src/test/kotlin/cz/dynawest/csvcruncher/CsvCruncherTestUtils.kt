@@ -6,6 +6,7 @@ import org.apache.commons.csv.CSVRecord
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.TestInfo
 import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -105,3 +106,8 @@ object CsvCruncherTestUtils {
         }
     }
 }
+
+
+fun TestInfo.defaultCsvOutputPath() = "target/results/${testClass.get().simpleName}_${testMethod.get().name}.csv".let { Path.of(it) }
+
+fun TestInfo.defaultJsonOutputPath() = "target/results/${testClass.get().simpleName}_${testMethod.get().name}.json".let { Path.of(it) }
