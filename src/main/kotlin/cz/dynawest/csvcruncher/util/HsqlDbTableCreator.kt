@@ -183,7 +183,7 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
 
     private fun setUpTableIndexes(tableName: String, indexedColumns: List<String>) {
         for (col in indexedColumns) {
-            val rnd = RandomStringUtils.randomAlphanumeric(3)
+            val rnd = RandomStringUtils.insecure().nextAlphanumeric(3)
             val sql = "CREATE INDEX ${quote("idx_${tableName}_$rnd")} ON ${quote(tableName)} (${quote(col)})"
             log.debug("Creating index, SQL: $sql")
             hsqlDbHelper.executeSql(sql, "Failed to create index: ")

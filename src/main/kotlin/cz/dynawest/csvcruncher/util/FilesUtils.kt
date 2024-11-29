@@ -428,7 +428,7 @@ object FilesUtils {
         do {
             if (!lineIterator.hasNext())
                 throw IllegalStateException("No first line with columns definition (format: [# ] [\"]<colName>[\"] [, ...]) in: " + file.path)
-            line = lineIterator.nextLine().trim { it <= ' ' }
+            line = lineIterator.next().trim { it <= ' ' }
         } while (line!!.startsWith(CSV_COMMENT_PREFIX))
 
         line = StringUtils.stripStart(line, "#")
