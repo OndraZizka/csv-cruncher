@@ -35,8 +35,5 @@ object JsonTestUtils {
         return entries
     }
 
-
     private val log = logger()
-
-    val PROJECT_ROOT_TOKEN = "{project}"
 }
