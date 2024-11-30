@@ -66,7 +66,7 @@ enum class LogLevel (val logbackLevel: Level) {
     TRACE(Level.TRACE), DEBUG(Level.DEBUG), INFO(Level.INFO), WARN(Level.WARN), ERROR(Level.ERROR), OFF(Level.OFF)
 }
 
-class Options2 {
+class Options {
 
     val initSqlArguments = mutableListOf<InitSqlArgument>()
     val importArguments = mutableListOf<ImportArgument>()
@@ -170,7 +170,8 @@ class Options2 {
                     |    initialRowNumber: ${initialRowNumber}
                     |    jsonExportFormat: ${jsonExportFormat}
                     |    skipNonReadable: ${skipNonReadable}
-                    |    logLevel: ${logLevel}""".trimMargin()
+                    |    logLevel: ${logLevel}"""
+            .trimMargin()
     }
 
     companion object { private val log = logger() }

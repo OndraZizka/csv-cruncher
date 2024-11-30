@@ -4,7 +4,7 @@ package cz.dynawest.csvcruncher.util
 
 import cz.dynawest.csvcruncher.*
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
-import cz.dynawest.csvcruncher.app.Options2
+import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import cz.dynawest.csvcruncher.util.FilesUtils.combineInputFiles
 import cz.dynawest.csvcruncher.util.FilesUtils.deriveNameForCombinedFile
@@ -33,7 +33,7 @@ class FilesUtilsTest {
         paths.add(Paths.get("foo.foo"))
         paths.add(Paths.get("bar.foo"))
         paths.add(Paths.get("bar.bar"))
-        val options = Options2()
+        val options = Options()
         options.includePathsRegex = Pattern.compile("^foo\\..*")
         options.excludePathsRegex = Pattern.compile(".*\\.bar$")
         var paths1: List<Path?> = filterPaths(options, paths)
@@ -125,7 +125,7 @@ class FilesUtilsTest {
     @Test
     @Throws(IOException::class)
     fun combineInputFiles_changedSchema(testInfo: TestInfo) {
-        val options = Options2()
+        val options = Options()
         options.newImportArgument().apply { path = testDataDir.resolve("sample-changedSchema") }
         options.excludePathsRegex = Pattern.compile(".*/LOAD.*\\.csv")
         options.combineDirs = OptionsEnums.CombineDirectories.COMBINE_ALL_FILES
@@ -151,7 +151,7 @@ class FilesUtilsTest {
 
     @Test
     fun expandDirectories(testInfo: TestInfo) {
-        val options = Options2()
+        val options = Options()
         val inputPaths = Arrays.asList(testDataDir.resolve("sample-changedSchema"))
         options.newImportArgument().apply { path = inputPaths[0] }
         options.includePathsRegex = Pattern.compile(".*\\.csv")

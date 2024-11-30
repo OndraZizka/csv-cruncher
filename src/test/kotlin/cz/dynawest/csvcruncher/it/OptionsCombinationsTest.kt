@@ -67,8 +67,10 @@ class OptionsCombinationsTest {
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         // If printed to stdout, the output goes to a temp file which is deleted at the end.
-        val resultCsv = Paths.get("$testOutputDir/testOutputToStdout.json").toFile()
-        assertTrue(!resultCsv.exists())
+        assertTrue(!Paths.get("$testOutputDir/testOutputToStdout.json").toFile().exists())
+        assertTrue(!Paths.get("$testOutputDir/-.json").toFile().exists())
+        assertTrue(!Paths.get("$testOutputDir/-").toFile().exists())
+        assertTrue(!Paths.get("-").toFile().exists())
     }
 
     @Test @Disabled("CHARACTER bug - https://github.com/OndraZizka/csv-cruncher/issues/122")

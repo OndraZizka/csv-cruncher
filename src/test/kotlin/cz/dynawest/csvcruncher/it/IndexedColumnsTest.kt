@@ -2,7 +2,7 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
-import cz.dynawest.csvcruncher.app.Options2
+import cz.dynawest.csvcruncher.app.Options
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -24,7 +24,7 @@ class IndexedColumnsTest {
         val testName = testInfo.testMethod.get().name
         val testOutputDir = CsvCruncherTestUtils.testOutputDir.resolve("sample-$testName")
 
-        val options = Options2()
+        val options = Options()
         options.newImportArgument().apply {
             this.path = CsvCruncherTestUtils.testDataDir.resolve("eapBuilds.csv")
             this.indexed = indexedColumns.split(",").map { it.trim() }

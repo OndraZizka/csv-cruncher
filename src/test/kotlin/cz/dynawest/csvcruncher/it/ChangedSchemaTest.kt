@@ -2,7 +2,7 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
-import cz.dynawest.csvcruncher.app.Options2
+import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsEnums
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
@@ -15,7 +15,7 @@ class ChangedSchemaTest {
     fun changedSchema(testInfo: TestInfo) {
         val testDataDir = CsvCruncherTestUtils.testDataDir.resolve("sample-changedSchema")
         val testOutputDir = CsvCruncherTestUtils.testOutputDir.resolve("sample-changedSchema")
-        val options = Options2()
+        val options = Options()
         options.newImportArgument().apply { this.path = testDataDir }
         options.combineDirs = OptionsEnums.CombineDirectories.COMBINE_ALL_FILES
         options.combineInputFiles = OptionsEnums.CombineInputFiles.CONCAT

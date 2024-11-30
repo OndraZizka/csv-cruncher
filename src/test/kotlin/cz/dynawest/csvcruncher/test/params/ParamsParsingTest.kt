@@ -1,6 +1,6 @@
 package cz.dynawest.csvcruncher.test.params
 
-import cz.dynawest.csvcruncher.app.Options2
+import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsParser
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
@@ -57,7 +57,7 @@ class ParamsParsingTest {
     }
 
 
-    private fun parseTestOptions(command: String): Options2 {
+    private fun parseTestOptions(command: String): Options {
         val arguments = command
             .splitToSequence("|")
             .map { obj: String -> obj.trim { it <= ' ' } }

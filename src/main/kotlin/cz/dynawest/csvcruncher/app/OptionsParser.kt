@@ -16,9 +16,9 @@ import kotlin.io.path.name
 
 object OptionsParser {
 
-    fun parseArgs(args: Array<String>): Options2? {
+    fun parseArgs(args: Array<String>): Options? {
 
-        val options = Options2()
+        val options = Options()
         var next: OptionsCurrentContext = OptionsCurrentContext.GLOBAL
 
         lateinit var currentImport: ImportArgument
@@ -317,7 +317,7 @@ object OptionsParser {
         }
 
     /** HSQLDB bug, see https://stackoverflow.com/questions/52708378/hsqldb-insert-into-select-null-from-leads-to-duplicate-column-name */
-    private fun preventHsqldbBug(options: Options2) {
+    private fun preventHsqldbBug(options: Options) {
         val numberedImport = options.importArguments.firstOrNull { import ->
             val initialRowNumber = import.initialRowNumber ?: options.initialRowNumber
             initialRowNumber != null

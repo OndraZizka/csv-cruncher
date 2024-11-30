@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
 import cz.dynawest.csvcruncher.app.ExportArgument
 import cz.dynawest.csvcruncher.app.Format
-import cz.dynawest.csvcruncher.app.Options2
+import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
 import cz.dynawest.csvcruncher.converters.json.JsonFileFlattener
@@ -28,7 +28,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 
-class Cruncher(private val options: Options2) {
+class Cruncher(private val options: Options) {
     private lateinit var jdbcConn: Connection
     private lateinit var dbHelper: HsqlDbHelper
     private val log = logger()

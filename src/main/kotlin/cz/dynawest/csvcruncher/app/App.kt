@@ -62,7 +62,7 @@ object App {
         outputStream.println("  For more, read the README.md distributed with CsvCruncher, or at: https://github.com/OndraZizka/csv-cruncher#readme")
     }
 
-    private fun setLogLevel(options: Options2) {
+    private fun setLogLevel(options: Options) {
         if (options.logLevel == null) return
 
         val configuredLevel: Level? = Level.toLevel(options.logLevel!!.name)
