@@ -10,7 +10,7 @@ Releasing
 
    ```bash
        export GPG_TTY=$(tty)
-   ```bash
+   ```
    
 3) To do the actual tag:
 
@@ -23,8 +23,10 @@ Releasing
     If not, or if that fails, it's possible to stage the artifacts manually.   
     
     Switch to the release tag with the non-SNAPSHOT version to publish, and run:
-        
-       $ mvn clean deploy -Possrh -Prelease   # p..##
+
+   ```bash
+       mvn clean deploy -Possrh -Prelease   # p..##
+   ```
 
 4) Go to [Sonatype OSSRH](https://oss.sonatype.org/#stagingRepositories) and release the staged snapshot:
    * Close the freshly created staging repo.
