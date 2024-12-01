@@ -251,12 +251,8 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <!-- Saxon 9 not found in maven repos. -->
-                <groupId>net.sf.saxon</groupId>
-                <artifactId>saxon</artifactId>
-                <version>8.7</version>
-            </dependency>
+            <!-- Saxon 9 not found in maven repos. -->
+            <dependency><groupId>net.sf.saxon</groupId><artifactId>saxon</artifactId><version>8.7</version></dependency>
         </dependencies>
     </dependencyManagement>
 
