@@ -226,7 +226,7 @@
                         <goals><goal>enforce</goal></goals>
                         <configuration>
                             <rules>
-                                <requireMavenVersion><version>3.9.9</version></requireMavenVersion>
+                                <requireMavenVersion><version>3.8.7</version></requireMavenVersion>
                             </rules>
                         </configuration>
                     </execution>
