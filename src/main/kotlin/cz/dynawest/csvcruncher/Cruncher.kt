@@ -48,8 +48,10 @@ class Cruncher(private val options: Options) {
         try {
             val existedBefore = File(dbPath).exists()
             FileUtils.forceMkdir(File(dbPath))
-            if (options.dbDirOnExit == ExitCleanupStrategy.DELETE && !existedBefore)
+            if (options.dbDirOnExit == ExitCleanupStrategy.DELETE && !existedBefore) {
                 File(dbPath).deleteOnExit()
+                log.debug("Will delete on exit: $dbPath")
+            }
             jdbcConn = DriverManager.getConnection("jdbc:hsqldb:file:$dbPath;shutdown=true;sql.syntax_mys=true", "SA", "")
         }
         catch (e: IOException) {

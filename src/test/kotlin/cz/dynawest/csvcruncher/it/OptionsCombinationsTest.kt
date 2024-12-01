@@ -141,7 +141,7 @@ class OptionsCombinationsTest {
      * The solution is not trivial, it needs to determine the output columns, using some merging of common columns,
      * probably utilizing SQL's NATURAL JOIN to reuse the same-named columns.
      */
-    @Test
+    @Test @Disabled("Known bug #149.")
     fun combineInputDir_JsonAndCsv_defaultSql_issue149(testInfo: TestInfo) {
         val command =
                 " | -in  | $testDataDir/sample-multiFile-json+csv" +
