@@ -127,7 +127,7 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
-                            <appendAssemblyId>false</appendAssemblyId>
+                            <appendAssemblyId>true</appendAssemblyId>
                         </configuration>
                     </execution>
                     <execution>
@@ -202,7 +202,7 @@
                         <goals><goal>enforce</goal></goals>
                         <configuration>
                             <rules>
-                                <requireMavenVersion><version>3.8.1</version></requireMavenVersion>
+                                <requireMavenVersion><version>3.9.9</version></requireMavenVersion>
                             </rules>
                         </configuration>
                     </execution>
