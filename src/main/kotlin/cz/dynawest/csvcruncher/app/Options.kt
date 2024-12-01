@@ -79,6 +79,9 @@ enum class LogLevel (val logbackLevel: Level) {
     TRACE(Level.TRACE), DEBUG(Level.DEBUG), INFO(Level.INFO), WARN(Level.WARN), ERROR(Level.ERROR), OFF(Level.OFF)
 }
 
+enum class ExitCleanupStrategy { DELETE, KEEP, COMPRESS }
+
+
 class Options {
 
     val initSqlArguments = mutableListOf<InitSqlArgument>()
@@ -100,6 +103,7 @@ class Options {
     var queryPerInputSubpart = false
     var overwrite = false
     var dbPath: String? = null
+    var dbDirOnExit: ExitCleanupStrategy = ExitCleanupStrategy.KEEP
     var keepWorkFiles = false
     var sortInputPaths = OptionsEnums.SortInputPaths.PARAMS_ORDER
     var combineDirs = OptionsEnums.CombineDirectories.COMBINE_PER_EACH_DIR

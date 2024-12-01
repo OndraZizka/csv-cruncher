@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher
 
 import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import cz.dynawest.csvcruncher.app.ExitCleanupStrategy
 import cz.dynawest.csvcruncher.app.ExportArgument
 import cz.dynawest.csvcruncher.app.Format
 import cz.dynawest.csvcruncher.app.Options
@@ -42,13 +43,19 @@ class Cruncher(private val options: Options) {
         } catch (e: ClassNotFoundException) {
             throw CsvCruncherException("Couldn't find JDBC driver: " + e.message, e)
         }
+
         val dbPath = StringUtils.defaultIfEmpty(options.dbPath, "hsqldb").toString() + "/cruncher"
         try {
+            val existedBefore = File(dbPath).exists()
             FileUtils.forceMkdir(File(dbPath))
+            if (options.dbDirOnExit == ExitCleanupStrategy.DELETE && !existedBefore)
+                File(dbPath).deleteOnExit()
             jdbcConn = DriverManager.getConnection("jdbc:hsqldb:file:$dbPath;shutdown=true;sql.syntax_mys=true", "SA", "")
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
             throw CsvCruncherException("Can't create HSQLDB data dir $dbPath: ${e.message}", e)
-        } catch (e: SQLException) {
+        }
+        catch (e: SQLException) {
             throw CsvCruncherException("Can't connect to the database $dbPath: ${e.message}", e)
         }
         dbHelper = HsqlDbHelper(jdbcConn)
