@@ -2,10 +2,14 @@ package cz.dynawest.csvcruncher.it
 
 import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
+import cz.dynawest.csvcruncher.CsvCruncherTestUtils.extractArgumentsFromTestCommandFormat
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
+import cz.dynawest.csvcruncher.app.ExportArgument.TargetType
+import cz.dynawest.csvcruncher.app.OptionsParser
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertIterableEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
@@ -64,13 +68,20 @@ class OptionsCombinationsTest {
                 " | -out | -" +
                 " | -sql | SELECT CONCAT('This should appear on STDOUT. ', jobName) AS msg" +
                 "  FROM eapBuilds ORDER BY deployDur LIMIT 3"
+
+        // First, check the parsing only.
+        val options = OptionsParser.parseArgs(extractArgumentsFromTestCommandFormat(command))
+        assertEquals(1, options!!.exportArguments.size)
+        assertEquals(TargetType.STDOUT, options.exportArguments[0].targetType)
+
+        // Run it.
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         // If printed to stdout, the output goes to a temp file which is deleted at the end.
-        assertTrue(!Paths.get("$testOutputDir/testOutputToStdout.json").toFile().exists())
-        assertTrue(!Paths.get("$testOutputDir/-.json").toFile().exists())
-        assertTrue(!Paths.get("$testOutputDir/-").toFile().exists())
-        assertTrue(!Paths.get("-").toFile().exists())
+        assertFalse(Paths.get("$testOutputDir/testOutputToStdout.json").toFile().exists())
+        assertFalse(Paths.get("$testOutputDir/-.json").toFile().exists())
+        assertFalse(Paths.get("$testOutputDir/-").toFile().exists())
+        assertFalse(Paths.get("-").toFile().exists())
     }
 
     @Test @Disabled("CHARACTER bug - https://github.com/OndraZizka/csv-cruncher/issues/122")
