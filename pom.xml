@@ -409,7 +409,7 @@
                             <execution>
                                 <!-- The current setup does not sign the base jar, so the Staged release fails on OSSRH checks. Not sure if this works, leaving as WIP. -->
                                 <id>sign-main-jar-hack</id>
-                                <phase>initialize</phase>
+                                <phase>none</phase> <!-- DISABLED - did not work -->
                                 <goals><goal>sign-and-deploy-file</goal></goals>
                                 <configuration>
                                     <file>${project.build.directory}/${project.build.finalName}.jar</file>
