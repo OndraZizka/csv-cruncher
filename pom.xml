@@ -185,7 +185,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.3.2</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.4.0</version>
                 <!-- Delete the pre-existing DB -->
                 <executions>
                     <execution><id>clean-hsqldb-data</id><phase>pre-integration-test</phase><goals><goal>clean</goal></goals>
