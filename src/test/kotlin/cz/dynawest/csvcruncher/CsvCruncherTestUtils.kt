@@ -31,13 +31,15 @@ object CsvCruncherTestUtils {
      */
     @Throws(Exception::class)
     fun runCruncherWithArguments(command: String) {
-        val arguments = command
-                .splitToSequence("|")
-                .map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { x: String -> x.isNotBlank() }
-                .toList().toTypedArray()
+        val arguments = extractArgumentsFromTestCommandFormat(command)
         App.mainNoExit(arguments)
     }
+
+    fun extractArgumentsFromTestCommandFormat(command: String) = command
+        .splitToSequence("|")
+        .map { obj: String -> obj.trim { it <= ' ' } }
+        .filter { x: String -> x.isNotBlank() }
+        .toList().toTypedArray()
 
     /**
      * Reads the given CSV file, skips the first line, and then checks if the 2nd column is an incrementing number
