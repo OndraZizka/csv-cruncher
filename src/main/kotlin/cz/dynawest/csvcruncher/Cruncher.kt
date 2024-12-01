@@ -254,7 +254,7 @@ class Cruncher(private val options: Options) {
                     }
 
                     // Print the result to STDOUT.
-                    if (output.forExport.target == ExportArgument.Target.STDOUT) {
+                    if (output.forExport.targetType == ExportArgument.TargetType.STDOUT) {
                         contentForStdout.inputStream().use { IOUtils.copy(it, System.out) }
                         System.out.println()
                         if (!options.keepWorkFiles) contentForStdout.deleteOnExit()

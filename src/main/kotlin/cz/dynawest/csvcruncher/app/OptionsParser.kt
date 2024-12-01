@@ -59,22 +59,21 @@ object OptionsParser {
                         if (currentImport.path!!.name.lowercase().endsWith(".json")) currentImport.format = Format.JSON
                     }
                     OptionsCurrentContext.OUT -> {
-                        currentExport.target = ExportArgument.Target.FILE
-
-                        // Any special treatment?
-                        for (it in ExportArgument.Target.values()) {
-                            if (arg.trim() == it.specialOptionValue) {
-                                currentExport.target = it
-                                currentExport.path = it.replacementPath?.invoke(currentExport)
-                                log.debug("Set export path to temp file: ${currentExport.path}")
-                                break
-                            }
-                        }
-
                         currentExport.path = Path.of(arg)
-                        if (currentExport.path!!.name.lowercase().endsWith(".json")) {
-                            currentExport.formats.clear()
-                            currentExport.formats += Format.JSON
+
+                        // Any special treatment, e.g. '-' for stdout?
+                        val targetType = ExportArgument.TargetType.entries.find { arg.trim() == it.specialOptionValue } ?: ExportArgument.TargetType.FILE
+                        currentExport.targetType = targetType
+                        currentExport.path = targetType.replacementPath?.invoke(currentExport)
+                            ?.also { log.debug("Export path set by Target ${targetType} to: ${currentExport.path}") }
+
+                        // Derive format from the path.
+                        /*if (currentExport.path!!.name.lowercase().endsWith(".json")) {
+                            currentExport.formats = mutableSetOf(Format.JSON)
+                        }*/
+                        currentExport.path ?.let {
+                            Format.from(it)
+                                ?.let { currentExport.formats = mutableSetOf(it) }
                         }
                     }
                     OptionsCurrentContext.DBPATH -> options.dbPath = arg

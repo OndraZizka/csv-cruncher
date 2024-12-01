@@ -9,6 +9,7 @@ import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
+import kotlin.io.path.extension
 
 class ImportArgument {
     var path: Path? = null
@@ -38,21 +39,22 @@ class ExportArgument {
     var sqlQuery: String? = null
     /** The file to export the CSV table to. May be an intermediate storage. If null, will be replaced with a temporary file path. */
     var path: Path? = null
-    var target: Target = Target.STDOUT
+    var targetType: TargetType = TargetType.STDOUT
     var alias: String? = null
-    val formats: MutableSet<Format> = mutableSetOf(Format.CSV)
+    var formats: MutableSet<Format> = mutableSetOf(Format.CSV)
 
 
     override fun toString(): String {
-        return "(${alias?:"no alias"}) $formats -> $path\n\t\t\"$sqlQuery\""
+        val outputPathOrSpecial = when (targetType) {TargetType.STDOUT -> "<STDOUT>"; else -> path }
+        return "(${alias ?: "no alias"}) $formats -> $outputPathOrSpecial\n\t\t\"$sqlQuery\""
     }
 
-    enum class Target(
+    enum class TargetType(
         val specialOptionValue: String?,
         val replacementPath: ((ExportArgument) -> Path)?
     ) {
         /** This export was explicitly requested to go to STDOUT (versus just a missing path). */
-        STDOUT("-", { exArg -> java.io.File.createTempFile("CsvCrunch-", ".csv").toPath() } ),
+        STDOUT("-", { exArg -> java.io.File.createTempFile("CsvCrunch-", exArg.formats.firstOrNull()?.suffixes?.firstOrNull() ?: ".csv").toPath() } ),
         FILE(null, null),
     }
 }
@@ -61,7 +63,18 @@ data class InitSqlArgument (
     var path: Path
 )
 
-enum class Format { CSV, JSON }
+enum class Format (val suffixes: Set<String>) {
+    CSV(setOf(".csv")),
+    JSON(setOf(".json"));
+
+    companion object {
+        fun from(path: Path): Format? {
+            return path.last().extension.ifEmpty { null }
+                ?.let { extension -> Format.entries.find { ".$extension" in it.suffixes } }
+        }
+    }
+}
+
 enum class LogLevel (val logbackLevel: Level) {
     TRACE(Level.TRACE), DEBUG(Level.DEBUG), INFO(Level.INFO), WARN(Level.WARN), ERROR(Level.ERROR), OFF(Level.OFF)
 }
