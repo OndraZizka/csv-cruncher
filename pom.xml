@@ -111,9 +111,7 @@
                         <goals><goal>single</goal></goals>
                         <phase>package</phase>
                         <configuration>
-                            <!-- As of maven-jar-plugin 2.3.3, this is read only and has no effect.
                             <finalName>${project.artifactId}-${project.version}-single</finalName>
-                            -->
                             <archive>
                                 <manifest>
                                     <mainClass>${mainClass}</mainClass>
@@ -129,6 +127,7 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
                     <execution>
@@ -136,9 +135,7 @@
                         <goals><goal>single</goal></goals>
                         <phase>package</phase>
                         <configuration>
-                            <!-- As of maven-jar-plugin 2.3.3, this is read only and has no effect.
                             <finalName>${project.artifactId}-${project.version}-dist</finalName>
-                            -->
                             <archive>
                                 <manifest>
                                     <mainClass>${mainClass}</mainClass>
@@ -157,7 +154,7 @@
                 </configuration>
             </plugin>
 
-            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.6.1</version></plugin>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
 
 
             <!-- One real execution of the tool from outside JUnit. -->
