@@ -23,7 +23,7 @@
         <version.kotlin-dokka>1.9.20</version.kotlin-dokka>
         <version.jdk>11</version.jdk>
         <version.jackson>2.18.2</version.jackson>
-        <version.surefire>3.2.5</version.surefire>
+        <version.surefire>3.5.2</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
@@ -183,7 +183,7 @@
 
             <!-- One real execution of the tool from outside JUnit. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.1.0</version>
+                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>testCrunch-simple</id><phase>integration-test</phase><goals><goal>exec</goal></goals>
@@ -309,7 +309,7 @@
         <dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-cbor</artifactId><version>${version.jackson}</version></dependency>
 
         <!-- Logging -->
-        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.15</version></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.16</version></dependency>
         <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.5.12</version></dependency>
         <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-core</artifactId><version>1.5.12</version></dependency>
 
