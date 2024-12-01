@@ -11,6 +11,7 @@ import java.nio.file.Files
 import java.sql.SQLException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
+import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
 class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
@@ -112,9 +113,9 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
                         csvFileToBind.delete()
                     else {
                         //throw IllegalArgumentException("The output file already exists. Use --overwrite or delete: $csvFileToBind")
-                        val backupName = csvFileToBind.name + formatBackupSuffix()
-                        log.info("Output already exists, renaming to: $backupName")
-                        csvFileToBind.renameTo(File(backupName))
+                        val backupFile = csvFileToBind.resolveSibling(csvFileToBind.name + formatBackupSuffix())
+                        log.info("Output already exists, renaming to: $backupFile")
+                        csvFileToBind.renameTo(backupFile)
                     }
                 }
                 catch (ex: Exception) { throw CsvCruncherException("Failed dealing with an existing file in place of the output: $csvFileToBind\n${ex.message}", ex) }
@@ -178,7 +179,7 @@ class HsqlDbTableCreator(private val hsqlDbHelper: HsqlDbHelper) {
     }
 
     private fun formatBackupSuffix() = ".backup-" +
-            LocalDateTime.now().format(ISO_LOCAL_DATE_TIME) + "-" +
+            LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).format(ISO_LOCAL_DATE_TIME) + "-" +
             Random.nextInt(1000).toString().padStart(3, '0')
 
     private fun setUpTableIndexes(tableName: String, indexedColumns: List<String>) {
