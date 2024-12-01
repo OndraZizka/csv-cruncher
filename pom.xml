@@ -383,12 +383,19 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <!-- The current setup does not sign the base jar, so the Staged release fails on OSSRH checks. -->
+                                <!-- The current setup does not sign the base jar, so the Staged release fails on OSSRH checks. Not sure if this works, leaving as WIP. -->
                                 <id>sign-main-jar-hack</id>
-                                <phase>verify</phase>
+                                <phase>initialize</phase>
                                 <goals><goal>sign-and-deploy-file</goal></goals>
                                 <configuration>
                                     <file>${project.build.directory}/${project.build.finalName}.jar</file>
+                                    <url>https://${ossrh.host}/</url>
+                                    <repositoryId>ossrh</repositoryId>
+
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${project.artifactId}</artifactId>
+                                    <version>${project.version}</version>
+
                                     <keyname>73BA361CA92D829800730DE207838E30786B5257</keyname>
                                     <passphrase>${gpg.passphrase}</passphrase>
                                     <executable>${gpg.executable}</executable>

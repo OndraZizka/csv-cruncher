@@ -2,6 +2,21 @@
 Releasing
 =========
 
+**Edit 2024-11:** 
+
+1) Sonatype has changed the way to release. Will eventually need some changes in the process.
+
+2) The current pom does not attach the basic .jar, so it is not signed by PHP.  
+   A workaround is to sign it manually, upload all files to staging, and release that way.
+   ```shell
+   gpg --sign '--local-user' '73BA361CA92D829800730DE207838E30786B5257' '--armor' '--detach-sign' '--output' '/home/o/uw/csv-cruncher/target/csv-cruncher-2.7.1.jar.asc'  '/home/o/uw/csv-cruncher/target/csv-cruncher-2.7.1.jar'
+   ```
+
+*********
+
+How to release
+--------------
+
 1) Need the PGP key, see `gpg -K`, `gpg --export-secret-keys` and `gpg --import`.
        
        gpg: key 07838E30786B5257: public key "Ondrej Zizka (Jar signing for Maven Central) <zizka@seznam.cz>" imported
