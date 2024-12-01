@@ -97,6 +97,15 @@ class HsqlDbHelper(val jdbcConn: Connection) {
             jdbcConn.prepareStatement(sql)
         }
         catch (ex: SQLSyntaxErrorException) {
+            if (ex.message!!.contains("unexpected token:")) {
+                throw SqlSyntaxCruncherException("""
+                |    The SQL contains syntax error:
+                |    ${ex.message}
+                |    $sql
+                |    This may be your SQL error or caused by alteration by CsvCruncher. 
+                |    See https://github.com/OndraZizka/csv-cruncher/issues for known bugs.
+                |    """.trimMargin())
+            }
             if (ex.message!!.contains("object not found:")) {
                 throw throwHintForObjectNotFound(ex, this, sql)
             }

@@ -10,3 +10,8 @@ open class CsvCruncherException : RuntimeException {
 class CrucherConfigException : CsvCruncherException {
     constructor(message: String?) : super(message)
 }
+
+class SqlSyntaxCruncherException : CsvCruncherException {
+    constructor(message: String?) : super(message)
+}
+
