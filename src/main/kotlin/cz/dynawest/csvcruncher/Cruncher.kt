@@ -210,7 +210,7 @@ class Cruncher(private val options: Options) {
                     dirToCreate.mkdirs()
 
                     // Get the columns info: Perform the SQL, LIMIT 1.
-                    val columnsDef: Map<String, String> = dbHelper.extractColumnsInfoFrom1LineSelect(sql)
+                    val columnsDef: Map<String, String> = dbHelper.extractColumnsInfoFrom1LineSelect(sql, export.sqlQuery)
                     output.columnNamesAndTypes = columnsDef
 
 

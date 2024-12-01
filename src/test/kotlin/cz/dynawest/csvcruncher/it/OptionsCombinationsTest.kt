@@ -5,9 +5,11 @@ import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.extractArgumentsFromTestCommandFormat
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testOutputDir
+import cz.dynawest.csvcruncher.SqlSyntaxCruncherException
 import cz.dynawest.csvcruncher.app.ExportArgument.TargetType
 import cz.dynawest.csvcruncher.app.OptionsParser
 import cz.dynawest.csvcruncher.util.FilesUtils.parseColumnsFromFirstCsvLine
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertIterableEquals
@@ -128,6 +130,26 @@ class OptionsCombinationsTest {
         assertEquals(13, columnNames.size.toLong()) { "Column names fit: $columnNames" }
         assertIterableEquals("Op,recording_group_id,status,storage_base_url,owner_id,room_id,session_id,requested_ts,created_ts,deleted_ts,updated_ts,is_deleted,acc_consumer_id".split(","), columnNames)
     }
+
+    @Test
+    fun sqlSyntaxError_noStackTrace(testInfo: TestInfo) {
+        val command =
+            " | -in  | $testDataDir/eapBuilds.csv" +
+            " | -sql | SELECT * LIMIT 1" + // SQL syntax error.
+            " | -out | $testOutputDir/sqlSyntaxError_noStackTrace.csv" +
+            " | --logLevel=ERROR"
+
+        Assertions.assertThatThrownBy {
+            CsvCruncherTestUtils.runCruncherWithArguments(command)
+        }
+            .hasNoSuppressedExceptions()
+            .hasMessageContaining("SELECT * LIMIT 1")
+            .isInstanceOf(SqlSyntaxCruncherException::class.java)
+
+        val resultCsv = Paths.get("$testOutputDir/sqlSyntaxError_noStackTrace.csv").toFile()
+        assertTrue( ! resultCsv.exists() )
+    }
+
 
     /**
      * Fails because of:

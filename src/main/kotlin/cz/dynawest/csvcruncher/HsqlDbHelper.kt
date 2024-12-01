@@ -88,7 +88,7 @@ class HsqlDbHelper(val jdbcConn: Connection) {
      * Get the columns info: Perform the SQL, LIMIT 1.
      */
     @Throws(SQLException::class)
-    fun extractColumnsInfoFrom1LineSelect(sql: String): Map<String, String> {
+    fun extractColumnsInfoFrom1LineSelect(sql: String, userSql: String?): Map<String, String> {
 
         val sql = setOrReplaceLimit(sql, "LIMIT 1")
 
@@ -97,14 +97,30 @@ class HsqlDbHelper(val jdbcConn: Connection) {
             jdbcConn.prepareStatement(sql)
         }
         catch (ex: SQLSyntaxErrorException) {
+            // TBD: This would be nice to refactor for wherever SQL is executed.
+
+            val isWholeSqlInExMsg = ex.message?.contains("[$sql]") ?: false
+            val isSqlSameAsUserSql = sql == userSql
+
             if (ex.message!!.contains("unexpected token:")) {
-                throw SqlSyntaxCruncherException("""
-                |    The SQL contains syntax error:
-                |    ${ex.message}
-                |    $sql
-                |    This may be your SQL error or caused by alteration by CsvCruncher. 
-                |    See https://github.com/OndraZizka/csv-cruncher/issues for known bugs.
-                |    """.trimMargin())
+                var msg = """
+                    |    The SQL contains syntax error:
+                    |    ${ex.message}
+                """
+
+                if (!isWholeSqlInExMsg || !isSqlSameAsUserSql)
+                    msg += "|    Export's SQL: $sql\n"
+
+                if (isSqlSameAsUserSql)
+                    msg += "|    This is likely an error in your SQL. Please refer to HSQLDB SQL syntax: https://www.hsqldb.org/doc/guide/dataaccess-chapt.html#dac_sql_select_statement"
+                else
+                    msg += """
+                        |    This may be your SQL error or caused by alteration by CsvCruncher. 
+                        |    Check HSQLDB SQL syntax: https://www.hsqldb.org/doc/guide/dataaccess-chapt.html#dac_sql_select_statement
+                        |    See https://github.com/OndraZizka/csv-cruncher/issues for known bugs.
+                        |    """
+
+                throw SqlSyntaxCruncherException(msg.trimMargin())
             }
             if (ex.message!!.contains("object not found:")) {
                 throw throwHintForObjectNotFound(ex, this, sql)
