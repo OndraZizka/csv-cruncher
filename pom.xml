@@ -159,7 +159,7 @@
 
             <!-- One real execution of the tool from outside JUnit. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.1.0</version>
+                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>testCrunch-simple</id><phase>integration-test</phase><goals><goal>exec</goal></goals>
