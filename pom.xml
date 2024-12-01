@@ -27,7 +27,8 @@
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
-        <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-single-jar-with-dependencies.jar</testRunCmd>
+        <fatJarAssemblyId>fatjar</fatJarAssemblyId>
+        <testRunCmd>${jvm.args.debug} -jar ${project.build.directory}/${project.build.finalName}-${fatJarAssemblyId}.jar</testRunCmd>
         <skipE2E>false</skipE2E>
         <ossrh.host>oss.sonatype.org</ossrh.host>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
@@ -100,16 +101,15 @@
                 </executions>
             </plugin>
 
-            <!-- Better - uses the Assembly plugin with built-in jar-with-dependencies descriptor.
-                   mvn install assembly:assembly
-            -->
+            <!-- Assemblies - fat jar, dist zip. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version>
                 <executions>
+
                     <execution>
-                        <id>single</id> <!-- Was before MJAR-233: assembleDistJar -->
+                        <id>single-DISABLED</id> <!-- Was before MJAR-233: assembleDistJar -->
                         <goals><goal>single</goal></goals>
-                        <phase>package</phase>
+                        <phase>none</phase> <!-- Disabled, trying a custom descriptor -->
                         <configuration>
                             <finalName>${project.artifactId}-${project.version}-single</finalName>
                             <archive>
@@ -130,6 +130,31 @@
                             <appendAssemblyId>true</appendAssemblyId>
                         </configuration>
                     </execution>
+
+                    <!-- Shaded jar. Used primarily for testing. Users would rather use ...-dist.zip . -->
+                    <execution>
+                        <id>single</id>
+                        <goals><goal>single</goal></goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>${mainClass}</mainClass>
+                                    <addClasspath>false</addClasspath> <!-- false for jar-with-dependencies -->
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                </manifest>
+                                <manifestEntries>
+                                    <Release-Version>${project.version}</Release-Version>
+                                </manifestEntries>
+                            </archive>
+                            <descriptors>
+                                <descriptor>src/main/assembly-${fatJarAssemblyId}.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>true</appendAssemblyId>
+                        </configuration>
+                    </execution>
+
                     <execution>
                         <id>dist</id> <!-- assembleDistZip -->
                         <goals><goal>single</goal></goals>
@@ -146,12 +171,11 @@
                             <descriptors>
                                 <descriptor>src/main/assembly-dist.xml</descriptor>
                             </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
+
                 </executions>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
             </plugin>
 
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
