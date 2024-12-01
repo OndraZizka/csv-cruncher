@@ -104,7 +104,7 @@
                    mvn install assembly:assembly
             -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.4.2</version>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.7.0</version>
                 <executions>
                     <execution>
                         <id>single</id> <!-- Was before MJAR-233: assembleDistJar -->
