@@ -368,6 +368,7 @@
                     </plugin>
 
                     <!-- This relies on the gpg command being installed and the GPG credentials being available e.g. from settings.xml. -->
+                    <!-- Remember to run this before Maven build: export GPG_TTY=$(tty) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.7</version>
                         <executions>
@@ -376,7 +377,18 @@
                                 <phase>verify</phase>
                                 <goals><goal>sign</goal></goals>
                                 <configuration>
-                                    <!-- Remember to run this before Maven build: export GPG_TTY=$(tty) -->
+                                    <keyname>73BA361CA92D829800730DE207838E30786B5257</keyname>
+                                    <passphrase>${gpg.passphrase}</passphrase>
+                                    <executable>${gpg.executable}</executable>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <!-- The current setup does not sign the base jar, so the Staged release fails on OSSRH checks. -->
+                                <id>sign-main-jar-hack</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign-and-deploy-file</goal></goals>
+                                <configuration>
+                                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
                                     <keyname>73BA361CA92D829800730DE207838E30786B5257</keyname>
                                     <passphrase>${gpg.passphrase}</passphrase>
                                     <executable>${gpg.executable}</executable>
