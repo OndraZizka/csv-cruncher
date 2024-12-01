@@ -46,7 +46,7 @@ class ExportArgument {
 
     override fun toString(): String {
         val outputPathOrSpecial = when (targetType) {TargetType.STDOUT -> "<STDOUT>"; else -> path }
-        return "(${alias ?: "no alias"}) $formats -> $outputPathOrSpecial\n\t\t\"$sqlQuery\""
+        return "(${alias ?: "no alias"}) $formats -> $outputPathOrSpecial\n\t\t\"${ sqlQuery ?: "(no SQL query)" }\""
     }
 
     enum class TargetType(
@@ -55,7 +55,7 @@ class ExportArgument {
     ) {
         /** This export was explicitly requested to go to STDOUT (versus just a missing path). */
         STDOUT("-", { exArg -> java.io.File.createTempFile("CsvCrunch-", exArg.formats.firstOrNull()?.suffixes?.firstOrNull() ?: ".csv").toPath() } ),
-        FILE(null, null),
+        FILE(null, { it.path ?: throw IllegalStateException("TargetType == FILE, but theres no path: $it") }),
     }
 }
 
