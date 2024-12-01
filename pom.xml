@@ -190,6 +190,7 @@
                 <executions>
                     <execution><id>clean-hsqldb-data</id><phase>pre-integration-test</phase><goals><goal>clean</goal></goals>
                         <configuration>
+                            <excludeDefaultDirectories>true</excludeDefaultDirectories>
                             <filesets> <fileset> <directory>hsqldb/</directory> <useDefaultExcludes>false</useDefaultExcludes> </fileset> </filesets>
                         </configuration>
                     </execution>
