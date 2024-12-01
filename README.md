@@ -278,7 +278,11 @@ What's new
 ---------
 <details><summary>What's new</summary>
 
-* `2022-11-27` Preparing 2.5.x - reading from spreadsheets (Excel/XLS, LibreOffice/ODS, etc.)
+* `2023-12-01` Release 2.7.1 - Various fixes of annoying UX bugs. #151 #152 #153
+* `2023-11-xx` Rebased branch with reading from spreadsheets.
+* `2023-09-03` Release 2.7.0 - Allow output to STDOUT.
+* `2023-06-29` Release 2.6.0 - Allow setting table names (`-as`) for input files.
+* `2022-11-27` ~~Preparing 2.5.x - reading from spreadsheets (Excel/XLS, LibreOffice/ODS, etc.)~~ Still in progress.
 * `2022-11-25` Release 2.4.1
     * Fix: CVE-2022-41853 in HSQLDB 
     * Upgrade: HSQLDB to 2.7.1
