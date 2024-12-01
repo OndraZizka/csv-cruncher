@@ -31,13 +31,17 @@ data class CruncherInputSubpart(
     }
 
     override fun toString(): String {
-        return  """:
+        var msg = """:
             |    originalImportArgument: $originalImportArgument
-            |    originalInputPath:      $originalInputPath
-            |    combinedFile:           $combinedFile
-            |    combinedFromFiles:      $combinedFromFiles
+            |    originalInputPath:      $originalInputPath"""
+        if (combinedFile != originalInputPath) msg += """
+            |    combinedFile:           $combinedFile"""
+        if (combinedFromFiles?.size != 1) msg += """
+            |    combinedFromFiles:      $combinedFromFiles"""
+        msg += """
             |    tableName:              $tableName
-            |    """.replaceIndentByMargin()
+            |    """
+        return  msg.replaceIndentByMargin()
     }
 
 }
