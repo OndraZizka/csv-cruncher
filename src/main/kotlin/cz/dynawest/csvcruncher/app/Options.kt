@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.CrucherConfigException
 import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineDirectories.COMBINE_PER_INPUT_SUBDIR
+import cz.dynawest.csvcruncher.app.csvRegexParts.columnNames
 import cz.dynawest.csvcruncher.util.logger
 import java.io.FileNotFoundException
 import java.nio.file.Path
@@ -14,7 +15,8 @@ import kotlin.io.path.extension
 class ImportArgument {
     var path: Path? = null
     var alias: String? = null
-    var format: Format = Format.CSV
+    var format: DataFormat? = null
+    var formatFrom: DataFormatFrom = DataFormatFrom.ASSUMED
     var itemsPathInTree: String = "/"
     var indexed: List<String> = emptyList()
 
@@ -30,7 +32,7 @@ class ImportArgument {
     var jsonExportFormat: OptionsEnums.JsonExportFormat? = null
 
     override fun toString(): String {
-        return "(${alias?:"no alias"}) [$format] ${initialRowNumber?:""} <- $path ${itemsPathInTree}"
+        return "(${alias?:"no alias"}) [$format from $formatFrom] ${initialRowNumber?:""} <- $path ${itemsPathInTree}"
     }
 }
 
@@ -41,7 +43,7 @@ class ExportArgument {
     var path: Path? = null
     var targetType: TargetType = TargetType.STDOUT
     var alias: String? = null
-    var formats: MutableSet<Format> = mutableSetOf(Format.CSV)
+    var formats: MutableSet<DataFormat> = mutableSetOf(DataFormat.CSV)
 
 
     override fun toString(): String {
@@ -63,17 +65,44 @@ data class InitSqlArgument (
     var path: Path
 )
 
-enum class Format (val suffixes: Set<String>) {
-    CSV(setOf(".csv")),
-    JSON(setOf(".json"));
+
+internal object csvRegexParts {
+    const val columnName = "[\\w-_. ]+"
+    const val quotedOrUnquoted = """("$columnName")|($columnName)"""
+    const val quotedOrUnquotedSpaced = """(\s*$quotedOrUnquoted\s*)"""
+    const val columnNames = """^\s*#?\s*$quotedOrUnquotedSpaced(,$quotedOrUnquotedSpaced)*,?\n?"""
+}
+
+enum class DataFormat (val suffixes: List<String>, val beginningLineRegex: Regex) {
+
+    // Auto-detection:  A comma-separated list of quoted or unquoted column names,
+    //                  optionally starting with #, and optional trailing comma.
+    CSV(listOf(".csv"), columnNames.toRegex()),
+
+    // Auto-detection:  Starts with { or [ followed by " or \n.
+    JSON(listOf(".json"), "^\\s*[{\\[]\\s*[\"\\n]*.*".toRegex());
+
+    val suffix: String get() = suffixes.first()
 
     companion object {
-        fun from(path: Path): Format? {
+        fun fromExtension(path: Path): DataFormat? {
             return path.last().extension.ifEmpty { null }
-                ?.let { extension -> Format.entries.find { ".$extension" in it.suffixes } }
+                ?.let { extension -> DataFormat.entries.find { ".$extension" in it.suffixes } }
         }
+
+        /**
+         * Detects from a string what the file type likely is.
+         * For simplicity, it operates on String, which should be the first line for CSV,
+         * and the first non-blank few characters for JSON.
+         *
+         * We could also use com.fasterxml.jackson.core.format.DataFormatDetector.
+         */
+        fun detectFormat(beginning: String): DataFormat?
+            = DataFormat.entries.find { it.beginningLineRegex.matches(beginning) }
     }
 }
+
+enum class DataFormatFrom { PARAM, FILE_SUFFIX, DETECTOR, ASSUMED }
 
 enum class LogLevel (val logbackLevel: Level) {
     TRACE(Level.TRACE), DEBUG(Level.DEBUG), INFO(Level.INFO), WARN(Level.WARN), ERROR(Level.ERROR), OFF(Level.OFF)

@@ -2,9 +2,10 @@ package cz.dynawest.csvcruncher
 
 import ch.qos.logback.classic.Level
 import cz.dynawest.csvcruncher.HsqlDbHelper.Companion.quote
+import cz.dynawest.csvcruncher.app.DataFormat
+import cz.dynawest.csvcruncher.app.DataFormatFrom
 import cz.dynawest.csvcruncher.app.ExitCleanupStrategy
 import cz.dynawest.csvcruncher.app.ExportArgument
-import cz.dynawest.csvcruncher.app.Format
 import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsEnums.CombineInputFiles
 import cz.dynawest.csvcruncher.app.OptionsEnums.JsonExportFormat
@@ -28,6 +29,7 @@ import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
+import kotlin.io.path.isDirectory
 
 class Cruncher(private val options: Options) {
     private lateinit var jdbcConn: Connection
@@ -43,6 +45,8 @@ class Cruncher(private val options: Options) {
         } catch (e: ClassNotFoundException) {
             throw CsvCruncherException("Couldn't find JDBC driver: " + e.message, e)
         }
+
+        detectImportFileFormatsWhereUnspecified(options)
 
         val dbPath = StringUtils.defaultIfEmpty(options.dbPath, "hsqldb").toString() + "/cruncher"
         try {
@@ -61,6 +65,30 @@ class Cruncher(private val options: Options) {
             throw CsvCruncherException("Can't connect to the database $dbPath: ${e.message}", e)
         }
         dbHelper = HsqlDbHelper(jdbcConn)
+    }
+
+    private fun detectImportFileFormatsWhereUnspecified(options: Options) {
+        val importsWithUnspecifiedFormat = options.importArguments
+            .filter { it.format == null }
+
+        for (import in importsWithUnspecifiedFormat) {
+            if (import.path == null) continue
+
+            // Assume CSV for dirs - the behavior before format detection.
+            if (import.path!!.isDirectory()) {
+                import.format = DataFormat.CSV
+                import.formatFrom = DataFormatFrom.ASSUMED
+                continue
+            }
+
+            import.path!!.toFile().bufferedReader().use { reader ->
+                import.ignoreFirstLines?.let { skipLinesCount -> repeat(skipLinesCount) { reader.readLine() } }
+
+                val line =  reader.readLine()
+                import.format = DataFormat.detectFormat(line)
+                import.formatFrom = DataFormatFrom.DETECTOR
+            }
+        }
     }
 
     /**
@@ -107,7 +135,7 @@ class Cruncher(private val options: Options) {
             if (importArguments.size == 1 && options.exportArguments.size == 1){
                 val singleConverted = options.importArguments.first()
                 val singleExport = options.exportArguments.first()
-                if (singleExport.sqlQuery == null && singleExport.formats == setOf(Format.CSV)) {
+                if (singleExport.sqlQuery == null && singleExport.formats == setOf(DataFormat.CSV)) {
                     singleExport.path!!.toFile().mkdirs()
                     Files.move(singleConverted.path!!, singleExport.path!!)
                     return
@@ -242,7 +270,7 @@ class Cruncher(private val options: Options) {
 
 
                     // Now let's convert it to JSON if necessary.
-                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(Format.JSON)
+                    val convertResultToJson = options.jsonExportFormat != JsonExportFormat.NONE || output.forExport.formats.contains(DataFormat.JSON)
                     if (convertResultToJson) {
                         var pathStr: String = csvOutFile.toPath().toString()
                         pathStr = StringUtils.removeEndIgnoreCase(pathStr, ".csv")
@@ -256,7 +284,7 @@ class Cruncher(private val options: Options) {
                                 destJsonFile,
                                 options.jsonExportFormat == JsonExportFormat.ARRAY
                             )
-                            if (!output.forExport.formats.contains(Format.CSV) && !options.keepWorkFiles) csvOutFile.deleteOnExit()
+                            if (!output.forExport.formats.contains(DataFormat.CSV) && !options.keepWorkFiles) csvOutFile.deleteOnExit()
                         }
 
                         contentForStdout = destJsonFile.toFile()
@@ -306,7 +334,7 @@ class Cruncher(private val options: Options) {
      */
     private val initialNumber: Long
         get() = options.initialRowNumber?.takeIf { it != -1L }
-            ?: System.currentTimeMillis() - TIMESTAMP_SUBTRACT
+            ?: (System.currentTimeMillis() - TIMESTAMP_SUBTRACT)
 
     /**
      * Information for the extra column used to add a unique id to each row.
@@ -346,8 +374,7 @@ class Cruncher(private val options: Options) {
 
     companion object {
         const val TABLE_NAME__OUTPUT = "output"
-        const val TIMESTAMP_SUBTRACT = 1600000000000L // To make the unique ID a smaller number.
-        const val FILENAME_SUFFIX_CSV = ".csv"
+        const val TIMESTAMP_SUBTRACT = 1_733_000_000_000L // To make the unique ID a smaller number.
         const val SQL_TABLE_PLACEHOLDER = "\$table"
         const val DEFAULT_SQL = "SELECT $SQL_TABLE_PLACEHOLDER.* FROM $SQL_TABLE_PLACEHOLDER"
     }

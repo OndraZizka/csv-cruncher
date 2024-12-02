@@ -1,8 +1,8 @@
 package cz.dynawest.csvcruncher.util
 
-import cz.dynawest.csvcruncher.Cruncher
 import cz.dynawest.csvcruncher.CruncherInputSubpart
 import cz.dynawest.csvcruncher.CsvCruncherException
+import cz.dynawest.csvcruncher.app.DataFormat
 import cz.dynawest.csvcruncher.app.ImportArgument
 import cz.dynawest.csvcruncher.app.Options
 import cz.dynawest.csvcruncher.app.OptionsEnums
@@ -221,7 +221,7 @@ object FilesUtils {
                 }
                 log.trace("   *** About to walk$inputPath")
                 Files.walk(inputPath)
-                        .filter { curFile: Path -> Files.isRegularFile(curFile) && curFile.fileName.toString().endsWith(Cruncher.FILENAME_SUFFIX_CSV) } ///.peek(path -> System.out.println("fileToGroupSorter " + path))
+                        .filter { curFile: Path -> Files.isRegularFile(curFile) && curFile.fileName.toString().endsWith(DataFormat.CSV.suffix) }
                         .filter { file: Path ->
                             if (file.toFile().canRead()) return@filter true
                             if (options.skipNonReadable) {
@@ -377,9 +377,9 @@ object FilesUtils {
         var originPath = fileGroup.key
         return if (originPath == null) {
             // Assorted files will be combined into resultDir/concat.csv.
-            Paths.get("concat" + Cruncher.FILENAME_SUFFIX_CSV).toString()
+            Paths.get("concat" + DataFormat.CSV.suffix).toString()
         } else {
-            val pathStr = StringUtils.appendIfMissing(originPath.toString(), Cruncher.FILENAME_SUFFIX_CSV)
+            val pathStr = StringUtils.appendIfMissing(originPath.toString(), DataFormat.CSV.suffix)
             originPath = Paths.get(pathStr)
             val concatFilePath = getNonUsedName(originPath, usedConcatFilePaths)
             usedConcatFilePaths.add(concatFilePath)

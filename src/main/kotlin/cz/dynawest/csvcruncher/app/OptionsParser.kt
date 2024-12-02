@@ -12,7 +12,6 @@ import org.apache.commons.lang3.StringUtils
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.regex.Pattern
-import kotlin.io.path.name
 
 object OptionsParser {
 
@@ -56,7 +55,12 @@ object OptionsParser {
                 when (next) {
                     OptionsCurrentContext.IN -> {
                         currentImport.path = Path.of(arg)
-                        if (currentImport.path!!.name.lowercase().endsWith(".json")) currentImport.format = Format.JSON
+                        // TBD By extension we should only assume?
+                        //if (currentImport.path!!.name.lowercase().endsWith(".json")) currentImport.format = DataFormat.JSON
+                        if (currentImport.format == null) {
+                            currentImport.format = DataFormat.fromExtension(currentImport.path!!)
+                            currentImport.formatFrom = DataFormatFrom.FILE_SUFFIX
+                        }
                     }
                     OptionsCurrentContext.OUT -> {
                         currentExport.path = Path.of(arg)
@@ -72,7 +76,7 @@ object OptionsParser {
                             currentExport.formats = mutableSetOf(Format.JSON)
                         }*/
                         currentExport.path ?.let {
-                            Format.from(it)
+                            DataFormat.fromExtension(it)
                                 ?.let { currentExport.formats = mutableSetOf(it) }
                         }
                     }
@@ -89,9 +93,9 @@ object OptionsParser {
                 }
             }
             else if ("-format" == arg) {
-                val format = enumValueOr(args.getOrNull(++argIndex), Format.CSV)
+                val format = enumValueOr(args.getOrNull(++argIndex), DataFormat.CSV)
                 when (next) {
-                    OptionsCurrentContext.IN -> currentImport.format = format
+                    OptionsCurrentContext.IN -> { currentImport.format = format; currentImport.formatFrom = DataFormatFrom.PARAM }
                     OptionsCurrentContext.OUT -> currentExport.formats.add(format)
                     else -> throw CrucherConfigException("-format may only come as part of an import or export, i.e. after `-in` or `-out`.")
                 }
@@ -261,7 +265,7 @@ object OptionsParser {
                 enumValueOrNull<LogLevel>(name)
                     ?.also { options.logLevel = it }
                     ?.also { Utils.setRootLoggerLevel(it.logbackLevel) }
-                    ?: log.error("Invalid logLevel '$name', will use the defaults. Try one of " + LogLevel.values().joinToString(", "))
+                    ?: log.error("Invalid logLevel '$name', will use the defaults. Try one of " + LogLevel.entries.joinToString(", "))
             }
             else if ("--keepWorkFiles" == arg) {
                 options.keepWorkFiles = true
