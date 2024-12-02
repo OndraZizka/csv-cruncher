@@ -42,6 +42,7 @@ object SqlFunctions {
             "Error creating Java function $FUNCTION_jsonSubtree()."
         )
 
+
         val FUNCTION_jsonLeaf = "jsonLeaf"
         hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_jsonLeaf", "Error dropping Java function $FUNCTION_jsonLeaf().")
         hsqlDbHelper.executeSql(
@@ -56,11 +57,28 @@ object SqlFunctions {
             "Error creating Java function $FUNCTION_jsonLeaf()."
         )
 
+
+        /* Can't make this work.
+        hsqlDbHelper.executeSql("CREATE TYPE ARRAY_STRINGS AS VARCHAR ARRAY", "Error creating type ARRAY_STRINGS.")
+        hsqlDbHelper.executeSql("SET DATABASE EVENT LOG SQL LEVEL 3", "Error creating type ARRAY_STRINGS.")
+
+        val FUNCTION_simpleArray = "simpleArray"
+        hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_simpleArray", "Error dropping Java function $FUNCTION_simpleArray().")
+        hsqlDbHelper.executeSql(
+                """CREATE FUNCTION simpleArray()
+                        RETURNS VARCHAR ARRAY
+                        LANGUAGE JAVA PARAMETER STYLE JAVA
+                        EXTERNAL NAME 'CLASSPATH:${javaClass.name}.simpleArray'
+                   """,
+            "Error creating Java function $FUNCTION_simpleArray()."
+        )*/
+
+
         val FUNCTION_jsonLeaves = "jsonLeaves"
         hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_jsonLeaves", "Error dropping Java function $FUNCTION_jsonLeaves().")
         hsqlDbHelper.executeSql(
-            """CREATE FUNCTION $FUNCTION_jsonLeaves(path LONGVARCHAR, jsonString LONGVARCHAR, nullOnNonScalarResult BOOLEAN) 
-                    RETURNS LONGVARCHAR
+            """CREATE FUNCTION $FUNCTION_jsonLeaves(pathToArray LONGVARCHAR, jsonString LONGVARCHAR, nullOnNonArrayNode BOOLEAN) 
+                    RETURNS LONGVARCHAR -- ARRAY -- ARRAY_STRINGS -- ARRAY doesn't work for functions :/
                     RETURNS NULL ON NULL INPUT
                     DETERMINISTIC
                     NO SQL
@@ -69,6 +87,7 @@ object SqlFunctions {
                 """,
             "Error creating Java function $FUNCTION_jsonLeaves()."
         )
+
     }
 
     @JvmStatic
@@ -123,7 +142,18 @@ object SqlFunctions {
 
     /** Returns the raw value of the respective leaf, converted to a text. */
     @JvmStatic
-    fun jsonLeaves(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): List<String?>? {
+    fun jsonLeaves(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): String? {
+        return jsonLeaves_impl(pathToArray, jsonString, nullOnNonArrayNode)
+            ?.let { objectMapper.writeValueAsString(it) }
+    }
+
+    @JvmStatic
+    fun jsonLeaves_array(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): Array<String?>? {
+        return jsonLeaves_impl(pathToArray, jsonString, nullOnNonArrayNode)?.toTypedArray()
+        //return jsonLeaves_impl(pathToArray, jsonString, nullOnNonArrayNode)?.toTypedArray()?.requireNoNulls() ?: emptyArray<String>()
+    }
+
+    internal fun jsonLeaves_impl(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): List<String?>? {
         val tree = findJsonSubtree(pathToArray, jsonString) ?: return null
 
         if (!tree.isArray) {
@@ -136,6 +166,10 @@ object SqlFunctions {
             it.textValue()
         }
     }
+
+
+    @JvmStatic
+    fun simpleArray(): Array<String> = arrayOf("a", "b", "c")
 
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
 
