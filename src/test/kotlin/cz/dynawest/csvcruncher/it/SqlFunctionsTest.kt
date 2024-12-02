@@ -3,7 +3,7 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.util.SqlFunctions.jsonLeaf
-import cz.dynawest.csvcruncher.util.SqlFunctions.jsonLeaves
+import cz.dynawest.csvcruncher.util.SqlFunctions.jsonLeaves_impl
 import cz.dynawest.csvcruncher.util.SqlFunctions.jsonSubtree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertEquals
+
 
 class SqlFunctionsTest {
 
@@ -42,14 +43,14 @@ class SqlFunctionsTest {
 
     @Test
     fun test_jsonLeaves_impl(testInfo: TestInfo) {
-        assertEquals(listOf("bar"), jsonLeaves("foo", """{ "foo": ["bar"] }"""))
-        assertEquals(null, jsonLeaves("foo", """{ "foo": { "bar": "baz" } }""", true))
-        assertThrows<IllegalArgumentException> { jsonLeaves("foo", """{ "foo": { "bar": "baz" } }""", false) }
-        assertEquals(listOf("baz"), jsonLeaves("foo/bar", """{ "foo": { "bar": ["baz"] } }"""))
-        assertEquals(listOf(""), jsonLeaves("foo/bar", """{ "foo": { "bar": [""] } }"""))
-        assertEquals(listOf(null), jsonLeaves("foo/bar", """{ "foo": { "bar": [null] } }"""))
-        assertEquals(null, jsonLeaves("foo/NON-EXISTENT", """{ "foo": { "bar": "baz" } }""", false))
-        assertThrows<IllegalArgumentException> { jsonLeaves("foo/BAD-JSON", """{ ][{ dfwq3 /]-json": } """) }
+        assertEquals(listOf("bar"), jsonLeaves_impl("foo", """{ "foo": ["bar"] }"""))
+        assertEquals(null, jsonLeaves_impl("foo", """{ "foo": { "bar": "baz" } }""", true))
+        assertThrows<IllegalArgumentException> { jsonLeaves_impl("foo", """{ "foo": { "bar": "baz" } }""", false) }
+        assertEquals(listOf("baz"), jsonLeaves_impl("foo/bar", """{ "foo": { "bar": ["baz"] } }"""))
+        assertEquals(listOf(""), jsonLeaves_impl("foo/bar", """{ "foo": { "bar": [""] } }"""))
+        assertEquals(listOf(null), jsonLeaves_impl("foo/bar", """{ "foo": { "bar": [null] } }"""))
+        assertEquals(null, jsonLeaves_impl("foo/NON-EXISTENT", """{ "foo": { "bar": "baz" } }""", false))
+        assertThrows<IllegalArgumentException> { jsonLeaves_impl("foo/BAD-JSON", """{ ][{ dfwq3 /]-json": } """) }
     }
 
     @Suppress("unused")
@@ -58,8 +59,8 @@ class SqlFunctionsTest {
         C2("{\"bar\":\"baz\"}", "foo",      """{ "foo": { "bar": "baz" } }"""),
         C3("{\"bar\":\"baz\"}", "foo",      """{ "foo": { "bar": "baz" } }"""),
         C4("\"baz\"",           "foo/bar",  """{ "foo": { "bar": "baz" } }"""),
-        C5(null,                "foo/NON-EXISTENT", """{ "foo": { "bar": "baz" } }"""),
-        C6("null",                "foo/NON-EXISTENT", """{ "foo": { "bar": null } }"""),
+        C5(null,                "foo/NON-EXISTENT", """{ "foo": "bar" }"""),
+        C6("null",                "foo/bar", """{ "foo": { "bar": null } }"""),
     }
 
     @ParameterizedTest
@@ -106,11 +107,10 @@ class SqlFunctionsTest {
         // TBD assertions
     }
 
-    @Test
+    @Test //@Disabled("Seems this is not supported by HSQLDB.")  Currently, returns a JSON string with the array. Not too useful.
     fun test_jsonLeaves_inSql(testInfo: TestInfo) {
 
         val inPath = Paths.get("$testDataDir/eapBuilds.csv")
-
         val outputPath = """${testInfo.testMethod.get().name}.json"""
         val command = """ -in  | $inPath | -out | $outputPath | -sql | SELECT jsonLeaves('foo', '{ "foo": ["bar"] }', true) FROM (VALUES(0)) AS dual"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
