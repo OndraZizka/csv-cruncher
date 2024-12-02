@@ -3,6 +3,7 @@ package cz.dynawest.csvcruncher.it
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils
 import cz.dynawest.csvcruncher.CsvCruncherTestUtils.testDataDir
 import cz.dynawest.csvcruncher.util.SqlFunctions.jsonLeaf
+import cz.dynawest.csvcruncher.util.SqlFunctions.jsonLeaves
 import cz.dynawest.csvcruncher.util.SqlFunctions.jsonSubtree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -10,8 +11,6 @@ import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertEquals
@@ -41,6 +40,18 @@ class SqlFunctionsTest {
         assertThrows<IllegalArgumentException> { jsonLeaf("foo/BAD-JSON", """{ ][{ dfwq3 /]-json": } """) }
     }
 
+    @Test
+    fun test_jsonLeaves_impl(testInfo: TestInfo) {
+        assertEquals(listOf("bar"), jsonLeaves("foo", """{ "foo": ["bar"] }"""))
+        assertEquals(null, jsonLeaves("foo", """{ "foo": { "bar": "baz" } }""", true))
+        assertThrows<IllegalArgumentException> { jsonLeaves("foo", """{ "foo": { "bar": "baz" } }""", false) }
+        assertEquals(listOf("baz"), jsonLeaves("foo/bar", """{ "foo": { "bar": ["baz"] } }"""))
+        assertEquals(listOf(""), jsonLeaves("foo/bar", """{ "foo": { "bar": [""] } }"""))
+        assertEquals(listOf(null), jsonLeaves("foo/bar", """{ "foo": { "bar": [null] } }"""))
+        assertEquals(null, jsonLeaves("foo/NON-EXISTENT", """{ "foo": { "bar": "baz" } }""", false))
+        assertThrows<IllegalArgumentException> { jsonLeaves("foo/BAD-JSON", """{ ][{ dfwq3 /]-json": } """) }
+    }
+
     @Suppress("unused")
     enum class JsonTestCase (val expected: String?, val path: String, val json: String) {
         C1("\"bar\"",           "foo",      """{ "foo": "bar" }"""),
@@ -53,18 +64,15 @@ class SqlFunctionsTest {
 
     @ParameterizedTest
     @EnumSource(value = JsonTestCase::class)
-    fun test_(case: JsonTestCase) {
+    fun test_(case: JsonTestCase, testInfo: TestInfo) {
         val inPath = Paths.get("$testDataDir/eapBuilds.csv")
-        val command = """ -in  | $inPath | -out | - | -sql | SELECT jsonSubtree('${case.path}', '${case.json}') FROM (VALUES(0)) AS dual"""
-
-        // Capture the stdout
-        val resultBytes = ByteArrayOutputStream()
-        val resultStream = PrintStream(resultBytes)
-        //System.setOut(resultStream) // TBD - put to files after all. This is too complicated.
+        val outputPath = """${testInfo.testMethod.get().name}.json"""
+        val command = """ -in  | $inPath | -out | $outputPath | -sql | SELECT jsonSubtree('${case.path}', '${case.json}') FROM (VALUES(0)) AS dual"""
 
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
-        resultBytes.close()
+        assertThat(Path.of(outputPath)).exists().isNotEmptyFile()
+        // TBD assertions
     }
 
 
@@ -78,6 +86,7 @@ class SqlFunctionsTest {
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         assertThat(Path.of(outputPath)).exists().isNotEmptyFile()
+        // TBD assertions
 
         // TBD: Bug - two outputs:
         //INFO:  * CSV output: /home/o/uw/csv-cruncher/test_jsonSubtree_inSql.json
@@ -94,6 +103,20 @@ class SqlFunctionsTest {
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         assertThat(Path.of(outputPath)).exists().isNotEmptyFile()
+        // TBD assertions
+    }
+
+    @Test
+    fun test_jsonLeaves_inSql(testInfo: TestInfo) {
+
+        val inPath = Paths.get("$testDataDir/eapBuilds.csv")
+
+        val outputPath = """${testInfo.testMethod.get().name}.json"""
+        val command = """ -in  | $inPath | -out | $outputPath | -sql | SELECT jsonLeaves('foo', '{ "foo": ["bar"] }', true) FROM (VALUES(0)) AS dual"""
+        CsvCruncherTestUtils.runCruncherWithArguments(command)
+
+        assertThat(Path.of(outputPath)).exists().isNotEmptyFile()
+        // TBD assertions
     }
 
 }

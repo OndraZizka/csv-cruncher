@@ -2,6 +2,7 @@ package cz.dynawest.csvcruncher.util
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import cz.dynawest.csvcruncher.HsqlDbHelper
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -54,6 +55,20 @@ object SqlFunctions {
                 """,
             "Error creating Java function $FUNCTION_jsonLeaf()."
         )
+
+        val FUNCTION_jsonLeaves = "jsonLeaves"
+        hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_jsonLeaves", "Error dropping Java function $FUNCTION_jsonLeaves().")
+        hsqlDbHelper.executeSql(
+            """CREATE FUNCTION $FUNCTION_jsonLeaves(path LONGVARCHAR, jsonString LONGVARCHAR, nullOnNonScalarResult BOOLEAN) 
+                    RETURNS LONGVARCHAR
+                    RETURNS NULL ON NULL INPUT
+                    DETERMINISTIC
+                    NO SQL
+                    LANGUAGE JAVA PARAMETER STYLE JAVA
+                    EXTERNAL NAME 'CLASSPATH:${javaClass.name}.jsonLeaves'
+                """,
+            "Error creating Java function $FUNCTION_jsonLeaves()."
+        )
     }
 
     @JvmStatic
@@ -103,7 +118,23 @@ object SqlFunctions {
 
         if (nullOnNonScalarResult) return null
 
-        throw IllegalArgumentException("The node at $pathString is not a scalar value.")
+        throw IllegalArgumentException("The node at $pathString is not a scalar value, but ${tree.nodeType.name}.")
+    }
+
+    /** Returns the raw value of the respective leaf, converted to a text. */
+    @JvmStatic
+    fun jsonLeaves(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): List<String?>? {
+        val tree = findJsonSubtree(pathToArray, jsonString) ?: return null
+
+        if (!tree.isArray) {
+            if (nullOnNonArrayNode) return null
+            throw IllegalArgumentException("The node at $pathToArray is not an array value, but ${tree.nodeType.name}.")
+        }
+
+        return (tree as ArrayNode).map {
+            //objectMapper.writeValueAsString(it)
+            it.textValue()
+        }
     }
 
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
