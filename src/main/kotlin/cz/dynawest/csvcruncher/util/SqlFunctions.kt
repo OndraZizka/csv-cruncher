@@ -48,24 +48,29 @@ object SqlFunctions {
     }
 
     @JvmStatic
-    fun jsonSubtree(path: String, jsonString: String): String? {
-        var path_ = try { Path.of(path) } catch (e: InvalidPathException) { throw IllegalArgumentException("Invalid path, use '/' to navigate (no array support): $path") }
+    fun jsonSubtree(pathString: String, jsonString: String): String? {
+        var path = try { Path.of(pathString) } catch (e: InvalidPathException) { throw IllegalArgumentException("Invalid path, use '/' to navigate (no array support): $pathString") }
 
-        val objectMapper = ObjectMapper()
+        var tree =
+            try { objectMapper.readTree(jsonString) }
+            catch (e: Exception) { throw IllegalArgumentException("Failed parsing the JSON (truncated to 100): ${jsonString.take(100)}") }
 
-        var tree = try {
-            objectMapper.readTree(jsonString)
-        }
-        catch (e: Exception) { throw IllegalArgumentException("Failed parsing the JSON: ${jsonString.take(20)}") }
-
-        // TODO: Parse JSON and return a subtree.
-        while (path_.firstOrNull() != null) {
-            tree = tree.get( path_.firstOrNull()!!.toString() )
+        // Follow the path and return the respective subtree, as JSON.
+        do {
+            val nextStep = path.firstOrNull() ?: break
+            tree = tree.get( nextStep.toString() )
             if (tree == null) return null
 
-            path_ = path_.subpath(1, path.length)
+            if (path.nameCount <= 1) break; // Otherwise the next step would fail - Path can't get empty.
+
+            ///System.out.println("PATH ${path.nameCount}: $path")
+            path = path.subpath(1, path.nameCount)
         }
+        while (true)
 
         return objectMapper.writeValueAsString(tree)
     }
+
+    private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
+
 }
