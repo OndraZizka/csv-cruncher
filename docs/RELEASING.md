@@ -51,4 +51,4 @@ How to release
 5) Go to GitHub and [create a new release](https://github.com/OndraZizka/csv-cruncher/releases/new):
    * Name is like `<version> <main new feature>`
    * Description describes what's new, and contains the usage example
-   * Attach the files `csv-cruncher-<version>-dist.jar` and `...-single.jar` 
+   * Attach the files `csv-cruncher-<version>-dist.jar` and `...-fatjar.jar` 

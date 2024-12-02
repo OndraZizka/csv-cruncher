@@ -94,7 +94,7 @@ Download & run
   ```
 
     Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
-    If you run `java -jar csv-cruncher-single.jar` directly, do not add `crunch`.  
+    If you run `java -jar csv-cruncher-fatjar.jar` directly, do not add `crunch`.  
     You might need to make the `crunch` script executable depending on your OS (until issue #): `chmod +x crunch`
 
 

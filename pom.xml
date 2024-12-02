@@ -106,10 +106,11 @@
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version>
                 <executions>
 
+                    <!-- Disabled, because it does not include resources. Possibly a bug? -->
                     <execution>
                         <id>single-DISABLED</id> <!-- Was before MJAR-233: assembleDistJar -->
                         <goals><goal>single</goal></goals>
-                        <phase>none</phase> <!-- Disabled, trying a custom descriptor -->
+                        <phase>none</phase>
                         <configuration>
                             <finalName>${project.artifactId}-${project.version}-single</finalName>
                             <archive>

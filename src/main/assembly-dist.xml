@@ -26,7 +26,7 @@
             <directory>${project.build.directory}</directory>
             <outputDirectory>.</outputDirectory>
             <includes>
-                <include>*-single.jar</include>
+                <include>*-fatjar.jar</include>
             </includes>
         </fileSet>
         <fileSet>
