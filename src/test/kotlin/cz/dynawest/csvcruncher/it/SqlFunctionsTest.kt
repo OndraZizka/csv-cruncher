@@ -55,7 +55,6 @@ class SqlFunctionsTest {
 
         // Deeper
         assertEquals(listOf("val1", "val2"), jsonLeaves_impl("foo", "/prop1", """{ "foo": [{ "prop1": "val1" }, { "prop1": "val2" }] }""", true))
-        assertEquals(listOf("val1", "val2"), jsonLeaves_impl("foo", "/prop1", """{ "foo": [{ "prop1": "val1" }, { "prop1": "val2" }] }""", true))
     }
 
     @Suppress("unused")
