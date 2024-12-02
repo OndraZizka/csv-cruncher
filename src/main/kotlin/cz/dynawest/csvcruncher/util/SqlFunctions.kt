@@ -1,5 +1,6 @@
 package cz.dynawest.csvcruncher.util
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import cz.dynawest.csvcruncher.HsqlDbHelper
 import java.nio.file.InvalidPathException
@@ -26,7 +27,6 @@ object SqlFunctions {
             "Error creating Java function $FUNCTION_startsWith()."
         )
 
-        // TODO: Add a test.
         val FUNCTION_jsonSubtree = "jsonSubtree"
         hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_jsonSubtree", "Error dropping Java function $FUNCTION_jsonSubtree().")
         hsqlDbHelper.executeSql(
@@ -40,6 +40,20 @@ object SqlFunctions {
                 """,
             "Error creating Java function $FUNCTION_jsonSubtree()."
         )
+
+        val FUNCTION_jsonLeaf = "jsonLeaf"
+        hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_jsonLeaf", "Error dropping Java function $FUNCTION_jsonLeaf().")
+        hsqlDbHelper.executeSql(
+            """CREATE FUNCTION $FUNCTION_jsonLeaf(path LONGVARCHAR, jsonString LONGVARCHAR, nullOnNonScalarResult BOOLEAN) 
+                    RETURNS LONGVARCHAR
+                    RETURNS NULL ON NULL INPUT
+                    DETERMINISTIC
+                    NO SQL
+                    LANGUAGE JAVA PARAMETER STYLE JAVA
+                    EXTERNAL NAME 'CLASSPATH:${javaClass.name}.jsonLeaf'
+                """,
+            "Error creating Java function $FUNCTION_jsonLeaf()."
+        )
     }
 
     @JvmStatic
@@ -47,8 +61,7 @@ object SqlFunctions {
         return whole.startsWith(startx)
     }
 
-    @JvmStatic
-    fun jsonSubtree(pathString: String, jsonString: String): String? {
+    private fun findJsonSubtree(pathString: String, jsonString: String): JsonNode? {
         var path = try { Path.of(pathString) } catch (e: InvalidPathException) { throw IllegalArgumentException("Invalid path, use '/' to navigate (no array support): $pathString") }
 
         var tree =
@@ -61,14 +74,36 @@ object SqlFunctions {
             tree = tree.get( nextStep.toString() )
             if (tree == null) return null
 
-            if (path.nameCount <= 1) break; // Otherwise the next step would fail - Path can't get empty.
+            if (path.nameCount <= 1) break // Otherwise the next step would fail - Path can't get empty.
 
             ///System.out.println("PATH ${path.nameCount}: $path")
             path = path.subpath(1, path.nameCount)
         }
         while (true)
 
+        return tree
+    }
+
+    /** Returns the respective subtree as a JSON string. */
+    @JvmStatic
+    fun jsonSubtree(pathString: String, jsonString: String): String? {
+        val tree = findJsonSubtree(pathString, jsonString)
+        //if (tree?.isNull != false) return null
+        if (tree == null) return null
+
         return objectMapper.writeValueAsString(tree)
+    }
+
+    /** Returns the raw value of the respective leaf, converted to a text. */
+    @JvmStatic
+    fun jsonLeaf(pathString: String, jsonString: String, nullOnNonScalarResult: Boolean = false): String? {
+        val tree = findJsonSubtree(pathString, jsonString) ?: return null
+
+        if (tree.isValueNode) return tree.asText()
+
+        if (nullOnNonScalarResult) return null
+
+        throw IllegalArgumentException("The node at $pathString is not a scalar value.")
     }
 
     private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
