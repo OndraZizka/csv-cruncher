@@ -43,14 +43,19 @@ class SqlFunctionsTest {
 
     @Test
     fun test_jsonLeaves_impl(testInfo: TestInfo) {
-        assertEquals(listOf("bar"), jsonLeaves_impl("foo", """{ "foo": ["bar"] }"""))
-        assertEquals(null, jsonLeaves_impl("foo", """{ "foo": { "bar": "baz" } }""", true))
-        assertThrows<IllegalArgumentException> { jsonLeaves_impl("foo", """{ "foo": { "bar": "baz" } }""", false) }
-        assertEquals(listOf("baz"), jsonLeaves_impl("foo/bar", """{ "foo": { "bar": ["baz"] } }"""))
-        assertEquals(listOf(""), jsonLeaves_impl("foo/bar", """{ "foo": { "bar": [""] } }"""))
-        assertEquals(listOf(null), jsonLeaves_impl("foo/bar", """{ "foo": { "bar": [null] } }"""))
-        assertEquals(null, jsonLeaves_impl("foo/NON-EXISTENT", """{ "foo": { "bar": "baz" } }""", false))
-        assertThrows<IllegalArgumentException> { jsonLeaves_impl("foo/BAD-JSON", """{ ][{ dfwq3 /]-json": } """) }
+        // Roots
+        assertEquals(listOf("bar"), jsonLeaves_impl("foo", "", """{ "foo": ["bar"] }"""))
+        assertEquals(null, jsonLeaves_impl("foo", "", """{ "foo": { "bar": "baz" } }""", true))
+        assertThrows<IllegalArgumentException> { jsonLeaves_impl("foo", "", """{ "foo": { "bar": "baz" } }""", false) }
+        assertEquals(listOf("baz"), jsonLeaves_impl("foo/bar", "", """{ "foo": { "bar": ["baz"] } }"""))
+        assertEquals(listOf(""), jsonLeaves_impl("foo/bar", "", """{ "foo": { "bar": [""] } }"""))
+        assertEquals(listOf(null), jsonLeaves_impl("foo/bar", "", """{ "foo": { "bar": [null] } }"""))
+        assertEquals(null, jsonLeaves_impl("foo/NON-EXISTENT", "", """{ "foo": { "bar": "baz" } }""", false))
+        assertThrows<IllegalArgumentException> { jsonLeaves_impl("foo/BAD-JSON", "", """{ ][{ dfwq3 /]-json": } """) }
+
+        // Deeper
+        assertEquals(listOf("val1", "val2"), jsonLeaves_impl("foo", "/prop1", """{ "foo": [{ "prop1": "val1" }, { "prop1": "val2" }] }""", true))
+        assertEquals(listOf("val1", "val2"), jsonLeaves_impl("foo", "/prop1", """{ "foo": [{ "prop1": "val1" }, { "prop1": "val2" }] }""", true))
     }
 
     @Suppress("unused")
@@ -112,7 +117,7 @@ class SqlFunctionsTest {
 
         val inPath = Paths.get("$testDataDir/eapBuilds.csv")
         val outputPath = """${testInfo.testMethod.get().name}.json"""
-        val command = """ -in  | $inPath | -out | $outputPath | -sql | SELECT jsonLeaves('foo', '{ "foo": ["bar"] }', true) FROM (VALUES(0)) AS dual"""
+        val command = """ -in  | $inPath | -out | $outputPath | -sql | SELECT jsonLeaves('foo', '/prop1', '{ "foo": [{ "prop1": "val1" }, { "prop1": "val2" }] }', true) FROM (VALUES(0)) AS dual"""
         CsvCruncherTestUtils.runCruncherWithArguments(command)
 
         assertThat(Path.of(outputPath)).exists().isNotEmptyFile()

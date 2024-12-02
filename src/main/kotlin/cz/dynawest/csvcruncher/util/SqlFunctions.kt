@@ -77,7 +77,7 @@ object SqlFunctions {
         val FUNCTION_jsonLeaves = "jsonLeaves"
         hsqlDbHelper.executeSql("DROP FUNCTION IF EXISTS $FUNCTION_jsonLeaves", "Error dropping Java function $FUNCTION_jsonLeaves().")
         hsqlDbHelper.executeSql(
-            """CREATE FUNCTION $FUNCTION_jsonLeaves(pathToArray LONGVARCHAR, jsonString LONGVARCHAR, nullOnNonArrayNode BOOLEAN) 
+            """CREATE FUNCTION $FUNCTION_jsonLeaves(pathToArray LONGVARCHAR, leavesSubPath LONGVARCHAR, jsonString LONGVARCHAR, nullOnNonArrayNode BOOLEAN) 
                     RETURNS LONGVARCHAR -- ARRAY -- ARRAY_STRINGS -- ARRAY doesn't work for functions :/
                     RETURNS NULL ON NULL INPUT
                     DETERMINISTIC
@@ -142,18 +142,23 @@ object SqlFunctions {
 
     /** Returns the raw value of the respective leaf, converted to a text. */
     @JvmStatic
-    fun jsonLeaves(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): String? {
-        return jsonLeaves_impl(pathToArray, jsonString, nullOnNonArrayNode)
+    fun jsonLeaves(pathToArray: String, jsonPointer: String, jsonString: String, nullOnNonArrayNode: Boolean = false): String? {
+        return jsonLeaves_impl(pathToArray, jsonPointer, jsonString, nullOnNonArrayNode)
             ?.let { objectMapper.writeValueAsString(it) }
     }
 
+    /*
     @JvmStatic
-    fun jsonLeaves_array(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): Array<String?>? {
-        return jsonLeaves_impl(pathToArray, jsonString, nullOnNonArrayNode)?.toTypedArray()
+    fun jsonLeaves_array(pathToArray: String, jsonString: String, subPath: String, nullOnNonArrayNode: Boolean = false): Array<String?>? {
+        return jsonLeaves_impl(pathToArray, jsonString, subPath, nullOnNonArrayNode)?.toTypedArray()
         //return jsonLeaves_impl(pathToArray, jsonString, nullOnNonArrayNode)?.toTypedArray()?.requireNoNulls() ?: emptyArray<String>()
     }
+     */
 
-    internal fun jsonLeaves_impl(pathToArray: String, jsonString: String, nullOnNonArrayNode: Boolean = false): List<String?>? {
+    /**
+     * For JsonPointer see https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-json-pointer-03 .
+     */
+    internal fun jsonLeaves_impl(pathToArray: String, leavesSubPath: String, jsonString: String, nullOnNonArrayNode: Boolean = false): List<String?>? {
         val tree = findJsonSubtree(pathToArray, jsonString) ?: return null
 
         if (!tree.isArray) {
@@ -161,9 +166,12 @@ object SqlFunctions {
             throw IllegalArgumentException("The node at $pathToArray is not an array value, but ${tree.nodeType.name}.")
         }
 
+        //@Suppress("NAME_SHADOWING")
+        //val leavesSubPath = "/" + leavesSubPath.removePrefix("/")
+
         return (tree as ArrayNode).map {
             //objectMapper.writeValueAsString(it)
-            it.textValue()
+            it.at(leavesSubPath).textValue()
         }
     }
 
