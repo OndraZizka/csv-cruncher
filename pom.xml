@@ -60,10 +60,18 @@
                 <groupId>org.apache.maven.plugins</groupId><artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version>
                 <executions>
                     <execution>
+                        <id>testData-unzip</id>
                         <phase>generate-test-resources</phase>
                         <goals><goal>run</goal></goals>
                         <configuration><target><unzip src="src/test/data/json/github_data.zip" dest="target/testData/json/" /></target></configuration>
                     </execution>
+                    <execution>
+                        <id>distZip-unzip-before-e2e-test</id><phase>pre-integration-test</phase><goals><goal>run</goal></goals>
+                        <configuration>
+                            <target><unzip src="${project.build.directory}/${project.build.finalName}-dist.zip" dest="${project.build.directory}/dist-zip/" /></target>
+                        </configuration>
+                    </execution>
+
                 </executions>
             </plugin>
 
@@ -201,6 +209,26 @@
                                 -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
                                 CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
                                 FROM eapBuilds ORDER BY deployDur'
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+
+                    <!-- Run CsvCruncher from the -dist.zip (extracted above) through the script. -->
+                    <execution>
+                        <id>testCrunch-dist</id><phase>verify</phase><goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${skipE2E}</skip>
+                            <executable>sh</executable>
+                            <commandlineArgs>
+                                ${project.build.directory}/dist-zip/${project.build.finalName}-dist/crunch
+                                --json=entries
+                                --rowNumbers
+                                --logLevel=INFO
+                                -in src/test/data/eapBuilds.csv
+                                -out ${project.build.directory}/results/distZipCrunchResult.csv
+                                -sql 'SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
+                                        CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
+                                        FROM eapBuilds ORDER BY deployDur'
                             </commandlineArgs>
                         </configuration>
                     </execution>
