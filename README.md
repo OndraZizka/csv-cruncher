@@ -13,7 +13,7 @@ and stores the result into CSV and JSON files.
 http://static.openheatmap.com/images/googleicon.png
 -->
 
-Many tools and systems can export their data to CSV - comma separated values.
+Many tools and systems can export their data to <abbr title="comma separated values">CSV</abbr>.
 Typical work with these data is importing them into some spreadsheet like Excel and process them manually.
 
 Web services typically produce results as JSON arrays of objects. Reviewing them in JSON format is not too human friendly,
@@ -21,7 +21,7 @@ and processing them using `jq` is quite complicated.
 
 <div style="clear: both; height: 10px"></div>
 
-With CSV Cruncher, you can automate this processing by writing SQL queries, which produce another CSV or JSON as a result.
+With CsvCruncher, you can automate this processing by writing SQL queries, which produce another CSV or JSON as a result.
 The SQL operations can be quite powerful – just consider what everything you have at hand:
 
  * Simple selects - ordering, filtering, grouping, aggregating, etc.
@@ -33,10 +33,13 @@ The SQL operations can be quite powerful – just consider what everything you h
  * User-defined functions (PL/SQL-based and Java-based)
  * XML and JSON processing
  * Time and date functions
- * Statistical agregate functions
+ * Statistical agregate functions  
  ...[and more](http://hsqldb.org/doc/guide/guide.html).
+   All this is backed by [HyperSQL database](http://hsqldb.org/).
+   See it's rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
 
-On top of that, CSV Cruncher can:
+
+On top of that, CsvCruncher can:
  * Convert CSV to JSON
  * Convert JSON to CSV **without any schema**
  * Aggregate input files in a directory structure (concatenate, intersect, merge, deduplicate and other operations)
@@ -50,15 +53,36 @@ And this is planned:
  * Read any text files, parsed into columns by a regular expression groups.
  * Export HTML tables.
 
-All this is backed by [HyperSQL database](http://hsqldb.org/).
-See it's very rich [SQL syntax and features documentation](http://hsqldb.org/doc/2.0/guide/dataaccess-chapt.html).
+
+
+<div style="border: 1px solid green; padding: 0.3ex 1em; background-color: cornsilk">
+<b>Why another tool?</b>
+</div>
+
+There are quite [many](https://github.com/dbohdan/structured-text-tools/blob/master/sql-based.md) tools for processing CSV, JSON etc. However, they have one or another problems:
+  * Steep learning curve - weird single-purpose syntaxes
+  * Need to have a schema upfront
+  * Loosely integrated separated tools
+  * Low performance
+  * Need to run a server
+  * Only usable as a library from a language
+  * Not maintained anymore
+  * Insufficient features for data manipulation
+  * Can not aggregate
+  * Can not join across multiple files/tables
+  * Last but not least: The NIH problem.
+
+CsvCruncher is simple, fast, the input parameters clear, and all complexity is delegated to SQL.  
+If you work with data, you probably already know SQL. Why learn another syntax, logic, concept?
+
 
 Quick example
 =======
-Let's download a JSON with the episodes of Narcos, and pick the best 3 in season 2.
+Let's download a JSON with the episodes of Narcos, and pick the best 3 episodes in season 2.
 ```bash
 wget -O narcos.json 'http://api.tvmaze.com/singlesearch/shows?q=narcos&embed=episodes'
-cruncher/crunch -in narcos.json -itemsAt '_embedded/episodes' -out narcos.csv \
+cruncher/crunch -in narcos.json -itemsAt '_embedded/episodes' \ 
+   -out narcos.csv \
    -sql 'SELECT season, number, name FROM $table WHERE season = 2 ORDER BY rating.average DESC LIMIT 3'
 open narcos.csv
 ```
@@ -75,43 +99,47 @@ open narcos.csv
 Download & run
 ==============
 
-* Download from the Maven repo or the latest [release page](https://github.com/OndraZizka/csv-cruncher/releases/latest) and unzip.
+* Download latest [release page](https://github.com/OndraZizka/csv-cruncher/releases/latest) and unzip. (Also available from the Maven repo.)
     ```bash
     ## Install...
-    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.6.0/csv-cruncher-2.6.0.zip"
+    wget "https://repo1.maven.org/maven2/ch/zizka/csvcruncher/csv-cruncher/2.10.1/csv-cruncher-2.10.1.zip"
     unzip csv-cruncher-*.zip
+    rm csv-cruncher-*.zip
     mv csv-cruncher-*-dist cruncher
+    chmod +x cruncher/crunch
     ```
     
-* Example run - find the script `crunch` which calls Java;
+* Example run:  (The script `crunch` uses Java):
     ```bash
-    cruncher/crunch -in narcos.json -itemsAt '_embedded/episodes' -out narcos.csv -sql 'SELECT season, number, name FROM $table WHERE rating.average > 8'
+    cruncher/crunch 
+       -in narcos.json -itemsAt '_embedded/episodes' 
+       -out narcos.csv -sql 'SELECT season, number, name FROM $table WHERE rating.average > 8'
     ```
 
 * Add CsvCruncher to the `PATH`, e.g. by linking it from `bin`:
-  ```bash
-  ln -s $(pwd)/cruncher/crunch ~/.local/bin/crunch
-  ```
+    ```bash
+    ln -s $(pwd)/cruncher/crunch ~/.local/bin/crunch
+    ```
 
-    Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
-    If you run `java -jar csv-cruncher-fatjar.jar` directly, do not add `crunch`.  
-    You might need to make the `crunch` script executable depending on your OS (until issue #): `chmod +x crunch`
+Requires [Java 11](https://adoptopenjdk.net/releases.html) or later.    
+If you run `java -jar csv-cruncher-fatjar.jar` directly, do not add `crunch`.  
 
 
 Usage
 =====
 
-CsvCruncher has imports and exports.    
-Each import config starts with `-in`, each export with `-out`.    
-Both need a filesystem path to read from, resp. write to, and have further options.  
+CsvCruncher has _imports_ and one _export_.    
+Each import config starts with `-in`, the export with `-out`.  
+Both need a filesystem path to read from, resp. write to, as the next parameter.  
+All options following `-in` or `-out` apply to that import / export.
 Some import options may also be taken from defaults, which are configured after `-all`.
+`-in`, `-out` and `-all` may come in any order.
 
 ```shell
     ./crunch [<global options...>]
-       -in <file.csv> [-as <alias>] [--format=JSON|CSV] [-indexed column1,column2,...] [other options...]
-       -in <file.json> [-as ...] [-itemsAt /path/in/json/tree]  [other options...]
+       -in <file.csv>  [-as <table>] [--format=JSON|CSV] [-indexed column1,column2,...] [other options...]
+       -in <file.json> [-as <table>] [-itemsAt /path/in/json/tree]  [other options...]
        -out <resultFile.csv> [-sql <SQL query>] [--format=JSON|CSV] [other options...]
-       -out ...
        -all [<default or global options>]
 ```
 
@@ -128,9 +156,9 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
    * `-as` The name of the table this import will be loaded to.
 
  * `-out`
-    * Output path. If ends with `.json`, the output is JSON.
-    * If set to `-` (minus), the result is printed to standard output ("STDOUT").
-    * Currently only one output table/file is supported (the support for multiple waits for testing).
+    * Output path. If ends with `.json`, the output is JSON. `--format` overrides that.
+    * If set to `-` (minus), the result is printed to standard output ("STDOUT"). Logging goes to STDERR.
+    * Currently only one output table/file is supported (the support for multiple is planned).
     * `-sql`
        The SQL `SELECT` to be performed.
        * The input files (or the results of preprocessing them) are available as tables.
@@ -145,9 +173,9 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
 
  * `--include=<regex>`, `--exclude=<regex>`
     * Filters which input files are taken as input.
-    * The whole path relative to the is matched, so make sure to use `.*` at the beginning.
+    * The whole path relative to the `-in <dir>` is matched, so make sure to use `.*` at the beginning.
     * The `--exclude` is applied after `--include`, so include does not override excluded files.
-    * If not specified, CSV Cruncher behaves as if `--include` was `.*\.csv$` and `--exclude` had no match.
+    * If not specified, CsvCruncher behaves as if `--include` was `.*\.csv$` and `--exclude` had no match.
 
 ##### Pre-processing
 
@@ -195,15 +223,15 @@ This README may be slightly obsolete; For a full list of options, check the
 Usage example
 =============
 
-Simple SQL SELECT on a single CSV file, producing CSV and JSON:
+Simple SQL `SELECT` on a single CSV file, producing CSV and JSON:
 
-    ./crunch -in myInput.csv -out output.csv
+    crunch -in myInput.csv -out output.csv
         -sql "SELECT AVG(duration) AS durAvg FROM (SELECT * FROM myInput ORDER BY duration LIMIT 2 OFFSET 6)"
         --json
 
 With input files searched in a directory and concatenated into one table:
 
-    ./crunch
+    crunch
         -in src/test/data/sampleMultiFilesPerDir/apollo_session/
         -out target/results/result.csv
         --json=entries
@@ -215,7 +243,7 @@ With input files searched in a directory and concatenated into one table:
 
 With input files searched in subdirectories of a directory, concatenated, and used as table-per-subdirectory:
 
-    (Supported, but example to be added)
+    (Supported, but example to be added.)
 
 
 Data example / simple use case
@@ -234,7 +262,7 @@ Suppose you have a CSV file named `eapData.csv`:
 Passing it to CsvCruncher would make a table available named `eapData`, so you may issue such SQL query:
 
 ```sql
-SELECT jobName, buildNumber, config, ar, arFile, deployDur, warmupDur, scale,
+SELECT jobName, buildNumber, config, ar, ...,
    CAST(warmupDur AS DOUBLE) / CAST(deployDur AS DOUBLE) AS warmupSlower
 FROM eapData ORDER BY deployDur
 ```
@@ -242,7 +270,8 @@ FROM eapData ORDER BY deployDur
 To do that, run this command:
 
 ```bash
-crunch -in eapData.csv -out eap-statistics.json -sql "SELECT jobName, ... FROM eapData ..." --json=entries
+crunch -in  eapData.csv 
+       -out eap-statistics.json -sql "SELECT jobName, ... FROM eapData ..." --json=entries
 ```
 
 Notice the `.json` suffix, which tells CsvCruncher to produce JSON. `--json=entries` then formats it as 1 entry per line rather than an array.
@@ -262,7 +291,6 @@ for various reasons:
  * It's faster than importing to a real DB server.
  * It's the only tool I have found which can convert any generic JSON to tabular data without any prior metadata.
  * NoSQL databases do not support joins so exporting parts of them to JSON and querying using CsvCruncher is often my only OLAP option.
- * Lack of other lightweight ETL tools.
 
 That, however, makes it susceptible to being developed in isolated streaks, and lack of features I do not need.  
 I try to avoid bugs by covering the promised features with tests, but it's far from complete coverage.
@@ -339,7 +367,7 @@ In case you use this in your project, then beware:
 
 
 
-## What didn't fit elsewhere..
+## What didn't fit elsewhere...
 
 #### Custom SQL functions
 
