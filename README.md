@@ -106,12 +106,14 @@ Each import config starts with `-in`, each export with `-out`.
 Both need a filesystem path to read from, resp. write to, and have further options.  
 Some import options may also be taken from defaults, which are configured after `-all`.
 
+```shell
     ./crunch [<global options...>]
        -in <file.csv> [-as <alias>] [--format=JSON|CSV] [-indexed column1,column2,...] [other options...]
        -in <file.json> [-as ...] [-itemsAt /path/in/json/tree]  [other options...]
        -out <resultFile.csv> [-sql <SQL query>] [--format=JSON|CSV] [other options...]
        -out ...
        -all [<default or global options>]
+```
 
 ### Options
 
@@ -122,7 +124,8 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
     * Input paths, comma and/or space separated.
     * Can be CSV files, JSON files (if ending `.json`), or directories with such files.  
     * Multiple files may be imported to the same table, see `--combineInputs`.
-    * The columns may get indexed to speed up the `JOIN`, `WHERE` and `GROUP BY` clauses. See `-indexed ...`
+    * `-indexed ...` The columns may get indexed to speed up the `JOIN`, `WHERE` and `GROUP BY` clauses.
+   * `-as` The name of the table this import will be loaded to.
 
  * `-out`
     * Output path. If ends with `.json`, the output is JSON.
@@ -134,7 +137,7 @@ Leave me a comment in the respective GitHub issues if per-import/export configur
        * See [HSQLDB documentation](http://hsqldb.org/doc/2.0/guide/guide.html#sqlgeneral-chapt) for the vast SQL operations at hand.
        * The SELECT is subject to certain tweaks necessary to deliver some convenience of usage.  
          They may, however, result in an unpredicted behavior. Please consult the logs if you hit some cryptic errors from HSQLDB.
-
+    
  * `-db <pathToDatabaseDirectory>`
     * Determines where the files of the underlying database will be stored. Defaults to `hsqldb/cruncher`.
 
@@ -184,7 +187,6 @@ Read the logs or use `-sql SELECT ... FROM INFORMATION_SCHEMA.*` to study the sc
     * Create the output in JSON format.
     * `entries` (default) will create a JSON entry per line, representing the original rows.
     * `array` will create a file with a JSON array (`[...,...]`).
-
 
 This README may be slightly obsolete; For a full list of options, check the
 [`Options`](https://github.com/OndraZizka/csv-cruncher/blob/master/src/main/java/cz/dynawest/csvcruncher/Options.java) class.
@@ -255,15 +257,15 @@ Notice the `.json` suffix, which tells CsvCruncher to produce JSON. `--json=entr
 Project status
 ==============
 
-I develop this project ocassionally, when I need it. Which has been surprisingly often in the last 10 years,
+I develop this project occasionally, when I need it. Which has been surprisingly often in the last 10 years,
 for various reasons:
  * It's faster than importing to a real DB server.
  * It's the only tool I have found which can convert any generic JSON to tabular data without any prior metadata.
  * NoSQL databases do not support joins so exporting parts of them to JSON and querying using CsvCruncher is often my only OLAP option.
  * Lack of other lightweight ETL tools.
 
-That, however, makes it susceptible to being developed in isolated streaks, and lack on features I do not need.  
-I try to avoid bugs by covering the promised features with tests but it's far from complete coverage.
+That, however, makes it susceptible to being developed in isolated streaks, and lack of features I do not need.  
+I try to avoid bugs by covering the promised features with tests, but it's far from complete coverage.
 
 Where can you help (as a developer)?
 --------------
@@ -278,8 +280,11 @@ What's new
 ---------
 <details><summary>What's new</summary>
 
-* `2023-12-01` Release 2.7.1 - Various fixes of annoying UX bugs. #151 #152 #153
-* `2023-11-xx` Rebased branch with reading from spreadsheets.
+* `2024-12-02` Release 2.10.1 - Added SQL functions to process JSON.
+* `2024-12-01` Release 2.9.0 - Added file type detection.
+* `2024-12-01` Release 2.8.0 - UX improvements - less garbage on the stderr.
+* `2024-12-01` Release 2.7.1 - Various fixes of annoying UX bugs. #151 #152 #153. HSQLDB 2.7.4.
+* `2024-11-xx` Rebased branch with reading from spreadsheets.
 * `2023-09-03` Release 2.7.0 - Allow output to STDOUT.
 * `2023-06-29` Release 2.6.0 - Allow setting table names (`-as`) for input files.
 * `2022-11-27` ~~Preparing 2.5.x - reading from spreadsheets (Excel/XLS, LibreOffice/ODS, etc.)~~ Still in progress.
@@ -333,7 +338,25 @@ In case you use this in your project, then beware:
 4. Consider donating to [HSQLDB "SupportWare"](http://hsqldb.org/web/supportware.html).
 
 
-*Easter Egg: The original text I sent to JBoss mailing list when introducing the tool in 2011 :)*
+
+## What didn't fit elsewhere..
+
+#### Custom SQL functions
+
+CsvCruncher adds a couple of SQL functions to HSQLDB.
+
+* `jsonSubtree(path, json)` - Returns a json subtree (as JSON) at a given slash-separated path (`foo/bar`). Arrays not supported, but could be added.
+
+* `jsonLeaf(path, json)` - Like above, but expects the node to be a scalar, and returns the raw value rather than JSON serialization of it.
+
+* `jsonLeaves(pathToArray STRING, leavesSubpath STRING, json STRING, nullOnNonArray BOOLEAN)` - returns the leaves form an array, extracted from the given subpath (of each item in that array). Returns it serialized to JSON - due to limitations of HSQLDB. Expects the leaves to be scalar.
+
+* ~~`jsonSubtrees(pathToArray, subpath, json)`~~ - Not implemented. It would do the same as `jsonLeaves()`, except it would put the sub-nodes (rather than only scalars) to an array of subtrees. Let me know if you need it. (The reason why `jsonSubtrees()` is missing is that originally, `jsonLeaves()` was supposed to return a SQL type `ARRAY`, but that is not supported by HSQLDB.)
+
+
+#### Memories
+
+ The original text I sent to JBoss mailing list when introducing the tool in 2011 :)*
 
 > Hi,
 >
