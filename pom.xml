@@ -49,6 +49,13 @@
         </testResources>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
+        <pluginManagement>
+            <plugins>
+                <!-- Allows packing a small bundle with JRE. -->
+                <plugin><groupId>com.github.akman</groupId><artifactId>jpackage-maven-plugin</artifactId><version>0.1.5</version></plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
 
             <plugin>
@@ -454,6 +461,19 @@
                                     <keyname>73BA361CA92D829800730DE207838E30786B5257</keyname>
                                     <passphrase>${gpg.passphrase}</passphrase>
                                     <executable>${gpg.executable}</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>com.github.akman</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <executions>
+                            <execution><id>create-deb</id><phase>post-integration-test</phase><goals><goal>jpackage</goal></goals>
+                                <configuration>
+                                    <input>target/dist-zip</input>
+                                    <mainjar>${project.build.finalName}-${fatJarAssemblyId}.jar</mainjar>
                                 </configuration>
                             </execution>
                         </executions>
