@@ -190,12 +190,13 @@
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
 
 
-            <!-- One real execution of the tool from outside JUnit. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version>
                 <executions>
+
+                    <!-- Run CsvCruncher using `java -jar ...` (outside JUnit). -->
                     <execution>
-                        <id>testCrunch-simple</id><phase>integration-test</phase><goals><goal>exec</goal></goals>
+                        <id>testCrunch-jar</id><phase>integration-test</phase><goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${skipE2E}</skip>
                             <executable>java</executable>
@@ -213,9 +214,9 @@
                         </configuration>
                     </execution>
 
-                    <!-- Run CsvCruncher from the -dist.zip (extracted above) through the script. -->
+                    <!-- Run CsvCruncher from the -dist.zip (extracted by Ant) through the script. -->
                     <execution>
-                        <id>testCrunch-dist</id><phase>verify</phase><goals><goal>exec</goal></goals>
+                        <id>testCrunch-dist</id><phase>integration-test</phase><goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${skipE2E}</skip>
                             <executable>sh</executable>
