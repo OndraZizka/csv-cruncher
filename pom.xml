@@ -52,12 +52,12 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version>
+                <artifactId>maven-jar-plugin</artifactId><version>3.4.2</version>
                 <configuration><includes><include>**/*.class</include><exclude>**/*.kt</exclude></includes></configuration>
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version>
+                <artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>testData-unzip</id>
@@ -77,7 +77,7 @@
 
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>${version.surefire}</version>
+                <artifactId>maven-surefire-plugin</artifactId><version>${version.surefire}</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <workingDirectory>${project.build.directory}/workdir</workingDirectory>
@@ -92,7 +92,7 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>${version.surefire}</version>
+                <artifactId>maven-failsafe-plugin</artifactId><version>${version.surefire}</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
@@ -111,7 +111,7 @@
 
             <!-- Assemblies - fat jar, dist zip. -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version>
+                <artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version>
                 <executions>
 
                     <!-- Disabled, because it does not include resources. Possibly a bug? -->
@@ -187,7 +187,7 @@
                 </executions>
             </plugin>
 
-            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
+            <plugin><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
 
 
             <plugin>
@@ -236,7 +236,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.4.0</version>
+                <artifactId>maven-clean-plugin</artifactId><version>3.4.0</version>
                 <!-- Delete the pre-existing DB -->
                 <executions>
                     <execution><id>clean-hsqldb-data</id><phase>pre-integration-test</phase><goals><goal>clean</goal></goals>
@@ -249,7 +249,7 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
+                <artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -281,7 +281,7 @@
 
             <!-- Maven Compiler plugin -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
+
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <executions>
@@ -380,12 +380,12 @@
 
                     <!-- Generate a JavaDoc and source jars -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.3.1</version>
+                        <artifactId>maven-source-plugin</artifactId><version>3.3.1</version>
                         <configuration><includes>**/*.kt</includes></configuration>
                         <executions><execution><id>attach-sources</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.11.1</version>
+                        <artifactId>maven-javadoc-plugin</artifactId><version>3.11.1</version>
                         <executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <!-- <plugin> <groupId>org.jetbrains.kotlin</groupId> <artifactId>kdoc-maven-plugin</artifactId> <version>${version.kotlin}</version> </plugin> -->
@@ -400,7 +400,7 @@
 
                     <!-- Release plugin -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-release-plugin</artifactId><version>3.1.1</version>
+                        <artifactId>maven-release-plugin</artifactId><version>3.1.1</version>
                         <configuration>
                             <autoVersionSubmodules>true</autoVersionSubmodules>
                             <useReleaseProfile>false</useReleaseProfile>
@@ -425,7 +425,7 @@
                     <!-- This relies on the gpg command being installed and the GPG credentials being available e.g. from settings.xml. -->
                     <!-- Remember to run this before Maven build: export GPG_TTY=$(tty) -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.7</version>
+                        <artifactId>maven-gpg-plugin</artifactId><version>3.2.7</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
