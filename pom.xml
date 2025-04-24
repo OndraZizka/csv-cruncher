@@ -482,6 +482,25 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>goodies</id><activation><property><name>!dummy</name></property></activation>
+            <build>
+                <plugins>
+                    <!-- Download sources and docs as part of the dependency resolution. -->
+                    <plugin>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals><goal>sources</goal><goal>resolve</goal></goals>
+                                <configuration><classifier>javadoc</classifier></configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <!-- Releasing to OSSRH, the alternative way. The other way is to use the 'release' profile, using -Drelease. -->
