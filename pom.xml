@@ -23,7 +23,6 @@
         <version.kotlin-dokka>1.9.20</version.kotlin-dokka>
         <version.jdk>11</version.jdk>
         <version.jackson>2.18.2</version.jackson>
-        <version.surefire>3.5.2</version.surefire>
 
         <jvm.args.debug /> <!-- Used by the -Pdebug profile. -->
         <mainClass>Crunch</mainClass>
@@ -52,12 +51,12 @@
         <plugins>
 
             <plugin>
-                <artifactId>maven-jar-plugin</artifactId><version>3.4.2</version>
+                <artifactId>maven-jar-plugin</artifactId>
                 <configuration><includes><include>**/*.class</include><exclude>**/*.kt</exclude></includes></configuration>
             </plugin>
 
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version>
+                <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>testData-unzip</id>
@@ -77,7 +76,7 @@
 
 
             <plugin>
-                <artifactId>maven-surefire-plugin</artifactId><version>${version.surefire}</version>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <workingDirectory>${project.build.directory}/workdir</workingDirectory>
@@ -92,7 +91,7 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-failsafe-plugin</artifactId><version>${version.surefire}</version>
+                <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
                     <systemPropertyVariables>
@@ -111,7 +110,7 @@
 
             <!-- Assemblies - fat jar, dist zip. -->
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version>
+                <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
 
                     <!-- Disabled, because it does not include resources. Possibly a bug? -->
@@ -187,11 +186,8 @@
                 </executions>
             </plugin>
 
-            <plugin><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
-
-
             <plugin>
-                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version>
+                <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId>
                 <executions>
 
                     <!-- Run CsvCruncher using `java -jar ...` (outside JUnit). -->
@@ -236,7 +232,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-clean-plugin</artifactId><version>3.4.0</version>
+                <artifactId>maven-clean-plugin</artifactId>
                 <!-- Delete the pre-existing DB -->
                 <executions>
                     <execution><id>clean-hsqldb-data</id><phase>pre-integration-test</phase><goals><goal>clean</goal></goals>
@@ -249,7 +245,7 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
+                <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -264,9 +260,7 @@
             </plugin>
 
             <plugin>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-maven-plugin</artifactId>
-                <version>${version.kotlin}</version>
+                <groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>compile</id><phase>compile</phase><goals><goal>compile</goal></goals>
@@ -281,9 +275,7 @@
 
             <!-- Maven Compiler plugin -->
             <plugin>
-
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <executions>
                     <!-- Short-circuit the special treatment of default-compile executions. See https://kotlinlang.org/docs/reference/using-maven.html -->
                     <execution><id>default-compile</id><phase>none</phase></execution>
@@ -300,6 +292,38 @@
             </plugin>
 
         </plugins>
+
+        <pluginManagement>
+            <plugins>
+                <!-- Last updated 2025-04-24 from https://gist.github.com/OndraZizka/ff189184597770444db4ee27f144c01f.
+                     To get new: mvn versions:display-plugin-updates -Dmaven.version.ignore='(?i).*(beta|alpha|RC|CR).*' -->
+                <plugin><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId><version>2.1.20</version></plugin>
+                <plugin><groupId>org.jetbrains.dokka</groupId><artifactId>dokka-maven-plugin</artifactId><version>2.0.0</version></plugin>
+                <plugin><groupId>io.fabric8</groupId><artifactId>docker-maven-plugin</artifactId><version>0.46.0</version></plugin>
+                <plugin><groupId>io.quarkus.platform</groupId><artifactId>quarkus-maven-plugin</artifactId><version>${quarkus.platform.version}</version><extensions>true</extensions></plugin>
+                <plugin><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version></plugin>
+                <plugin><artifactId>maven-clean-plugin</artifactId><version>3.4.1</version></plugin>
+                <plugin><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
+                <plugin><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+                <plugin><artifactId>maven-source-plugin</artifactId><version>3.3.1</version></plugin>
+                <plugin><artifactId>maven-resources-plugin</artifactId><version>3.3.1</version></plugin>
+                <plugin><artifactId>maven-javadoc-plugin</artifactId><version>3.11.2</version></plugin>
+                <plugin><artifactId>maven-surefire-plugin</artifactId><version>3.5.3</version></plugin>
+                <plugin><artifactId>maven-failsafe-plugin</artifactId><version>3.5.3</version></plugin>
+                <plugin><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
+                <plugin><artifactId>maven-install-plugin</artifactId><version>3.1.4</version></plugin>
+                <plugin><artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version></plugin>
+                <plugin><artifactId>maven-release-plugin</artifactId><version>3.1.1</version></plugin>
+                <plugin><artifactId>maven-deploy-plugin</artifactId><version>3.1.4</version></plugin>
+                <plugin><artifactId>maven-help-plugin</artifactId><version>3.5.1</version></plugin>
+                <plugin><artifactId>maven-site-plugin</artifactId><version>4.0.0-M16</version></plugin>
+                <plugin><artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version></plugin>
+                <plugin><groupId>com.soebes.maven.plugins</groupId><artifactId>echo-maven-plugin</artifactId><version>0.5.0</version></plugin>
+                <plugin><groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version></plugin>
+                <plugin><groupId>org.flywaydb</groupId><artifactId>flyway-maven-plugin</artifactId><version>11.8.0</version></plugin>
+                <plugin><groupId>io.smallrye</groupId><artifactId>jandex-maven-plugin</artifactId><version>3.3.0</version></plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
 
@@ -352,10 +376,7 @@
 
     </dependencies>
     <repositories>
-        <repository>
-            <id>central</id>
-            <url>https://repo.maven.apache.org/maven2/</url>
-        </repository>
+        <repository><id>central</id><url>https://repo.maven.apache.org/maven2/</url></repository>
     </repositories>
 
     <profiles>
@@ -465,15 +486,7 @@
 
     <!-- Releasing to OSSRH, the alternative way. The other way is to use the 'release' profile, using -Drelease. -->
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <name>ossrh</name>
-            <url>https://${ossrh.host}/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <name>ossrh</name>
-            <url>https://${ossrh.host}/service/local/staging/deploy/maven2/</url>
-        </repository>
+        <snapshotRepository><id>ossrh</id><name>ossrh</name><url>https://${ossrh.host}/content/repositories/snapshots</url></snapshotRepository>
+        <repository><id>ossrh</id><name>ossrh</name><url>https://${ossrh.host}/service/local/staging/deploy/maven2/</url></repository>
     </distributionManagement>
 </project>
