@@ -309,19 +309,19 @@
             <plugins>
                 <!-- Last updated 2025-04-24 from https://gist.github.com/OndraZizka/ff189184597770444db4ee27f144c01f.
                      To get new: mvn versions:display-plugin-updates -Dmaven.version.ignore='(?i).*(beta|alpha|RC|CR).*' -->
-                <plugin><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId><version>2.1.20</version></plugin>
-                <plugin><groupId>org.jetbrains.dokka</groupId><artifactId>dokka-maven-plugin</artifactId><version>2.0.0</version></plugin>
+                <plugin><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId><version>2.2.20</version></plugin>
+                <plugin><groupId>org.jetbrains.dokka</groupId><artifactId>dokka-maven-plugin</artifactId><version>2.1.0</version></plugin>
                 <plugin><groupId>io.fabric8</groupId><artifactId>docker-maven-plugin</artifactId><version>0.46.0</version></plugin>
                 <plugin><groupId>io.quarkus.platform</groupId><artifactId>quarkus-maven-plugin</artifactId><version>${quarkus.platform.version}</version><extensions>true</extensions></plugin>
-                <plugin><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version></plugin>
+                <plugin><artifactId>maven-enforcer-plugin</artifactId><version>3.6.2</version></plugin>
                 <plugin><artifactId>maven-clean-plugin</artifactId><version>3.5.0</version></plugin>
                 <plugin><artifactId>maven-dependency-plugin</artifactId><version>3.9.0</version></plugin>
                 <plugin><artifactId>maven-compiler-plugin</artifactId><version>3.14.1</version></plugin>
                 <plugin><artifactId>maven-source-plugin</artifactId><version>3.3.1</version></plugin>
                 <plugin><artifactId>maven-resources-plugin</artifactId><version>3.3.1</version></plugin>
-                <plugin><artifactId>maven-javadoc-plugin</artifactId><version>3.11.2</version></plugin>
-                <plugin><artifactId>maven-surefire-plugin</artifactId><version>3.5.3</version></plugin>
-                <plugin><artifactId>maven-failsafe-plugin</artifactId><version>3.5.3</version></plugin>
+                <plugin><artifactId>maven-javadoc-plugin</artifactId><version>3.12.0</version></plugin>
+                <plugin><artifactId>maven-surefire-plugin</artifactId><version>3.5.4</version></plugin>
+                <plugin><artifactId>maven-failsafe-plugin</artifactId><version>3.5.4</version></plugin>
                 <plugin><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
                 <plugin><artifactId>maven-install-plugin</artifactId><version>3.1.4</version></plugin>
                 <plugin><artifactId>maven-assembly-plugin</artifactId><version>3.7.1</version></plugin>
@@ -329,11 +329,11 @@
                 <plugin><artifactId>maven-deploy-plugin</artifactId><version>3.1.4</version></plugin>
                 <plugin><artifactId>maven-help-plugin</artifactId><version>3.5.1</version></plugin>
                 <plugin><artifactId>maven-site-plugin</artifactId><version>4.0.0-M16</version></plugin>
-                <plugin><artifactId>maven-antrun-plugin</artifactId><version>3.1.0</version></plugin>
+                <plugin><artifactId>maven-antrun-plugin</artifactId><version>3.2.0</version></plugin>
                 <plugin><groupId>com.soebes.maven.plugins</groupId><artifactId>echo-maven-plugin</artifactId><version>0.5.0</version></plugin>
-                <plugin><groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version></plugin>
-                <plugin><groupId>org.flywaydb</groupId><artifactId>flyway-maven-plugin</artifactId><version>11.8.0</version></plugin>
-                <plugin><groupId>io.smallrye</groupId><artifactId>jandex-maven-plugin</artifactId><version>3.3.0</version></plugin>
+                <plugin><groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.6.2</version></plugin>
+                <plugin><groupId>org.flywaydb</groupId><artifactId>flyway-maven-plugin</artifactId><version>11.14.1</version></plugin>
+                <plugin><groupId>io.smallrye</groupId><artifactId>jandex-maven-plugin</artifactId><version>3.5.0</version></plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -413,12 +413,12 @@
 
                     <!-- Generate a JavaDoc and source jars -->
                     <plugin>
-                        <artifactId>maven-source-plugin</artifactId><version>3.3.1</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.3.1</version>
                         <configuration><includes>**/*.kt</includes></configuration>
                         <executions><execution><id>attach-sources</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <plugin>
-                        <artifactId>maven-javadoc-plugin</artifactId><version>3.11.1</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.11.1</version>
                         <executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
                     </plugin>
                     <!-- <plugin> <groupId>org.jetbrains.kotlin</groupId> <artifactId>kdoc-maven-plugin</artifactId> <version>${version.kotlin}</version> </plugin> -->
@@ -433,7 +433,7 @@
 
                     <!-- Release plugin -->
                     <plugin>
-                        <artifactId>maven-release-plugin</artifactId><version>3.1.1</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-release-plugin</artifactId><version>3.1.1</version>
                         <configuration>
                             <autoVersionSubmodules>true</autoVersionSubmodules>
                             <useReleaseProfile>false</useReleaseProfile>
@@ -458,7 +458,7 @@
                     <!-- This relies on the gpg command being installed and the GPG credentials being available e.g. from settings.xml. -->
                     <!-- Remember to run this before Maven build: export GPG_TTY=$(tty) -->
                     <plugin>
-                        <artifactId>maven-gpg-plugin</artifactId><version>3.2.7</version>
+                        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.8</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
