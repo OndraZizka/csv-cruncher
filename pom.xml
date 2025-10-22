@@ -20,7 +20,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.kotlin>2.2.20</version.kotlin>
-        <version.kotlin-dokka>1.9.20</version.kotlin-dokka>
+        <version.kotlin-dokka>2.1.0</version.kotlin-dokka>
         <version.jdk>11</version.jdk>
         <version.jackson>2.20.0</version.jackson>
 
@@ -314,9 +314,9 @@
                 <plugin><groupId>io.fabric8</groupId><artifactId>docker-maven-plugin</artifactId><version>0.46.0</version></plugin>
                 <plugin><groupId>io.quarkus.platform</groupId><artifactId>quarkus-maven-plugin</artifactId><version>${quarkus.platform.version}</version><extensions>true</extensions></plugin>
                 <plugin><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version></plugin>
-                <plugin><artifactId>maven-clean-plugin</artifactId><version>3.4.1</version></plugin>
-                <plugin><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version></plugin>
-                <plugin><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+                <plugin><artifactId>maven-clean-plugin</artifactId><version>3.5.0</version></plugin>
+                <plugin><artifactId>maven-dependency-plugin</artifactId><version>3.9.0</version></plugin>
+                <plugin><artifactId>maven-compiler-plugin</artifactId><version>3.14.1</version></plugin>
                 <plugin><artifactId>maven-source-plugin</artifactId><version>3.3.1</version></plugin>
                 <plugin><artifactId>maven-resources-plugin</artifactId><version>3.3.1</version></plugin>
                 <plugin><artifactId>maven-javadoc-plugin</artifactId><version>3.11.2</version></plugin>
